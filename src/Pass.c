@@ -1690,6 +1690,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
               ((Value *)element)->name = temp_str;
             }
           } else {
+            //删除没有被引用的变量
             ListRemove((self_cfg->node_set)[i]->bblock_head->inst_list,
                        iter_num);
             continue;
@@ -1767,7 +1768,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   remove_bblock_phi_func_pass(graph_for_dom_tree);
 
   printf("\n\n\n");
-
+  //2023-3-22 函数打印
   printf_cur_func_ins(cur_func);
 
   // // 打印表的表头信息

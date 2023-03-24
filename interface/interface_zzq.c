@@ -1,0 +1,556 @@
+#include "interface_zzq.h"
+#include "instruction.h"
+#include "variable_map.h"
+#include "arm.h"
+#include "arm_assembly.h"
+#include "dependency.h"
+#include <assert.h>
+#include "config.h"
+#include "translate.h"
+
+extern bool Open_Register_Allocation;
+
+int ins_get_opCode(Instruction* this)
+{
+    // @brief:获取指令的操作码，由zzq的font-end暴露的接口
+    // @birth:Created by LGD on 20221228
+    return this->opcode;
+}
+
+char* ins_get_label(Instruction* this)
+{
+    // @brief:获取Label指令的标签，由zzq的font-end暴露的接口
+    // @birth:Created by LGD on 20221228
+    assert((this->opcode == LabelOP || this->opcode == FuncLabelOP) && "非标签语句");
+    return this->user.res->name;
+}
+
+char* ins_get_tarLabel(Instruction* this)
+{
+    // @brief:获取目标跳转指令，适用于GotoOP,GotoWithConditionOP,CallOP,CallWithReturnValueOP
+    // @birth:Created by LGD on 20221229
+    assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP || this->opcode != CallOP || this->opcode != CallWithReturnValueOP);
+    switch(ins_get_opCode(this))
+    {
+        case GotoOP:
+        case CallOP:
+        case CallWithReturnValueOP:
+            return this->user.res->pdata->no_condition_goto.goto_location->name;
+        case GotoWithConditionOP:
+            return this->user.res->pdata->condition_goto.false_goto_location->name;   //条件跳转时，只需要跳转至正确，错误顺序执行
+    }
+}
+
+Value* ins_get_assign_left_value(Instruction* this)
+{
+    // @brief:返回赋值号左值，由zzq的font-end暴露的接口
+    // @birth:Created by LGD on 20221229
+    return this->user.res;
+}
+
+struct _Value *ins_get_operand(Instruction* this,int i){
+    // @brief 按下标取instruction的操作数
+    // @birth:Created by LGD on 20221229
+    // @update:现在第0操作数将视为tempValue
+    if(i)
+    {
+        return user_get_operand_use(&(this->user),i-1)->Val;
+    }
+    else
+    {
+        return this->user.res;
+    }
+}
+
+/**
+ * @brief   当操作数为常数时，获取指令的操作数的常数值
+ * @param   [int i]: 1：第一操作数  2：第二操作数
+ * @notice: 不包括目标操作数
+ * @birth:  Created by LGD on 20221229,由zzq的font-end暴露的接口
+ * @update: 20230122 添加了对浮点数转换为IEEE754 32位浮点数格式的支持
+ *          20221225 调用ins_get_operand接口代替user_get_operand_use  第一操作数由0变为1，以此类推
+*/
+int64_t ins_get_constant(Instruction* this,int i)
+{
+    if(value_get_type(ins_get_operand(this,i)) == ConstIntTyID )
+        return ins_get_operand(this,i)->pdata->var_pdata.iVal;
+
+    else if(value_get_type(ins_get_operand(this,i)) == ConstFloatTyID)
+        return (int64_t)float_754_binary_code(ins_get_operand(this,i)->pdata->var_pdata.fVal,BITS_32);
+}
+
+/**
+ * @brief 获取操作数的常量值（当操作数确实是常数时）
+ * @author Created by LGD on 20220106
+*/
+int op_get_constant(Value* op)
+{
+    return op->pdata->var_pdata.iVal;
+}
+
+/**
+ * @brief 从zzq的return语句中获取op
+ * @author Created by LGD on 20220106
+*/
+Value* get_op_from_return_instruction(Instruction* this)
+{
+    return this->user.value.pdata->return_pdata.return_value;
+}
+
+/**
+ * @brief 从zzq的param语句中获取op
+ * @author Created by LGD on 20220106
+*/
+Value* get_op_from_param_instruction(Instruction* this)
+{
+    return this->user.value.pdata->param_pdata.param_value;
+}
+
+char* from_tac_op_2_str(TAC_OP op)
+{
+    switch(op)
+    {
+        case AddOP:
+            return "ADD";
+        case SubOP:
+            return "SUB";
+        case MulOP:
+            return "MUL";
+        // case Goto:
+        //     return "B";
+        case LessEqualOP:
+            return "LE";
+        case GreatEqualOP:
+            return "GE";
+        case LessThanOP:
+            return "LT";
+        case GreatThanOP:
+            return "GT";
+        case EqualOP:
+            return "EQ";
+        case NotEqualOP:
+            return "NE";
+
+
+        // case Goto_LessEqual:
+        //     return "LE";
+        // case Goto_GreatEqual:
+        //     return "GE";
+        // case Goto_LessThan:
+        //     return "LT";
+        // case Goto_GreatThan:
+        //     return "GT";
+        // case Goto_Equal:
+        //     return "E";
+        // case Goto_NotEqual:
+        //     return "NE";
+        
+        case GotoWithConditionOP:
+            return "E";
+        //add on 20221208
+        case AssignOP:
+            return "MOV";
+
+        default:
+            return "";
+    }
+}
+
+
+void translate_IR_test(struct _Instruction* this)
+{
+    // @brief:这个方法通过判断Instruction的指令来执行对应的翻译方法
+    // @birth:Created by LGD on 20221224
+    // @update:Latest 20221224:添加对比较运算符的翻译支持
+    switch(ins_get_opCode(this))
+    {
+#ifdef OPEN_TRANSLATE_BINARY
+        case AddOP:
+        case SubOP:
+        case MulOP:
+        case DivOP:
+    #ifdef OPEN_LOAD_AND_STORE_BINARY_OPERATE
+            translate_binary_expression_test(this);
+    #else   
+            translate_binary_expression_binary_and_assign(this);
+    #endif
+            break;
+#endif
+#ifdef OPEN_TRANSLATE_LOGICAL
+        case EqualOP:
+        case NotEqualOP:
+        case GreatEqualOP:
+        case GreatThanOP:
+        case LessEqualOP:
+        case LessThanOP:
+            translate_logical_binary_instruction(this);
+            break;
+#endif
+        // case Goto:
+        // case Goto_Equal:
+        // case Goto_GreatEqual:
+        // case Goto_GreatThan:
+        // case Goto_LessEqual:
+        // case Goto_LessThan:
+        // case Goto_NotEqual:
+        //     translate_goto_instruction_conditions_in_one(this);
+            // break;
+        case GotoWithConditionOP:
+            translate_goto_instruction_test_bool(this);
+        break;
+        case FuncLabelOP:
+            translate_function_entrance(this);
+        break;
+        // case ReturnOP:
+        //     translate_return_instructions(this);
+        // break;
+        case ParamOP:
+            translate_param_instructions(this);
+        break;
+        case FuncEndOP:
+            translate_function_end(this);
+        break;
+        case CallOP:
+            translate_call_instructions(this);
+        break;
+        case CallWithReturnValueOP:
+            translate_call_with_return_value_instructions(this);
+        break;
+        case AssignOP:
+            translate_assign_instructions(this);
+        break;
+        case LabelOP:
+            translate_label(this);
+        break;
+
+    }
+}
+
+/**
+ * @brief 这个方法通过判断Instruction的指令来执行对应的翻译方法
+ *        在寄存器分配开启的情况下
+ * @author Created by LGD on 20230112
+*/
+void translate_IR_open_register_allocation(struct _Instruction* this,struct _Instruction* last)
+{
+    update_variable_place(last,this);
+    switch(ins_get_opCode(this))
+    {
+        case AddOP:
+        case SubOP:
+        case MulOP:
+        case DivOP:
+#ifdef OPEN_LOAD_AND_STORE_BINARY_OPERATE
+            translate_binary_expression_test(this);
+#endif
+            break;
+        case EqualOP:
+        case NotEqualOP:
+        case GreatEqualOP:
+        case GreatThanOP:
+        case LessEqualOP:
+        case LessThanOP:
+            translate_logical_binary_instruction(this);
+            break;
+        case GotoWithConditionOP:
+            translate_goto_instruction_test_bool(this);
+            break;
+        case FuncLabelOP:
+            translate_function_entrance(this);
+            break;
+        // case ReturnOP:
+        //     translate_return_instructions(this);
+        // break;
+        case FuncEndOP:
+            translate_function_end(this);
+            break;
+        case CallOP:
+            translate_call_instructions(this);
+            break;
+        case CallWithReturnValueOP:
+            translate_call_with_return_value_instructions(this);
+            break;
+        case AssignOP:
+            translate_assign_instructions(this);
+            break;
+        case LabelOP:
+            translate_label(this);
+
+    }
+}
+
+
+
+size_t traverse_list_and_count_total_size_of_value(List* this,int order)
+{
+    // @brief:遍历一个代码块指定数量的指令，并根据操作码为出现的Value生成一个表
+    // @param:order:第一个函数块，以FunctionBeginOp 作为入口的标志
+    // @birth:Created by LGD on 20221218
+    // @update:20221220:添加了对变量是否已经存在在变量哈希表中的判定
+    //         20221224:将涉及函数赋值的赋值号左侧的变量视为左值
+    Instruction* p;
+    size_t totalSize = 0;
+    
+    ListFirst(this,false);
+    for(size_t cnt = 0;cnt <= order;)
+    {
+        ListNext(this,&p);
+        if(ins_get_opCode(p) == FuncLabelOP)
+            cnt++;
+    }
+
+    Value* val;
+    do
+    {
+        switch(ins_get_opCode(p))
+        {
+            case AddOP:
+            case SubOP:
+            case MulOP:
+            case DivOP:
+            case AssignOP:
+            case CallWithReturnValueOP:
+            case NotEqualOP:
+            case EqualOP:
+            case GreatEqualOP:
+            case GreatThanOP:
+            case LessEqualOP:
+            case LessThanOP:
+                val = ins_get_assign_left_value(p);
+                totalSize += 4;
+                break;
+        }
+    }while(ListNext(this,&p));
+    return totalSize;
+}
+
+
+HashMap* traverse_list_and_get_all_value_into_map(List* this,int order)
+{
+    // @brief:遍历一个代码块指定数量的指令，并根据操作码为出现的Value生成一个表
+    // @param:order:第一个函数块，以FunctionBeginOp 作为入口的标志
+    // @birth:Created by LGD on 20221218
+    // @update:20221220:添加了对变量是否已经存在在变量哈希表中的判定
+    //         20221224:将涉及函数赋值的赋值号左侧的变量视为左值
+    HashMap* map;
+    variable_map_init(&map);
+    Instruction* p;
+    
+    ListFirst(this,false);
+    for(size_t cnt = 0;cnt <= order;cnt++)
+    {
+        ListNext(this,&p);
+        if(ins_get_opCode(p) == FuncLabelOP)
+            cnt++;
+    }
+
+    Value* val;
+    do
+    {
+        switch(ins_get_opCode(p))
+        {
+            case AddOP:
+            case SubOP:
+            case MulOP:
+            case DivOP:
+            case AssignOP:
+            case CallWithReturnValueOP:
+            case NotEqualOP:
+            case EqualOP:
+            case GreatEqualOP:
+            case GreatThanOP:
+            case LessEqualOP:
+            case LessThanOP:
+                val = ins_get_assign_left_value(p);
+                void* isFound = variable_map_get_value(map,val);
+                if(isFound)break; 
+                VarInfo* space = set_in_memory(NULL);
+                variable_map_insert_pair(map,val,space);
+                break;
+        }
+    }while(ListNext(this,&p));
+    return map;
+}
+
+   
+/**
+ * @brief 遍历一个代码块指定数量的指令，并根据操作码为出现的Value生成一个表
+ * @param order 第n个函数块，以FuncLabelOP 作为入口的标志
+ * @author LGD
+ * @date 20221218
+ * @update  20220109 对遍历至指定函数入口的方法进行了封装调用
+ *          20221220:添加了对变量是否已经存在在变量哈希表中的判定
+ *          20221224:将涉及函数赋值的赋值号左侧的变量视为左值
+*/
+void traverse_list_and_set_map_for_each_instruction(List* this,HashMap* map,int order)
+{
+    
+    Instruction* p;
+    
+    p = traverse_to_specified_function(this,order);
+
+    do
+    {
+        ins_deepSet_varMap(p,map);
+    }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
+
+}
+
+size_t traverse_list_and_count_the_number_of_function(List* this)
+{
+    // @brief:遍历一个代码块指定数量的指令，并根据操作码为出现的Value生成一个表
+    // @param:order:第一个函数块，以FunctionBeginOp 作为入口的标志
+    // @birth:Created by LGD on 20221218
+    // @update:20221220:添加了对变量是否已经存在在变量哈希表中的判定
+    //         20221224:将涉及函数赋值的赋值号左侧的变量视为左值
+    Instruction* p;
+    size_t cnt = 0;
+    
+    ListFirst(this,false);
+    while(ListNext(this,&p))
+    {
+        if(ins_get_opCode(p) == FuncLabelOP)
+            cnt++;
+    }
+    return cnt;
+}
+
+/**
+ * @biref:遍历所有三地址并翻译
+ * @update:20220103 对链表进行初始化
+*/
+size_t traverse_list_and_translate_all_instruction(List* this,int order)
+{
+    Instruction* p;
+    p = traverse_to_specified_function(this,order);
+
+    do
+    {
+        translate_IR_test(p);
+    }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
+
+}
+
+void translate_object_code(List* this)
+{
+    // @brief: 这个程序概括了后端的全部过程
+    // @birth: Created by LGD on 20221229
+
+    //获取所有的函数个数
+    size_t num = traverse_list_and_count_the_number_of_function(this);
+
+    for(int i=0;i<num;i++)
+    {
+        //第一步，遍历一个函数的全部变量并统计栈帧总大小
+        size_t stacksize = traverse_list_and_count_total_size_of_value(this,i);
+
+        set_function_stackSize(stacksize);
+        set_function_currentDistributeSize(0);
+
+        //第二步，遍历一个函数的所有变量并为他们分配栈帧相对位置并存入map
+        HashMap* map = traverse_list_and_get_all_value_into_map(this,i);
+
+        //第三步，将这个map拷贝给该函数的所有指令(这是没有任何优化的处理)
+        traverse_list_and_set_map_for_each_instruction(this,map,i);
+
+        //第四步，将所有的指令翻译出来
+        traverse_list_and_translate_all_instruction(this,i);
+
+        //第五步，打印输出
+        print_model();
+    }
+
+}
+
+
+
+
+
+size_t get_function_stackSize()
+{
+    // @brief:获取当前函数的栈帧大小
+    // @birth:Created by LGD on 20221229
+    return stackSize;
+}
+
+size_t get_function_currentDistributeSize()
+{
+    // @brief:获取当前函数已分配的空间大小
+    // @birth:Created by LGD on 20221229
+    return currentDistributeSize;
+}
+
+void set_function_stackSize(size_t num)
+{
+    // @brief:获取当前函数的栈帧大小
+    // @birth:Created by LGD on 20221229
+    stackSize = num;
+}
+
+void set_function_currentDistributeSize(size_t num)
+{
+    // @brief:获取当前函数已分配的空间大小
+    // @birth:Created by LGD on 20221229
+    currentDistributeSize = num;
+}
+
+/**
+ * @brief 遍历指令列表初始化
+ * @author Created by LGD on 20230109
+*/
+void traverse_instruction_list_init(List* this)
+{
+    ListFirst(this,false);
+}
+
+/**
+ * @brief 遍历指令列表并获取下一个指令
+ * @author Created by LGD on 20230109
+ * @update 20230109 现在当遍历到末尾时返回NULL
+*/
+Instruction* get_next_instruction(List* this)
+{
+    Instruction* p;
+    if(ListNext(this,&p)==false)return NULL;
+    return p;
+}
+
+
+/**
+ * @brief 判断一个变量是不是return_value，这是为了处理zzq引入的return_val记号
+ * @author Created by LGD on 20230109
+*/
+bool var_is_return_val(Value* var)
+{
+    return var == return_val;
+}
+
+/**
+ * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
+ * @author Created by LGD on 20230109
+*/
+bool label_is_entry(Instruction* label_ins)
+{
+    return !strcmp(label_ins->user.res->name,"entry");
+}
+
+
+/**
+ * @brief 遍历列表到指定编号的函数的FuncLabel位置
+ * @return 返回当前遍历到的函数入口的指令地址
+ * @author LGD
+ * @date 20230109
+*/
+Instruction* traverse_to_specified_function(List* this,int order)
+{
+    Instruction* p;
+    traverse_instruction_list_init(this);
+    for(size_t cnt = 0;cnt <= order;)
+    {
+        p = get_next_instruction(this);
+        assert(p && "the function order you request out of range");
+        if(ins_get_opCode(p) == FuncLabelOP)
+            cnt++;
+    }
+    return p;
+}
