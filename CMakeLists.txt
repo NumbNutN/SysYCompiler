@@ -8,10 +8,12 @@ include_directories(.)
 
 include_directories(${CMAKE_SOURCE_DIR}/lib/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/backend/include)
+include_directories(${CMAKE_SOURCE_DIR}/backend/inc)
 include_directories(${CMAKE_SOURCE_DIR}/interface)
+
 file(GLOB_RECURSE DIR_SRC "src/*.c")
 file(GLOB_RECURSE DIR_BACKEND_SRC "backend/src/*.c")
+file(GLOB_RECURSE DIR_INTERFACE_SRC "interface/*.c")
 #包含的头文件目录
 
 find_package(BISON)
@@ -30,8 +32,8 @@ link_directories(${PROJECT_SOURCE_DIR}/lib)
 add_compile_options(-g)
 
 #生成可执行文件
-add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC} ${DIR_BACKEND_SRC} ${DIR_STRUCT_DEMO} )
+add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC} ${DIR_BACKEND_SRC} ${DIR_STRUCT_DEMO} ${DIR_INTERFACE_SRC})
   
 
 #链接动态库文件
-target_link_libraries(${PROJECT_NAME} libcds.so)
+target_link_libraries(${PROJECT_NAME} libcds.so libm.so)

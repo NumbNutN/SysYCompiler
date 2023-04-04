@@ -16,6 +16,12 @@ void Label(char* label);
 void translate_goto_instruction_test(Instruction* this);
 void translate_binary_expression_test(Instruction* ins);
 
+
+/**
+ * @brief 翻译双目逻辑运算表达式重构版
+*/
+void translate_logical_binary_instruction_new(Instruction* this);
+
 void translate_assign_instructions(Instruction* this);
 
 
@@ -66,7 +72,13 @@ translate_call_instructions(Instruction* this);
 */
 translate_call_with_return_value_instructions(Instruction* this);
 
-#ifdef REGISTER_ALLOCATE_IS_DOWN
+/**
+ * @brief 翻译前执行的初始化
+ * @birth: Created by LGD on 2023-3-28
+*/
+void TranslateInit();
+
+#ifdef LLVM_LOAD_AND_STORE_INSERTED
 
 /**
  * @brief 翻译load指令
@@ -78,5 +90,7 @@ void translate_load_instruction(Instruction* this);
  * @birth: Created by LGD on 2023-3-10
 */
 void translate_store_instruction(Instruction* this);
+
+
 
 #endif

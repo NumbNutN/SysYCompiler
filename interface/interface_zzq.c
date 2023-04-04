@@ -7,6 +7,9 @@
 #include <assert.h>
 #include "config.h"
 #include "translate.h"
+#include "memory_manager.h"
+
+#include "Pass.h"
 
 extern bool Open_Register_Allocation;
 
@@ -17,48 +20,66 @@ int ins_get_opCode(Instruction* this)
     return this->opcode;
 }
 
+/**
+ * @brief 获取Label指令的标签，由zzq的font-end暴露的接口
+ * @birth:Created by LGD on 20221228
+ * @update: 2023-3-28 调用ins_get_left_value基本方法
+*/
 char* ins_get_label(Instruction* this)
 {
-    // @brief:获取Label指令的标签，由zzq的font-end暴露的接口
-    // @birth:Created by LGD on 20221228
+
     assert((this->opcode == LabelOP || this->opcode == FuncLabelOP) && "非标签语句");
-    return this->user.res->name;
+    return ins_get_assign_left_value(this)->name;
 }
 
+/**
+ * @brief 获取目标跳转指令，适用于GotoOP,GotoWithConditionOP,CallOP,CallWithReturnValueOP
+ * @birth: Created by LGD on 20221229
+ * @update: 2023-3-28 调用ins_get_left_value基本方法
+*/
 char* ins_get_tarLabel(Instruction* this)
 {
-    // @brief:获取目标跳转指令，适用于GotoOP,GotoWithConditionOP,CallOP,CallWithReturnValueOP
-    // @birth:Created by LGD on 20221229
     assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP || this->opcode != CallOP || this->opcode != CallWithReturnValueOP);
     switch(ins_get_opCode(this))
     {
         case GotoOP:
         case CallOP:
         case CallWithReturnValueOP:
-            return this->user.res->pdata->no_condition_goto.goto_location->name;
+            return ins_get_assign_left_value(this)->pdata->no_condition_goto.goto_location->name;
         case GotoWithConditionOP:
-            return this->user.res->pdata->condition_goto.false_goto_location->name;   //条件跳转时，只需要跳转至正确，错误顺序执行
+            return ins_get_assign_left_value(this)->pdata->condition_goto.false_goto_location->name;   //条件跳转时，只需要跳转至正确，错误顺序执行
     }
 }
 
+/**
+ * @brief 获取赋值号左值
+ * @birth: Created by LGD on 20221229
+ * @update: 2023-3-26 左值的位置可以条件编译
+*/
 Value* ins_get_assign_left_value(Instruction* this)
 {
-    // @brief:返回赋值号左值，由zzq的font-end暴露的接口
-    // @birth:Created by LGD on 20221229
+#ifdef LEFT_VALUE_IS_OUTSIDE_INSTRUCTION
     return this->user.res;
+#elif defined LEFT_VALUE_IS_IN_INSTRUCTION
+    return &this->user.value;
+#endif
 }
 
+
+/**
+ * @brief 按下标取instruction的操作数
+ * @birth: Created by LGD on 20221229
+ * @update: 2023-3-28 使用get_left_value的基本方法
+*/
 struct _Value *ins_get_operand(Instruction* this,int i){
-    // @brief 按下标取instruction的操作数
-    // @birth:Created by LGD on 20221229
-    // @update:现在第0操作数将视为tempValue
+
     if(i)
     {
         return user_get_operand_use(&(this->user),i-1)->Val;
     }
     else
     {
-        return this->user.res;
+        return ins_get_assign_left_value(this);
     }
 }
 
@@ -72,10 +93,10 @@ struct _Value *ins_get_operand(Instruction* this,int i){
 */
 int64_t ins_get_constant(Instruction* this,int i)
 {
-    if(value_get_type(ins_get_operand(this,i)) == ConstIntTyID )
+    if(value_get_type(ins_get_operand(this,i)) == ImmediateIntTyID )
         return ins_get_operand(this,i)->pdata->var_pdata.iVal;
 
-    else if(value_get_type(ins_get_operand(this,i)) == ConstFloatTyID)
+    else if(value_get_type(ins_get_operand(this,i)) ==  ImmediateFloatTyID)
         return (int64_t)float_754_binary_code(ins_get_operand(this,i)->pdata->var_pdata.fVal,BITS_32);
 }
 
@@ -88,6 +109,7 @@ int op_get_constant(Value* op)
     return op->pdata->var_pdata.iVal;
 }
 
+#ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
 /**
  * @brief 从zzq的return语句中获取op
  * @author Created by LGD on 20220106
@@ -96,7 +118,7 @@ Value* get_op_from_return_instruction(Instruction* this)
 {
     return this->user.value.pdata->return_pdata.return_value;
 }
-
+#endif
 /**
  * @brief 从zzq的param语句中获取op
  * @author Created by LGD on 20220106
@@ -183,7 +205,7 @@ void translate_IR_test(struct _Instruction* this)
         case GreatThanOP:
         case LessEqualOP:
         case LessThanOP:
-            translate_logical_binary_instruction(this);
+            translate_logical_binary_instruction_new(this);
             break;
 #endif
         // case Goto:
@@ -226,6 +248,7 @@ void translate_IR_test(struct _Instruction* this)
     }
 }
 
+#ifdef OPEN_REGISTER_ALLOCATION
 /**
  * @brief 这个方法通过判断Instruction的指令来执行对应的翻译方法
  *        在寄存器分配开启的情况下
@@ -258,9 +281,11 @@ void translate_IR_open_register_allocation(struct _Instruction* this,struct _Ins
         case FuncLabelOP:
             translate_function_entrance(this);
             break;
-        // case ReturnOP:
-        //     translate_return_instructions(this);
-        // break;
+#ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
+        case ReturnOP:
+            translate_return_instructions(this);
+        break;
+#endif
         case FuncEndOP:
             translate_function_end(this);
             break;
@@ -278,7 +303,7 @@ void translate_IR_open_register_allocation(struct _Instruction* this,struct _Ins
 
     }
 }
-
+#endif
 
 
 size_t traverse_list_and_count_total_size_of_value(List* this,int order)
@@ -528,10 +553,11 @@ bool var_is_return_val(Value* var)
 /**
  * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
  * @author Created by LGD on 20230109
+ * @update: 2023-3-28 使用get_left_value基本方法
 */
 bool label_is_entry(Instruction* label_ins)
 {
-    return !strcmp(label_ins->user.res->name,"entry");
+    return !strcmp(ins_get_assign_left_value(label_ins)->name,"entry");
 }
 
 
@@ -540,11 +566,17 @@ bool label_is_entry(Instruction* label_ins)
  * @return 返回当前遍历到的函数入口的指令地址
  * @author LGD
  * @date 20230109
+ * @update: 2023-3-26 更新了新的
 */
 Instruction* traverse_to_specified_function(List* this,int order)
 {
     Instruction* p;
     traverse_instruction_list_init(this);
+    if(order == 0)
+    {
+        p = get_next_instruction(this);
+        return p;
+    }
     for(size_t cnt = 0;cnt <= order;)
     {
         p = get_next_instruction(this);
@@ -553,4 +585,36 @@ Instruction* traverse_to_specified_function(List* this,int order)
             cnt++;
     }
     return p;
+}
+
+/**
+ * @brief 将当前zzq寄存器分配表转换为变量信息表
+ * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
+ * @birth: Created by LGD on 2023-3-26
+ * @update: 2023-4-4 不应该判断enum _LOCATION*是否为Memory
+*/
+HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap)
+{
+    HashMapFirst(zzqMap);
+    Pair* pair_ptr;
+    while((pair_ptr = HashMapNext(zzqMap)) != NULL)
+    {
+        // //Debug
+        char* var = (char*)pair_ptr->key;
+        enum _LOCATION* varInfo = pair_ptr->value;
+        if(*((enum _LOCATION*)pair_ptr->value) == MEMORY)
+        {
+            //为该变量（名）进行物理地址映射
+            int offset = request_new_local_variable_memory_unit();
+            //TODO 为什么是size_t
+            set_variable_stack_offset_by_name(myMap,pair_ptr->key,offset);
+        }
+        else
+        {
+            RegisterOrder reg_order = request_new_allocable_register();
+            //为该变量(名)创建寄存器映射
+            set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
+        }
+    }
+
 }

@@ -129,7 +129,6 @@ translate_call_instructions(Instruction* this)
 
 }
 
-
 /**
  * @brief 翻译调用函数并接收返回值的指令
  * @author Created by LGD on 20221224
@@ -170,7 +169,6 @@ translate_call_with_return_value_instructions(Instruction* this)
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
-    
 }
 
 
@@ -323,51 +321,30 @@ void translate_assign_instructions(Instruction* this)
     }
 }
 
+
 /**
- * @brief 翻译双目逻辑运算表达式
- * @author Created by LGD on 20221225
- * @update 20230113 考虑整型和浮点型混合运算的隐式转换
+ * @brief 翻译双目逻辑运算表达式重构版
 */
-void translate_logical_binary_instruction(Instruction* this)
+void translate_logical_binary_instruction_new(Instruction* this)
 {
-    AssembleOperand opList[2];
+    AssembleOperand opList[3];
     TAC_OP opCode = ins_get_opCode(this);
     
+    opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
+    opList[SECOND_OPERAND] = toOperand(this,SECOND_OPERAND);
+    opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
-        ins_variable_load_in_register(this,FIRST_OPERAND,VFP,&opList[FIRST_OPERAND]);
-        ins_variable_load_in_register(this,SECOND_OPERAND,VFP,&opList[SECOND_OPERAND]);
-        fcmp_instruction(opList[FIRST_OPERAND],opList[SECOND_OPERAND],FloatTyID);
+        assert(NULL && "暂时不支持浮点比较");
     }
     else
     {
-        ins_variable_load_in_register(this,FIRST_OPERAND,ARM,&opList[FIRST_OPERAND]);
-        ins_variable_load_in_register(this,SECOND_OPERAND,ARM,&opList[SECOND_OPERAND]);
-        general_data_processing_instructions("CMP",opList[0],opList[1],nullop,NONESUFFIX,false,NONELABEL);
+        cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
     }
 
-    //暂存寄存器回收
-    for(int i=1;i<3;i++)
-        general_recycle_temp_register_conditional(this,i,opList[i]);
+    movCondition(opList[TARGET_OPERAND],falseOp,opCode);
+    movCondition(opList[TARGET_OPERAND],trueOp,DefaultOP);
 
-    AssembleOperand boolOp;
-    ins_variable_load_in_register(this,0,ARM,&boolOp);
-
-    AssembleOperand falseOp;
-    falseOp.addrMode = IMMEDIATE;
-    falseOp.oprendVal = 0;
-    general_data_processing_instructions("MOV",boolOp,falseOp,nullop,NONESUFFIX,false,NONELABEL);
-
-    AssembleOperand trueOp;
-    trueOp.addrMode = IMMEDIATE;
-    trueOp.oprendVal = 1;
-    general_data_processing_instructions("MOV",boolOp,trueOp,nullop,from_tac_op_2_str(opCode),false,NONELABEL);
-
-    variable_storage_back(this,0,opList[0].oprendVal);
-   //暂存寄存器回收
-    if(get_variable_place_by_order(this,0)==IN_MEMORY)
-        recycle_temp_arm_register(opList[0].oprendVal);
-    
 }
 
 /**
@@ -401,7 +378,7 @@ void translate_goto_instruction_test_bool(Instruction* this)
 }
 
 
-
+#ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
 void translate_return_instructions(Instruction* this)
 {
     // @brief:翻译返回语句return
@@ -419,7 +396,7 @@ void translate_return_instructions(Instruction* this)
 
     general_data_processing_instructions("MOV",r0,op,nullop,NONESUFFIX,false,NONELABEL);
 }
-
+#endif
 
 
 
@@ -445,7 +422,7 @@ void translate_function_label(Instruction* this)
 }
 
 
-#ifdef REGISTER_ALLOCATE_IS_DOWN
+#ifdef LLVM_LOAD_AND_STORE_INSERTED
 
 
 size_t ins_get_load_and_store_vitual_address(Instruction* this)
@@ -540,5 +517,78 @@ void translate_binary_expression_test(Instruction* this)
     }
 }
 
+/**
+ * @brief 翻译双目逻辑运算表达式
+ * @author Created by LGD on 20221225
+ * @update 20230113 考虑整型和浮点型混合运算的隐式转换
+ * @update 2023-3-28 针对CMP语句不可能出现两个立即数的问题
+*/
+void translate_logical_binary_instruction(Instruction* this)
+{
+    AssembleOperand opList[3];
+    TAC_OP opCode = ins_get_opCode(this);
+    
+    if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
+    {
+        ins_variable_load_in_register(this,FIRST_OPERAND,VFP,&opList[FIRST_OPERAND]);
+        ins_variable_load_in_register(this,SECOND_OPERAND,VFP,&opList[SECOND_OPERAND]);
+
+        //2023-3-28 如果目标操作数为立即数
+        if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
+            opList[FIRST_OPERAND] = operand_ldr_immed(opList[FIRST_OPERAND],VFP);
+        fcmp_instruction(opList[FIRST_OPERAND],opList[SECOND_OPERAND],FloatTyID);
+        //回收寄存器
+        operand_recycle_temp_register(opList[FIRST_OPERAND]);
+    }
+    else
+    {
+        ins_variable_load_in_register(this,FIRST_OPERAND,ARM,&opList[FIRST_OPERAND]);
+        ins_variable_load_in_register(this,SECOND_OPERAND,ARM,&opList[SECOND_OPERAND]);
+        
+        //2023-3-28 如果目标操作数为立即数
+        if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
+            opList[FIRST_OPERAND] = operand_ldr_immed(opList[FIRST_OPERAND],ARM);
+        general_data_processing_instructions("CMP",opList[FIRST_OPERAND],opList[SECOND_OPERAND],nullop,NONESUFFIX,false,NONELABEL);
+        //回收寄存器
+        operand_recycle_temp_register(opList[FIRST_OPERAND]);
+    }
+
+    //暂存寄存器回收
+    for(int i=1;i<3;i++)
+        general_recycle_temp_register_conditional(this,i,opList[i]);
+
+    AssembleOperand boolOp;
+    ins_variable_load_in_register(this,0,ARM,&boolOp);
+
+    AssembleOperand falseOp;
+    falseOp.addrMode = IMMEDIATE;
+    falseOp.oprendVal = 0;
+    general_data_processing_instructions("MOV",boolOp,falseOp,nullop,NONESUFFIX,false,NONELABEL);
+
+    AssembleOperand trueOp;
+    trueOp.addrMode = IMMEDIATE;
+    trueOp.oprendVal = 1;
+    general_data_processing_instructions("MOV",boolOp,trueOp,nullop,from_tac_op_2_str(opCode),false,NONELABEL);
+
+    variable_storage_back(this,0,opList[0].oprendVal);
+   //暂存寄存器回收
+    if(get_variable_place_by_order(this,0)==IN_MEMORY)
+        recycle_temp_arm_register(opList[0].oprendVal);
+    
+}
+
 #endif
 
+/**
+ * @brief 翻译前执行的初始化
+ * @birth: Created by LGD on 2023-3-28
+*/
+void TranslateInit()
+{
+    //初始化用于整型的临时寄存器
+    Init_arm_tempReg();
+    //初始化浮点临时寄存器
+    Free_Vps_Register_Init();
+    //初始化链表
+    initDlist(); 
+}

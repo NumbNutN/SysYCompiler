@@ -1,10 +1,10 @@
 #include "variable_map.h"
 #include "interface_zzq.h"
-#include "sc_map.h"
 #include "dependency.h"
-#include "register_allocate.h"
 #include "arm_assembly.h"
 #include "cds.h"
+#include <string.h>
+#include "config.h"
 
 //记录当前函数的栈总容量
 size_t stackSize;
@@ -14,7 +14,15 @@ size_t currentDistributeSize = 0;
 /**
  * @brief 重设了键的判等依据等
 */
-int CompareKey_Value(void* lhs,void* rhs)       {return lhs != rhs;}
+int CompareKey_Value(void* lhs,void* rhs)       {
+#ifdef VARIABLE_MAP_BASE_ON_NAME
+    return strcmp(lhs,rhs);
+#elif defined VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
+    return lhs != rhs;
+#else 
+#error "需要指定至少一种变量信息表的键形式"
+#endif
+    }
 int CleanKey_Value(void* key)                   {}
 int CleanValue_VarSpace(void* value)            {free(value);}
 
@@ -25,18 +33,28 @@ int CleanValue_VarSpace(void* value)            {free(value);}
 void variable_map_init(HashMap** map)
 {
     *map = HashMapInit();
+
     HashMapSetHash(*map,HashDjb2);
     HashMapSetCompare(*map,CompareKey_Value);
 
     HashMapSetCleanKey(*map,CleanKey_Value);
     HashMapSetCleanValue(*map,CleanValue_VarSpace);
+
 }
 
 /**
  * @brief   遍历变量信息表一次并返回一个键
  * @author  Created by LGD on 20230110
+ * @update: 2023-3-26 添加名字和Value*查表的选项
 */
-Value* traverse_variable_map_get_key(HashMap* map)
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS 
+Value*  
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+char*   
+#else 
+#error "需要指定至少一种变量信息表的键形式"
+#endif
+traverse_variable_map_get_key(HashMap* map)
 {
     Pair* pair_ptr = HashMapNext(map);
     if(pair_ptr)
@@ -45,6 +63,78 @@ Value* traverse_variable_map_get_key(HashMap* map)
         return NULL;
 
 }
+
+/**
+ * @brief   在指定变量状态表中根据指定键Value*获取值
+ * @author  LGD
+ * @date    20230110
+ * @update: 2023-3-26 添加基于名字的条件编译
+*/
+VarInfo* variable_map_get_value(HashMap* map,Value* key)
+{
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
+    return HashMapGet(map,key);
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+    return  HashMapGet(map,key->name);
+#else 
+#error "需要指定至少一种变量信息表的键形式"
+#endif
+}
+
+/**
+ * @brief   为变量状态表插入新的键值对，若键已存在则覆盖值
+ * @author  LGD
+ * @date    20221220
+ * @update: 2023-3-26 添加基于名字的条件编译
+*/
+void variable_map_insert_pair(HashMap* map,Value* key,VarInfo* value)
+{
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
+    HashMapPut(map,key,value);
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+    HashMapPut(map,key->name,value);
+#else 
+#error "需要指定至少一种变量信息表的键形式"
+#endif
+}
+
+
+#ifdef VARIABLE_MAP_BASE_ON_NAME
+/**
+ * @brief 依据变量名设定变量在指定map的栈帧偏移
+ * @birth: Created by LGD on 2023-3-26
+ * @update: update 2023-4-4 添加寻址方式
+*/
+void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset)
+{
+    VarInfo* vi = HashMapGet(map,name);
+    vi->ori.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
+    vi->ori.oprendVal = FP;
+    vi->ori.addtion = offset;
+}
+
+/**
+ * @brief 在map中设置变量当前的寄存器编号
+ * @birth: Created by LGD on 20230305
+*/
+void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder reg_order)
+{
+    VarInfo* vi = HashMapGet(map,name);
+    vi->ori.addrMode = REGISTER_DIRECT;
+    vi->ori.oprendVal = reg_order;
+}
+#endif
+
+
+/**
+ * @brief 判断一个变量在当前指令中是否是活跃的
+*/
+bool variable_is_live(Instruction* this,Value* var)
+{
+
+    return variable_map_get_value(this->map,var)->isLive;
+}
+
 
 /**
  * @brief   遍历变量信息表一次并返回一个键
@@ -72,32 +162,29 @@ void ins_shallowSet_varMap(Instruction* this,HashMap* map)
 
 /**
  * @brief   将指定的变量信息表赋给指令，这是深拷贝，会将map中所有的变量信息值的内存复制一份新的
- * @author  LGD
- * @date    20221218
+ * @birth:  Created by LGD on 20221218
+ * @update: 2023-3-28 依据哈希表的键值进行条件编译
 */
 void ins_deepSet_varMap(Instruction* this,HashMap* map)
 {
     HashMap* newMap;
     variable_map_init(&newMap);
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
     Value* key;
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+    char* key;
+#endif
     VarInfo* value;
     VarInfo* new_var_info;
     HashMap_foreach(map,key,value)
     {
         new_var_info = (VarInfo*)malloc(sizeof(VarInfo));
         memcpy(new_var_info,value,sizeof(VarInfo));
-        variable_map_insert_pair(newMap,key,new_var_info);
+        HashMapPut(newMap,key,value);
     }
     this->map = newMap;
 }
 
-/**
- * @brief 判断一个变量在当前指令中是否是活跃的
-*/
-bool variable_is_live(Instruction* this,Value* var)
-{
-    return variable_map_get_value(this->map,var)->isLive;
-}
 
 /**
  * @brief 将变量信息表拷贝给当前指令，但是仅拷贝存储位置和偏移（不拷贝活跃信息）
@@ -116,25 +203,7 @@ void ins_cpy_varinfo_space(Instruction* this,HashMap* map)
     }
 }
 
-/**
- * @brief   为变量状态表插入新的键值对，若键已存在则覆盖值
- * @author  LGD
- * @date    20221220
-*/
-void variable_map_insert_pair(HashMap* map,Value* key,VarInfo* value)
-{
-    HashMapPut(map,key,value);
-}
 
-/**
- * @brief   在指定变量状态表中根据指定键Value*获取值
- * @author  LGD
- * @date    20230110
-*/
-VarInfo* variable_map_get_value(HashMap* map,Value* key)
-{
-    return HashMapGet(map,key);
-}
 
 /**
  * @brief   [只用于后端，临时使用]在无寄存器的情况下，遍历每一个变量，并为其分配空间
@@ -277,7 +346,6 @@ AssembleOperand get_variable_current_operand(Instruction* this,Value* var)
     return vi->current;
 }
 
-
 /**
  * @brief 将寄存器位置转换为对应的寻址方式
  * @birth: Created by LGD on 20230305
@@ -344,45 +412,71 @@ void set_variable_register_order_or_memory_offset_test(Instruction* this,Value* 
         vs->ori.oprendVal = order;
 }
 
-
 /**
- * @brief 设置变量当前的寄存器编号
+ * @brief 在map中设置变量当前的寄存器编号
  * @birth: Created by LGD on 20230305
 */
-void set_variable_register_order(Instruction* this,Value* var,RegisterOrder reg_order)
+void set_variable_register_order(HashMap* map,Value* var,RegisterOrder reg_order)
 {
-    VarInfo* vi = variable_map_get_value(this->map,var);
+    VarInfo* vi = variable_map_get_value(map,var);
     vi->ori.oprendVal = reg_order;
+}
+
+/**
+ * @brief 设置变量在当前指令的寄存器编号
+ * @birth: Created by LGD on 20230305
+ * @update: 2023-3-26 更改了基本方法
+*/
+void ins_set_variable_register_order(Instruction* this,Value* var,RegisterOrder reg_order)
+{
+    set_variable_register_order(this->map,var,reg_order);
 }
 
 /**
  * @brief 设置变量当前的寄存器编号
  * @birth: Created by LGD on 20230305
 */
-void set_variable_register_order_by_order(Instruction* this,int i,RegisterOrder reg_order)
+void ins_set_variable_register_order_by_order(Instruction* this,int i,RegisterOrder reg_order)
 {
     set_variable_register_order(this,ins_get_operand(this,i),reg_order);
 }
 
 /**
- * @brief 设置变量在当前指令的栈帧偏移
- * @birth: Created by LGD on 20230305
+ * @brief 设置变量在指定map的栈帧偏移
+ * @birth: Created by LGD on 2023-3-26
+ * @update: 2023-4-4 将SP改为栈帧FP
 */
-void set_variable_stack_offset(Instruction* this,Value* var,size_t offset)
+void set_variable_stack_offset(HashMap* map,Value* var,size_t offset)
 {
-    VarInfo* vi = variable_map_get_value(this->map,var);
-    vi->ori.oprendVal = SP;
+    VarInfo* vi = variable_map_get_value(map,var);
+    vi->ori.oprendVal = FP;
     vi->ori.addtion = offset;
 }
 
 /**
  * @brief 设置变量在当前指令的栈帧偏移
  * @birth: Created by LGD on 20230305
+ * @update: 2023-3-26 更改了基础方法
 */
-void set_variable_stack_offset_by_order(Instruction* this,int i,size_t offset)
+void ins_set_variable_stack_offset(Instruction* this,Value* var,size_t offset)
 {
-    set_variable_stack_offset(this,ins_get_operand(this,i),offset);
+    set_variable_stack_offset(this->map,var,offset);
+    // VarInfo* vi = variable_map_get_value(this->map,var);
+    // vi->ori.oprendVal = SP;
+    // vi->ori.addtion = offset;
 }
+
+/**
+ * @brief 设置变量在当前指令的栈帧偏移
+ * @birth: Created by LGD on 20230305
+*/
+void ins_set_variable_stack_offset_by_order(Instruction* this,int i,size_t offset)
+{
+    ins_set_variable_stack_offset(this,ins_get_operand(this,i),offset);
+}
+
+
+
 
 
 /**
@@ -414,13 +508,17 @@ void ins_reset_var_info(Instruction* this,Value* var)
  * @param order 要遍历第几个函数，以FuncLabelOP作为分割依据
  * @param map 传入一个map的指针，填装满的map将返回
  * @return 计算的栈帧大小
- * @update 20230109 将到达指定函数入口的方法进行了封装调用
+ * @update: 20230109 将到达指定函数入口的方法进行了封装调用
+ *          2023-3-26 更新，如果map的值为NULL则初始化，否则为当前map进行增量添加，如果为当前map提供了一个非对应一个HashMap的未定义值，则会发生非法页错误
+ *          2023-3-26 更新 使对map的插入键值对受到条件编译的选择
 */
 size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** map)
 {
     Instruction* p;
     size_t totalSize = 0;
-    variable_map_init(map);
+
+    if(*map == NULL)
+        variable_map_init(map);
     
     p = traverse_to_specified_function(this,order);
 
@@ -446,6 +544,7 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
                 if(isFound)break;
                 VarInfo* var_info = (VarInfo*)malloc(sizeof(VarInfo));
                 reset_var_info(var_info);
+                printf("插入新的变量名：%s 地址%lx\n",val->name,val);
                 variable_map_insert_pair(*map,val,var_info);
                 totalSize += 4;
                 break;

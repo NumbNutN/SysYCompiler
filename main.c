@@ -141,7 +141,9 @@ int main() {
   // 清除return语句和label或者functionEnd之间语句之间的不可达语句的pass
   print_ins_pass(ins_list);
   printf("\n");
-  //   delete_return_deadcode_pass(ins_list);
+
+  //删除不可达的块
+  //delete_return_deadcode_pass(ins_list);
 
   ins_toBBlock_pass(ins_list);
 

@@ -33,9 +33,9 @@ typedef enum _RegisterOrder
     IN_MEM = -1,  //内存
     R0,R1,R2,R3,R4,R5,R6,R7,R8,      //通用寄存器
     R9_SB,R10_SL,R11_FP,R12_IP,      //分组寄存器
-    SP,                              //堆栈指针，最多允许六个不同的堆栈空间
-    LR,                              //链接寄存器，子程序调用保存返回地址
-    PC,                              //(R15)
+    R13,                             //堆栈指针，最多允许六个不同的堆栈空间                           
+    R14,                              //链接寄存器，子程序调用保存返回地址
+    R15,                              //(R15)
     CPSR,
     SPSR,
 
@@ -43,8 +43,15 @@ typedef enum _RegisterOrder
     S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,
     S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,
     S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,
-    S31,S32
+    S31,S32,
+
+    SP = R13,
+    LR = R14,
+    PC = R15
+
 } RegisterOrder;
+
+#define FP R7
 
 typedef enum _ARMorVFP
 {
@@ -142,5 +149,11 @@ AssembleOperand operand_float_convert(AssembleOperand src,bool recycleSrc);
  * @birth: Created by LGD on 20230202
 */
 AssembleOperand operand_ldr_immed(AssembleOperand src,ARMorVFP type);
+
+/**
+ * @brief 判断一个operand是否在指令中
+ * @birth: Created by LGD on 20230328
+*/
+bool opernad_is_in_instruction(AssembleOperand op);
 
 #endif

@@ -42,6 +42,8 @@ typedef struct _Instruction {
   TAC_OP opcode;  // 操作吗
   struct _BasicBlock *Parent;
   unsigned ins_id;
+
+  HashMap* map;   //2023-3-26 变量信息表
 } Instruction;
 
 Instruction *ins_new(int op_num, Value *self);

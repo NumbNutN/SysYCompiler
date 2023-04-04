@@ -1,6 +1,7 @@
 #include "dependency.h"
 #include "arm_assembly.h"
 #include "variable_map.h"
+#include "interface_zzq.h"
 #include <math.h>
 
 // Value* tempReg; //算数运算暂存寄存器
@@ -41,24 +42,30 @@ unsigned value_get_addr(Value* val)
 /**
  * @brief 判断一个操作数是不是在指令中的常量
  * @update 20230122 添加了对浮点立即数的支持
+ *         2023-3-28 更改了实现对Immediate判断的依据
 */
 bool op_is_in_instruction(Value* op)
 {
-    // switch(val->VTy->TID)
-    // {
-    //     case IntegerTyID:
-    //     case FloatTyID:
-    //     return 1;
-    // }
-    // return 0;
+    
+#ifdef JUDGE_IMMEDIATE_BY_NAME
     if(strcmp(op->name,"immediateInt")==0)
         return 1;
     else if(strcmp(op->name,"immediateFloat") == 0)
         return 1;
     else
         return 0;
-    
+#elif defined JUDGE_IMMEDIATE_BY_TYPE
+    switch(op->VTy->TID)
+    {
+        case ImmediateIntTyID:
+        case ImmediateFloatTyID:
+        return 1;
+    }
+    return 0;
+#endif
 }
+
+
 
 /**
  * @brief 判断一个变量是否在内存中
@@ -81,10 +88,11 @@ bool variable_is_in_instruction(Instruction* this,Value* var)
 /**
  * @brief 返回指令的操作数个数
  * @birth: Created by LGD on 20230123
+ * @update: 2023-3-28 采用ins_get_left_assign基本方法
 */
 ins_get_operand_num(Instruction* this)
 {
-    return this->user.res->NumUserOperands;
+    return ins_get_assign_left_value(this)->NumUserOperands;
 }
 
 /**

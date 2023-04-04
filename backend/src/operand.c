@@ -19,6 +19,7 @@ AssembleOperand toOperand(Instruction* this,int i)
 /**
  * @brief 依据Value* 返回 operand
  * @birth: Created by LGD on 2023-3-16
+ * @update: 2023-4-4 将栈顶指针改为栈帧
 */
 AssembleOperand ValuetoOperand(Instruction* this,Value* var)
 {
@@ -28,7 +29,7 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
     {
         case IN_MEMORY:
             op.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
-            op.oprendVal = SP;
+            op.oprendVal = FP;
             op.addtion = get_variable_register_order_or_memory_offset_test(this,var);
         break;
         case IN_REGISTER:
@@ -243,5 +244,14 @@ AssembleOperand operand_ldr_immed(AssembleOperand src,ARMorVFP type)
         break;
     }
     return temp;
+}
+
+/**
+ * @brief 判断一个operand是否在指令中
+ * @birth: Created by LGD on 20230328
+*/
+bool opernad_is_in_instruction(AssembleOperand op)
+{
+    return (op.addrMode == IMMEDIATE);
 }
 

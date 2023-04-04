@@ -1,7 +1,28 @@
 #ifndef _INTERFACE_H
 #define _INTERFACE_H
 
+#include "Pass.h"
+typedef enum _LOCATION { ALLOCATE_R1 = 1, ALLOCATE_R2, ALLOCATE_R3, MEMORY } LOCATION;
+
+extern char *location_string[];
+
+extern int REGISTER_NUM;
+
+void register_replace(ALGraph *self_cfg, Function *self_func,
+                      HashMap *var_location);
+
+//typedef enum _LOCATION { R1 = 1, R2, R3, MEMORY } LOCATION;
+
 #include "instruction.h"
+
+#define  Traverse_Instruction_Via_Function \
+  for (int i = 0; i < self_cfg->node_num; i++) { \
+    int iter_num = 0;   \
+    while (iter_num <   \
+           ListSize((self_cfg->node_set)[i]->bblock_head->inst_list)) { \
+      Instruction *element = NULL;  \
+      ListGetAt((self_cfg->node_set)[i]->bblock_head->inst_list, iter_num,  \
+                &element);  
 
 extern Value *return_val;
 
@@ -86,4 +107,11 @@ Instruction* traverse_to_specified_function(List* this,int order);
  * @update:20220103 对链表进行初始化
 */
 size_t traverse_list_and_translate_all_instruction(List* this,int order);
+
+/**
+ * @brief 将当前zzq寄存器分配表转换为变量信息表
+ * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
+ * @birth: Created by LGD on 2023-3-26
+*/
+HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap);
 #endif

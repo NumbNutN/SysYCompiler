@@ -26,6 +26,9 @@ extern struct _operand fp;
 extern struct _operand pc;
 extern struct _operand sp_indicate_offset;
 
+extern struct _operand trueOp;
+extern struct _operand falseOp;
+
 //定义了当前已被处理的参数个数
 extern size_t passed_param_number;
 
@@ -44,6 +47,11 @@ void vitual_register_map_init(HashMap** map);
  * @author  Created by LGD on 20230110
 */
 void vitual_Stack_Memory_map_init(HashMap** map);
+
+/**
+ * @brief 申请一块新的局部变量的内存单元
+*/
+int request_new_local_variable_memory_unit();
 
 
 /**********************************************/

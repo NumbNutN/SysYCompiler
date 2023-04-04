@@ -224,7 +224,7 @@ void variable_pick_a_free_temp_register(AssembleOperand* op)
 */
 bool variable_is_float(Value* var)
 {
-    if(value_get_type(var) == FloatTyID || value_get_type(var) == ConstFloatTyID)return true;
+    if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
     else return false;
 }
 
@@ -278,27 +278,25 @@ void general_recycle_temp_register(Instruction* this,int i,AssembleOperand op)
  * @brief 回收寄存器的特殊情况，在操作数取自内存或者发生了隐式类型转换
  * @param specificOperand 可选 FIRST_OPERAND SECOND_OPERAND
  * @birth: Created by LGD on 20230227
+ * @update: 2023-3-28 重构了回收寄存器条件
 */
 void general_recycle_temp_register_conditional(Instruction* this,int specificOperand,AssembleOperand recycleRegister)
 {
-    // switch(cond)
-    // {
-    //     case VARIABLE_IN_MEMORY:
-    //         if(variable_is_in_memory(this,ins_get_operand(this,specificOperand)))
-    //             general_recycle_temp_register(this,specificOperand,recycleRegister);
-    //     break;
-    //     case VARIABLE_LDR_FROM_IMMEDIATE:
-    //         if(variable_is_in_instruction(this,ins_get_operand(this,specificOperand)))
-    //             general_recycle_temp_register(this,specificOperand,recycleRegister);
-    //     break;
-    //     case INTERGER_PART_IN_MIX_CALCULATE:
-    //         if((ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND) && !ins_operand_is_float(this,specificOperand)))
-    //     break;
-    // }
-    if(variable_is_in_memory(this,ins_get_operand(this,specificOperand)) || 
-       variable_is_in_instruction(this,ins_get_operand(this,specificOperand)) ||
-       ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND) && !ins_operand_is_float(this,specificOperand) )
-            general_recycle_temp_register(this,specificOperand,recycleRegister);
+
+    size_t recycle_status = NO_NEED_TO_RECYCLE;
+    if(variable_is_in_memory(this,ins_get_operand(this,specificOperand)))
+        recycle_status |= VARIABLE_IN_MEMORY;
+    
+    if(variable_is_in_instruction(this,ins_get_operand(this,specificOperand)))
+        recycle_status |= VARIABLE_LDR_FROM_IMMEDIATE;
+
+    //增加确保操作数大于等于2的判断条件  否则GOTO等归还发生报错
+    if(ins_get_operand_num(this) >= 2)
+        if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND) && !ins_operand_is_float(this,specificOperand))
+            recycle_status |= INTERGER_PART_IN_MIX_CALCULATE;
+
+    if((recycle_status | NO_NEED_TO_RECYCLE) != NO_NEED_TO_RECYCLE)
+        general_recycle_temp_register(this,specificOperand,recycleRegister);
         
 }
 
@@ -438,11 +436,51 @@ void movii(AssembleOperand tar,AssembleOperand op1)
 
 }
 
+/**
+ * @brief cmpii
+ * @birth: Created by LGD on 2023-4-4
+ * @todo 更改回收寄存器的方式
+*/
+void cmpii(AssembleOperand tar,AssembleOperand op1)
+{
+    AssembleOperand original_tar = tar;
+    AssembleOperand original_op1 = op1;
+    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        op1 = operand_load_in_mem(op1,ARM);
+
+    if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+        tar = operand_load_in_mem(tar,ARM);
+    
+    general_data_processing_instructions("CMP",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
+
+    if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
+    (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
+        operand_recycle_temp_register(op1);
+}
+
+/**
+ * @brief movCondition
+ * @birth: Created by LGD on 20230201
+*/
+void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
+{
+    AssembleOperand original_op1 = op1;
+    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        op1 = operand_load_in_mem(op1,ARM);
+
+    general_data_processing_instructions("MOV",tar,op1,nullop,from_tac_op_2_str(opCode),false,NONELABEL);
+
+    if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
+    (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
+        operand_recycle_temp_register(op1);
+
+}
 
 /**
  * @brief 双目运算 双整型
  * @birth: Created by LGD on 20230226
  * @update: 20230227 添加了对寄存器的回收
+ *          2023-3-29 添加在寄存器中变量的直传
 */
  BinaryOperand binaryOpii(AssembleOperand op1,AssembleOperand op2)
  {
@@ -454,11 +492,15 @@ void movii(AssembleOperand tar,AssembleOperand op1)
         cvtOp1 = operand_load_in_mem(op1,ARM);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         cvtOp1 = operand_ldr_immed(op1,ARM);
+    else
+        cvtOp1 = op1;
 
     if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
         cvtOp2 = operand_load_in_mem(op2,ARM);
     else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
         cvtOp2 = operand_ldr_immed(op2,ARM);
+    else
+        cvtOp2 = op2;
     
     BinaryOperand binaryOp = {cvtOp1,cvtOp2};
     return binaryOp;

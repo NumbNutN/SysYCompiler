@@ -105,6 +105,7 @@ void general_recycle_temp_register(Instruction* this,int i,AssembleOperand op);
 
 typedef enum _RecycleCondition
 {
+    NO_NEED_TO_RECYCLE = 0,
     VARIABLE_IN_MEMORY = 1,
     VARIABLE_LDR_FROM_IMMEDIATE = 2,
     INTERGER_PART_IN_MIX_CALCULATE = 4
@@ -151,6 +152,18 @@ void movff(AssembleOperand tar,AssembleOperand op1);
  * @birth: Created by LGD on 20230201
 */
 void movii(AssembleOperand tar,AssembleOperand op1);
+
+/**
+ * @brief movCondition
+ * @birth: Created by LGD on 20230201
+*/
+void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode);
+/**
+ * @brief cmpii
+ * @birth: Created by LGD on 2023-4-4
+ * @todo 更改回收寄存器的方式
+*/
+void cmpii(AssembleOperand tar,AssembleOperand op1);
 
 
 /**

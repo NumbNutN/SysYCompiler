@@ -5,6 +5,7 @@
 #include "bblock.h"
 #include "cds.h"
 #include "operand.h"
+#include "config.h"
 
 
 typedef enum _RegorMem
@@ -24,7 +25,6 @@ typedef struct _VarInfo
 
     struct _operand ori;
     struct _operand current;
-
     
 } VarInfo;
 
@@ -72,8 +72,30 @@ void ins_deepSet_varMap(Instruction* this,HashMap* map);
 /**
  * @brief   遍历变量信息表一次并返回一个键
  * @author  Created by LGD on 20230110
+ * @update: 2023-3-26 添加名字和Value*查表的选项
 */
-Value* traverse_variable_map_get_key(HashMap* map);
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS 
+Value*  
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+char*   
+#else 
+#error "需要指定至少一种变量信息表的键形式"
+#endif
+traverse_variable_map_get_key(HashMap* map);
+
+
+#ifdef VARIABLE_MAP_BASE_ON_NAME
+/**
+ * @brief 依据变量名设定变量在指定map的栈帧偏移
+ * @birth: Created by LGD on 2023-3-26
+*/
+void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset);
+/**
+ * @brief 在map中设置变量当前的寄存器编号
+ * @birth: Created by LGD on 20230305
+*/
+void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder reg_order);
+#endif
 
 /**
  * @brief   遍历变量信息表一次并返回一个键
@@ -106,12 +128,6 @@ void print_single_info_map(List* this,int order,bool print_info);
  *              ...
  *          }
 */
-// #define Traverse_Variable_Map_Init Pair* pair_ptr;
-// #define HashMap_foreach(map,k,v)  \
-//     HashMapFirst(map);                  \
-//     while(((pair_ptr = HashMapNext(map))!= NULL) && (k = pair_ptr->key) &&       \
-//         (v = pair_ptr->value))
-
 
 #define HashMap_foreach(map,k,v)  \
     HashMapFirst(map);                  \
@@ -200,23 +216,27 @@ void set_variable_register_order_or_memory_offset_test(Instruction* this,Value* 
  * @brief 设置变量当前的寄存器编号
  * @birth: Created by LGD on 20230305
 */
-void set_variable_register_order_by_order(Instruction* this,int i,RegisterOrder reg_order);
-/**
- * @brief 设置变量在当前指令的栈帧偏移
- * @birth: Created by LGD on 20230305
-*/
-void set_variable_stack_offset_by_order(Instruction* this,int i,size_t offset);
+void ins_set_variable_register_order_by_order(Instruction* this,int i,RegisterOrder reg_order);
 /**
  * @brief 设置变量当前的寄存器编号
  * @birth: Created by LGD on 20230305
 */
-void set_variable_register_order(Instruction* this,Value* var,RegisterOrder reg_order);
+void ins_set_variable_register_order(Instruction* this,Value* var,RegisterOrder reg_order);
 /**
  * @brief 设置变量在当前指令的栈帧偏移
  * @birth: Created by LGD on 20230305
 */
-void set_variable_stack_offset(Instruction* this,Value* var,size_t offset);
-
+void ins_set_variable_stack_offset(Instruction* this,Value* var,size_t offset);
+/**
+ * @brief 设置变量在指定map的栈帧偏移
+ * @birth: Created by LGD on 2023-3-26
+*/
+void set_variable_stack_offset(HashMap* map,Value* var,size_t offset);
+/**
+ * @brief 设置变量在当前指令的栈帧偏移
+ * @birth: Created by LGD on 20230305
+*/
+void ins_set_variable_stack_offset_by_order(Instruction* this,int i,size_t offset);
 /**
  * @brief 获取变量原始存放的操作数单元
  * @birth: Created by LGD on 20230305

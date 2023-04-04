@@ -122,7 +122,8 @@ void set_parameter_passing_number(size_t num)
 }
 
 /**
- * @biref 使对栈帧指针的更改生效
+ * @brief 使对栈帧指针的更改生效
+ * @update: 2023-4-4 将栈顶相对偏移改为栈帧
 */
 void update_fp_value()
 {
@@ -132,11 +133,11 @@ void update_fp_value()
     AssembleOperand offset;
     
     offset.addrMode = IMMEDIATE;
-    offset.oprendVal = curFP - oriFP;
+    offset.oprendVal = abs(curFP - oriFP);
     if(curFP-oriFP > 0)
-        general_data_processing_instructions("ADD",sp,sp,offset," ",false,"\t");
+        general_data_processing_instructions("ADD",fp,fp,offset," ",false,"\t");
     else
-        general_data_processing_instructions("SUB",sp,sp,offset," ",false,"\t");
+        general_data_processing_instructions("SUB",fp,fp,offset," ",false,"\t");
 }
 
 /**
@@ -152,7 +153,7 @@ void update_st_value()
     sp.oprendVal = SP;
     
     offset.addrMode = IMMEDIATE;
-    offset.oprendVal = curST - oriST;
+    offset.oprendVal = abs(curST - oriST);
     if(curFP-oriFP > 0)
         general_data_processing_instructions("ADD",sp,sp,offset," ",false,"\t");
     else
@@ -174,11 +175,12 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
     update_fp_value();
     update_st_value();
 
+#ifdef LLVM_LOAD_AND_STORE_INSERTED
     //初始化寄存器映射表
     vitual_register_map_init(&cur_register_mapping_map);
     //初始化内存映射表
     vitual_Stack_Memory_map_init(&cur_memory_mapping_map);
-
+#endif
 }
 
 struct _operand r027[8] = {{REGISTER_DIRECT,R0,0},
@@ -195,6 +197,9 @@ struct _operand sp_indicate_offset = {
                 SP,
                 0
 };
+
+struct _operand trueOp = {IMMEDIATE,1,0};
+struct _operand falseOp = {IMMEDIATE,0,0};
 
 
 
@@ -215,12 +220,17 @@ RegisterOrder allocable_register_pool[ALLOCABLE_REGISTER_NUM] = {ALLOCABLE_REGIS
 /**
  * @brief 申请一个新的可分配的寄存器
  * @birth: Created by LGD on 2023-3-12
+ * @update: 2023-4-4 分配后标注为已分配
 */
 RegisterOrder request_new_allocable_register()
 {
+    RegisterOrder reg;
     for(size_t i=0;i<ALLOCABLE_REGISTER_NUM;i++)
-        if(allocable_register_pool[i]!=-1)
-            return allocable_register_pool[i];
+        if((reg = allocable_register_pool[i])!=-1){
+            allocable_register_pool[i] = -1;
+            return reg;
+        }
+            
     assert(false && "No enough allocable when register allocate");
 }
 
@@ -306,8 +316,19 @@ RegisterOrder get_virtual_register_mapping(HashMap* map,size_t ViOrder)
 /*                 栈空间映射表                */
 /**********************************************/
 
+/**
+ * @brief 申请一块新的局部变量的内存单元
+*/
+int request_new_local_variable_memory_unit()
+{
+    cur_use_variable_offset -= 4;
+    if(cur_use_variable_offset >= 0)
+        return cur_use_variable_offset;
+    assert(false && "Request for new local variable stack unit more than expected");
+}
 
 
+#ifdef LLVM_LOAD_AND_STORE_INSERTED
 
 /**
  * @brief 重设了键的判等依据等
@@ -333,18 +354,6 @@ void vitual_Stack_Memory_map_init(HashMap** map)
 
 
 /**
- * @brief 申请一块新的局部变量的内存单元
-*/
-int request_new_local_variable_memory_unit()
-{
-    cur_use_variable_offset -= 4;
-    if(cur_use_variable_offset >= 0)
-        return cur_use_variable_offset;
-    assert(false && "Request for new local variable stack unit more than expected");
-}
-
-
-/**
  * @brief   为虚拟内存映射表插入新的键值对，若键已存在则覆盖值
  * @author  Created by LGD on 2023-3-12
 */
@@ -354,14 +363,13 @@ void vitual_Stack_Memory_map_insert_pair(HashMap* map,size_t ViMem,RegisterOrder
 }
 
 /**
- * @brief   返回当前虚拟内存单元映射值，若为正数则为寄存器编号，若为-1则未作映射
+ * @brief   返回当前虚拟内存单元映射值
  * @author  Created by LGD on 2023-3-12
 */
 int vitual_Stack_Memory_map_get_value(HashMap* map,size_t ViMem)
 {
     return HashMapGet(map,ViMem) != NULL? HashMapGet(map,ViMem) - BASE_VALUE: -1;
 }
-
 
 /**
  * @brief 给定虚拟内存位置，若有映射，则返回映射的实际内存相对栈帧偏移值；
@@ -384,7 +392,7 @@ int get_virtual_Stack_Memory_mapping(HashMap* map,size_t viMem)
     return realMem;
 }
 
-
+#endif
 
 /**********************************************/
 /*                  传递参数映射表              */

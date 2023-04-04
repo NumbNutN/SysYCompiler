@@ -1,6 +1,6 @@
 #include "instruction.h"
 
-#include "stdio.h"
+#include <stdio.h>
 
 // TODO 应该从上级获得两个操作数的信息来更新User中value的type?
 Instruction *ins_new(int op_num, Value *self) {
