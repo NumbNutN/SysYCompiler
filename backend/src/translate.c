@@ -44,9 +44,9 @@ void translate_function_entrance(Instruction* this)
     push_pop_instructions("PUSH",fp);
     push_pop_instructions("PUSH",lr);
     
-    //第二步，SP自减栈空间
-    immedOp.oprendVal = get_function_stackSize();
-    general_data_processing_instructions("SUB",sp,sp,immedOp,NONESUFFIX,false,NONELABEL);
+    // //第二步，SP自减栈空间
+    // immedOp.oprendVal = get_function_stackSize();
+    // general_data_processing_instructions("SUB",sp,sp,immedOp,NONESUFFIX,false,NONELABEL);
 
     //第四步 设定当前函数的各项参数
     set_stack_frame_status(2,20);
@@ -67,8 +67,8 @@ void translate_function_entrance(Instruction* this)
 void translate_function_end(Instruction* this)
 {
      
-    immedOp.oprendVal = get_function_stackSize();
-    general_data_processing_instructions("ADD",sp,sp,immedOp,NONESUFFIX,false,NONELABEL);
+    // immedOp.oprendVal = get_function_stackSize();
+    // general_data_processing_instructions("ADD",sp,sp,immedOp,NONESUFFIX,false,NONELABEL);
     //第一步，SP自加栈空间
 
     push_pop_instructions("POP",fp);

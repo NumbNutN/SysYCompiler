@@ -23,6 +23,20 @@
 
 #define BASE_VALUE 32
 
+struct _Produce_Frame{
+
+    //栈顶偏移量
+    int SPOffset;
+    //栈帧偏移量
+    int FPOffset;
+    //定义了当前已被使用的局部变量栈内存单元偏移值，其初始值为栈帧至栈底之差，并在每次分配时自增
+    int cur_use_variable_offset;
+    //定义了当前已被使用的参数传递用栈内存单元偏移值，其初始值为栈顶至栈帧之差，并在每次分配时自增
+    int cur_use_parameter_offset;
+
+} currentPF;
+
+
 //当前函数的寄存器映射表
 HashMap* cur_register_mapping_map;
 //当前函数的内存映射表
@@ -105,6 +119,7 @@ void set_local_variable(size_t num)
     //设置局部变量变量
     cur_local_variable_number = num;
 }
+
 /**
  * @brief 设置参数传递的个数
 */
@@ -182,6 +197,21 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
     vitual_Stack_Memory_map_init(&cur_memory_mapping_map);
 #endif
 }
+
+/**
+ * @brief 回复函数的栈帧和栈顶
+ * @birth: Created by LGD on 2023-4-4
+*/
+void reset_stack_frame_status()
+{
+
+}
+
+
+/**
+ * @brief 恢复当前函数的堆栈状态
+*/
+
 
 struct _operand r027[8] = {{REGISTER_DIRECT,R0,0},
                             {REGISTER_DIRECT,R1,0},
@@ -464,3 +494,5 @@ void return_a_memoryUnit(size_t memAddr)
 {
     StackPush(MemoryUnit,memAddr);
 }
+
+

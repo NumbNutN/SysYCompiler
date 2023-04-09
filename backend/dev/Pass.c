@@ -4,8 +4,7 @@
 #include <stdio.h>
 
 #include "interface_zzq.h"
-#include "memory_manager.h"
-
+#include "variable_map.h"
 typedef struct _dom_tree {
   List *child;
   HeadNode *bblock_node;  // 分管的basicblock
@@ -26,6 +25,9 @@ typedef struct _var_live_interval {
   List *this_var_discrete_live_interval;
   live_interval *this_var_total_live_interval;
 } var_live_interval;
+
+static const int REGISTER_NUM = 3;
+
 
 
 char *op_string[] = {"DefaultOP",
@@ -57,6 +59,7 @@ char *op_string[] = {"DefaultOP",
 
 };
 
+static char *location_string[] = {"null", "R1", "R2", "R3", "M"};
 
 extern List *func_list;
 
@@ -284,19 +287,6 @@ void dom_relation_pass() {
     printf("\n");
   }
 
-  // for (int i = 0; i < node_num; i++) {
-  //   HashSetFirst(graph_for_dom_tree->node_set[i]->dom_set);
-  //   void *element;
-  //   printf("%s dom node is ",
-  //          graph_for_dom_tree->node_set[i]->bblock_head->label->name);
-  //   while ((element = HashSetNext(graph_for_dom_tree->node_set[i]->dom_set))
-  //   !=
-  //          NULL) {
-  //     printf("%s,", ((HeadNode *)element)->bblock_head->label->name);
-  //   }
-  //   printf("\n");
-  // }
-
   printf("\n打印每个节点的立即支配节点\n");
   // 计算每个节点的idom
   for (int i = 1; i < node_num; i++) {
@@ -310,11 +300,11 @@ void dom_relation_pass() {
       }
       if (is_subset(graph_for_dom_tree->node_set[i]->dom_set,
                     graph_for_dom_tree->node_set[j]->dom_set) &&
-          (HashSetSize(graph_for_dom_tree->node_set[j]->dom_set) <
+          (HashSetSize(graph_for_dom_tree->node_set[j]->edge_list) <
            cur_idom_nodeset_num)) {
         cur_subscript = j;
         cur_idom_nodeset_num =
-            HashSetSize(graph_for_dom_tree->node_set[j]->dom_set);
+            HashSetSize(graph_for_dom_tree->node_set[j]->edge_list);
       }
     }
 
@@ -986,9 +976,8 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
             printf("%s live use add %s\n",
                    (self->node_set)[i]->bblock_head->label->name,
                    user_get_operand_use((User *)element, j)->Val->name);
-            HashSetAdd(
-                (self->node_set)[i]->bblock_head->live_use,
-                strdup(user_get_operand_use((User *)element, j)->Val->name));
+            HashSetAdd((self->node_set)[i]->bblock_head->live_use,
+                       user_get_operand_use((User *)element, j)->Val->name);
           }
         }
         if (((Instruction *)element)->opcode < 13) {
@@ -996,7 +985,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
                  (self->node_set)[i]->bblock_head->label->name,
                  ((Value *)element)->name);
           HashSetAdd((self->node_set)[i]->bblock_head->live_def,
-                     strdup(((Value *)element)->name));
+                     ((Value *)element)->name);
         }
       }
     }
@@ -1041,54 +1030,49 @@ void calculate_live_in_out(ALGraph *self) {
     if (no_liveout_changed) break;
   }
 
-  /*
-    打印全部的活跃信息
-  */
+  for (int i = 0; i < self->node_num; i++) {
+    HashSetFirst((self->node_set)[i]->bblock_head->live_def);
+    char *live_def = NULL;
+    printf("bblock %s's live def are ",
+           (self->node_set)[i]->bblock_head->label->name);
+    while ((live_def = HashSetNext(
+                (self->node_set)[i]->bblock_head->live_def)) != NULL) {
+      printf("\t%s", live_def);
+    }
+    printf("\n");
 
-  // for (int i = 0; i < self->node_num; i++) {
-  //   HashSetFirst((self->node_set)[i]->bblock_head->live_def);
-  //   char *live_def = NULL;
-  //   printf("bblock %s's live def are ",
-  //          (self->node_set)[i]->bblock_head->label->name);
-  //   while ((live_def = HashSetNext(
-  //               (self->node_set)[i]->bblock_head->live_def)) != NULL) {
-  //     printf("\t%s", live_def);
-  //   }
-  //   printf("\n");
+    HashSetFirst((self->node_set)[i]->bblock_head->live_use);
+    char *live_use = NULL;
+    printf("bblock %s's live use are ",
+           (self->node_set)[i]->bblock_head->label->name);
+    while ((live_use = HashSetNext(
+                (self->node_set)[i]->bblock_head->live_use)) != NULL) {
+      printf("\t%s", live_use);
+    }
+    printf("\n");
+  }
+  printf("\n\n\n");
+  for (int i = 0; i < self->node_num; i++) {
+    HashSetFirst((self->node_set)[i]->bblock_head->live_out);
+    char *live_out = NULL;
+    printf("bblock %s's live out are ",
+           (self->node_set)[i]->bblock_head->label->name);
+    while ((live_out = HashSetNext(
+                (self->node_set)[i]->bblock_head->live_out)) != NULL) {
+      printf("\t%s", live_out);
+    }
+    printf("\n");
 
-  //   HashSetFirst((self->node_set)[i]->bblock_head->live_use);
-  //   char *live_use = NULL;
-  //   printf("bblock %s's live use are ",
-  //          (self->node_set)[i]->bblock_head->label->name);
-  //   while ((live_use = HashSetNext(
-  //               (self->node_set)[i]->bblock_head->live_use)) != NULL) {
-  //     printf("\t%s", live_use);
-  //   }
-  //   printf("\n");
-  // }
-  // printf("\n\n\n");
-  // for (int i = 0; i < self->node_num; i++) {
-  //   HashSetFirst((self->node_set)[i]->bblock_head->live_out);
-  //   char *live_out = NULL;
-  //   printf("bblock %s's live out are ",
-  //          (self->node_set)[i]->bblock_head->label->name);
-  //   while ((live_out = HashSetNext(
-  //               (self->node_set)[i]->bblock_head->live_out)) != NULL) {
-  //     printf("\t%s", live_out);
-  //   }
-  //   printf("\n");
-
-  //   HashSetFirst((self->node_set)[i]->bblock_head->live_in);
-  //   char *live_in = NULL;
-  //   printf("bblock %s's live in are ",
-  //          (self->node_set)[i]->bblock_head->label->name);
-  //   while ((live_in = HashSetNext((self->node_set)[i]->bblock_head->live_in))
-  //   !=
-  //          NULL) {
-  //     printf("\t%s", live_in);
-  //   }
-  //   printf("\n");
-  // }
+    HashSetFirst((self->node_set)[i]->bblock_head->live_in);
+    char *live_in = NULL;
+    printf("bblock %s's live in are ",
+           (self->node_set)[i]->bblock_head->label->name);
+    while ((live_in = HashSetNext((self->node_set)[i]->bblock_head->live_in)) !=
+           NULL) {
+      printf("\t%s", live_in);
+    }
+    printf("\n");
+  }
 }
 
 var_live_interval *is_list_contain_item(List *self, char *item) {
@@ -1564,61 +1548,19 @@ void ins_toBBlock_pass(List *self) {
 
 void delete_return_deadcode_pass(List *self) {
   void *element;
-  ListFirst(self, true);
+  ListFirst(self, false);
   ListSetClean(self, CommonCleanInstruction);
   unsigned i = 0;
-  HashSet *reach_label = NULL;
-  hashset_init(&reach_label);
-  while (i != ListSize(self)) {
-    ListGetAt(self, i, &element);
-    switch (((Instruction *)element)->opcode) {
-      case GotoOP:
-        HashSetAdd(reach_label,
-                   ((Value *)element)->pdata->no_condition_goto.goto_location);
-        i++;
-        while (ListGetAt(self, i, &element) &&
-               (((Instruction *)element)->opcode == GotoOP ||
-                ((Instruction *)element)->opcode == GotoWithConditionOP)) {
-          ListRemove(self, i);
-        }
-        break;
-      case GotoWithConditionOP:
-        HashSetAdd(
-            reach_label,
-            ((Value *)element)->pdata->condition_goto.true_goto_location);
-        HashSetAdd(
-            reach_label,
-            ((Value *)element)->pdata->condition_goto.false_goto_location);
-        i++;
-        while (ListGetAt(self, i, &element) &&
-               (((Instruction *)element)->opcode == GotoOP ||
-                ((Instruction *)element)->opcode == GotoWithConditionOP)) {
-          ListRemove(self, i);
-        }
-        break;
-      case ReturnOP:
-        i++;
-        while (ListGetAt(self, i, &element) &&
-               (((Instruction *)element)->opcode != LabelOP &&
-                ((Instruction *)element)->opcode != FuncEndOP)) {
-          ListRemove(self, i);
-        }
-        break;
-      case LabelOP:
-        while (!HashSetFind(reach_label, (Value *)element) &&
-               strcmp(((Value *)element)->name, "entry")) {
-          ListRemove(self, i);
-          while (ListGetAt(self, i, &element) &&
-                 (((Instruction *)element)->opcode != LabelOP)) {
-            ListRemove(self, i);
-          }
-        }
-        i++;
-        break;
-      default:
-        i++;
-        break;
+  while (ListNext(self, &element)) {
+    if (((Instruction *)element)->opcode == ReturnOP) {
+      i++;
+      while (ListNext(self, &element) &&
+             (((Instruction *)element)->opcode != LabelOP &&
+              ((Instruction *)element)->opcode != FuncEndOP)) {
+        ListRemove(self, i);
+      }
     }
+    i++;
   }
   ListSetClean(self, CleanObject);
 }
@@ -1713,14 +1655,9 @@ void line_scan_register_allocation(ALGraph *self_cfg, Function *self_func,
   }
 }
 
-char *location_string[] = {"null", "R1", "R2", "R3", "M"};
-
-int REGISTER_NUM = 3;
-
 void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {
-
-    Pair *ptr_pair;
+  Pair *ptr_pair;
   //变量存储位置映射表
   //|  a   |   b  |   c   |
   //|  M   |  R0  |  ALLOCATE_R1   |
@@ -1741,9 +1678,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0,&VariableInfoMap);    
   }
-  //翻译前初始化
-  TranslateInit();
-  set_stack_frame_status(0,totalLocalVariableSize/4);
+
   // VarInfo testVarInfo;
   // VarInfo* testVarInfoPtr;
   // HashMapPut(VariableInfoMap,"name",&testVarInfo);
@@ -1762,6 +1697,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ins_deepSet_varMap(element,VariableInfoMap);
 
   }
+  //翻译前初始化
+  TranslateInit();
 
   //第三次function遍历，翻译每一个list
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -1769,12 +1706,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
-  // Pair *ptr_pair;
-  // HashMapFirst(var_location);
-  // while ((ptr_pair = HashMapNext(var_location)) != NULL) {
-  //   printf("\tvar:%s\taddress:%s\n ", (char *)ptr_pair->key,
-  //          location_string[*((LOCATION *)ptr_pair->value)]);
-  // }
+  
 
   // for (int i = 0; i < self_cfg->node_num; i++) {
   //   int iter_num = 0;
@@ -1783,6 +1715,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //     Instruction *element = NULL;
   //     ListGetAt((self_cfg->node_set)[i]->bblock_head->inst_list, iter_num,
   //               &element);
+
+  //     //如果当前指令是具有操作数的  use关系
   //     if (element->opcode < 19) {
   //       for (int j = 0; j < ((User *)element)->num_oprands; j++) {
   //         Value *cur_handle = user_get_operand_use((User *)element, j)->Val;
@@ -1791,6 +1725,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //         // M store load
   //       }
 
+        
   //       if (((Instruction *)element)->opcode < 13) {
   //         if (HashMapGet(var_location, ((Value *)element)->name)) {
   //           LOCATION cur_var_location = *(
@@ -1798,12 +1733,13 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //           if (cur_var_location == MEMORY) {
   //             // 将当前语句改成store语句
   //           } else {
-  //             char *temp_str = strdup(location_string[*((LOCATION *)HashMapGet(
-  //                 var_location, ((Value *)element)->name))]);
-  //             free(((Value *)element)->name);
-  //             ((Value *)element)->name = temp_str;
+  //             // char *temp_str = strdup(location_string[*((LOCATION *)HashMapGet(
+  //             //     var_location, ((Value *)element)->name))]);
+  //             // free(((Value *)element)->name);
+  //             // ((Value *)element)->name = temp_str;
   //           }
   //         } else {
+  //           //删除没有被引用的变量
   //           ListRemove((self_cfg->node_set)[i]->bblock_head->inst_list,
   //                      iter_num);
   //           continue;
@@ -1821,7 +1757,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   // hashset_init(&(graph_head_set));
   graph_for_dom_tree = (ALGraph *)malloc(sizeof(ALGraph));
   graph_for_dom_tree->node_set =
-      (HeadNode **)malloc(num_of_block * sizeof(HeadNode *));
+      (HeadNode **)malloc(num_of_block * sizeof(HeadNode));
   graph_for_dom_tree->node_num = num_of_block;
   self->self_cfg = graph_for_dom_tree;
 
@@ -1836,19 +1772,6 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   bblock_to_dom_graph_dfs_pass(init_headnode, 0);
   HashMapDeinit(bblock_to_dom_graph_hashmap);
-
-  // 打印邻接边
-  for (int i = 0; i < num_of_block; i++) {
-    HashSetFirst(graph_for_dom_tree->node_set[i]->edge_list);
-    void *element;
-    printf("%s edge is ",
-           graph_for_dom_tree->node_set[i]->bblock_head->label->name);
-    while ((element = HashSetNext(
-                graph_for_dom_tree->node_set[i]->edge_list)) != NULL) {
-      printf("%s ", ((HeadNode *)element)->bblock_head->label->name);
-    }
-    printf("\n");
-  }
 
   // 初始化dom_tree树根
   dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
@@ -1894,8 +1817,20 @@ void bblock_to_dom_graph_pass(Function *self) {
   remove_bblock_phi_func_pass(graph_for_dom_tree);
 
   printf("\n\n\n");
-
+  //2023-3-22 函数打印
   printf_cur_func_ins(cur_func);
+
+  // // 打印表的表头信息
+  // printf("\t%s\tnumber: %20s \t%25s \t%10s\n", "labelID", "opcode", "name",
+  //        "use");
+  // // 打印当前函数的基本块
+  // print_bblock_pass_phi(cur_func->entry_bblock);
+  // printf("\n\n");
+
+  // 清空哈希表 然后重新初始化供后面使用
+  HashSetDeinit(bblock_pass_hashset);
+  bblock_pass_hashset = NULL;
+  hashset_init(&(bblock_pass_hashset));
 
   calculate_live_use_def_by_graph(graph_for_dom_tree);
 
@@ -1911,5 +1846,3 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   register_replace(graph_for_dom_tree, cur_func, var_location);
 }
-
-

@@ -50,8 +50,8 @@ Value* get_op_from_return_instruction(Instruction* this);
 Value* get_op_from_param_instruction(Instruction* this);
 
 
-size_t get_function_stackSize();
-size_t get_function_currentDistributeSize();
+// size_t get_function_stackSize();
+// size_t get_function_currentDistributeSize();
 void set_function_stackSize(size_t num);
 void set_function_currentDistributeSize(size_t num);
 

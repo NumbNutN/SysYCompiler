@@ -74,26 +74,6 @@ void recycle_vfp_register(RegisterOrder reg)
     }
     assert("Missing the temp regitser");
 }
-// void Free_Vps_Register_Init()
-// {
-//     Free_Vps_Register_list = StackInit();
-//     for(RegisterOrder i = S1;i<=S3;i++)
-//         StackPush(Free_Vps_Register_list,i);
-// }
-
-// RegisterOrder pick_one_free_vfp_register()
-// {   
-//     RegisterOrder reg;
-//     if(!StackTop(Free_Vps_Register_list,&reg))
-//         return -1;
-//     StackPop(Free_Vps_Register_list);
-//     return reg;
-// }
-
-// void recycle_vfp_register(RegisterOrder reg)
-// {
-//     StackPush(Free_Vps_Register_list,reg);
-// }
 
 
 /**

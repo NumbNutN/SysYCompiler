@@ -206,37 +206,6 @@ void ins_cpy_varinfo_space(Instruction* this,HashMap* map)
 
 
 /**
- * @brief   [只用于后端，临时使用]在无寄存器的情况下，遍历每一个变量，并为其分配空间
- * @author  Created by LGD on 20221218
- * @todo    根据Value的数据类型安排等量的栈空间,目前暂定统一为4个字节
- * @update  Latest:20221229 为StackSize和currentdistributeSize的访问和设置抽象化
-*/
-VarInfo* set_in_memory(Value* var)
-{
-    set_function_currentDistributeSize(get_function_currentDistributeSize()+4);
-
-    VarInfo* varInfo;
-    varInfo = (VarInfo*)malloc(sizeof(VarInfo));
-    varInfo->ori.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
-    varInfo->ori.oprendVal = SP;
-    varInfo->ori.addtion = get_function_stackSize() - get_function_currentDistributeSize();
-    return varInfo;
-}
-
-/**
- * @brief 为一个变量分配空间，不产生新的VarSpace变量
- * @author Created by LGD on 20230109
-*/
-void set_in_memory_new(Value* var,VarInfo** var_info)
-{
-    set_function_currentDistributeSize(get_function_currentDistributeSize()+4);
-    (*var_info)->ori.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
-    (*var_info)->ori.oprendVal = SP;
-    (*var_info)->ori.addtion = get_function_stackSize() - get_function_currentDistributeSize();
-}
-
-
-/**
  * @brief 获取操作数的位置，如果是变量查变量表，如果是常数直接返回IN_INSTRUCTION
  * @author Created by LGD on 20220106
  * @update 20230305 完善了zzq return_var的设定
@@ -554,20 +523,6 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
     return totalSize;
 }
 
-/**
- * @brief 为一个函数的变量信息表map中所有的变量分配空间
- * @author Created by LGD on 20230109
-*/
-void spilled_all_into_memory(HashMap* map)
-{    
-    Value* var;
-    VarInfo* var_info;
-    HashMap_foreach(map,var,var_info)
-    {
-        VarInfo* space = set_in_memory(NULL);
-        variable_map_insert_pair(map,var,space);
-    }
-}
 
 /**
  * @brief 打印每个指令变量信息表的格式化输出子方法
