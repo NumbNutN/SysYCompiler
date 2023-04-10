@@ -1769,6 +1769,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
+
+  reset_stack_frame_status();
   // Pair *ptr_pair;
   // HashMapFirst(var_location);
   // while ((ptr_pair = HashMapNext(var_location)) != NULL) {
@@ -1909,6 +1911,7 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   line_scan_register_allocation(graph_for_dom_tree, cur_func, var_location);
 
+  
   register_replace(graph_for_dom_tree, cur_func, var_location);
 }
 

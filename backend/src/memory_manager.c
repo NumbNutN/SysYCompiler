@@ -55,6 +55,10 @@ size_t oriST = 0;
 //当前栈顶指针值 Top of Stack Pointer
 size_t curST = 0;
 
+    //定义了当前已被使用的局部变量栈内存单元偏移值，其初始值为栈帧至栈底之差，并在每次分配时自增
+    int cur_use_variable_offset;
+    //定义了当前已被使用的参数传递用栈内存单元偏移值，其初始值为栈顶至栈帧之差，并在每次分配时自增
+    int cur_use_parameter_offset;
 
 //定义了参数的个数
 int cur_param_number;
@@ -64,128 +68,31 @@ int cur_local_variable_number;
 //定义了当前已被处理的参数个数
 size_t passed_param_number = 0;
 
-//定义了当前已被使用的局部变量栈内存单元偏移值，其初始值为栈帧至栈底之差，并在每次分配时自增
-int cur_use_variable_offset;
-
-//定义了当前已被使用的参数传递用栈内存单元偏移值，其初始值为栈顶至栈帧之差，并在每次分配时自增
-int cur_use_parameter_offset;
 
 RegisterOrder param_passing_register[PARAMETER_ON_THE_STACK_BOUNDARY];
 
 /**************************************************************/
 /*                           函数初始化                          */
 /***************************************************************/
-
-
-/**
- * @brief 定义参数传递候选寄存器列表
-*/
-void init_parameter_register_list()
-{
-    size_t cnt = 0;
-    for(RegisterOrder i = R0;i<PARAMETER_ON_THE_STACK_BOUNDARY;i++,cnt++)
-        param_passing_register[cnt] = i;
-}
-
-/**
- * @brief 设置栈帧指针的相对位移
- * @birth: Created by LGD on 20230312
-*/
-void set_fp_relative(int offset)
-{
-    curFP += offset;
-}
-
-/**
- * @brief 设置栈顶指针的相对偏移
- * @birth: Created by LGD on 20230312
-*/
-void set_pToS_relative(int offset)
-{
-    curST += offset;
-}
-
-/**
- * @brief 设置局部变量的传递个数
-*/
-void set_local_variable(size_t num)
-{
-    set_pToS_relative(-num*4);
-    set_fp_relative(-num*4);
-
-    //设置局部变量初始堆栈偏移值
-    cur_use_variable_offset = num*4;
-
-    //设置局部变量变量
-    cur_local_variable_number = num;
-}
-
-/**
- * @brief 设置参数传递的个数
-*/
-void set_parameter_passing_number(size_t num)
-{
-    if(num <= 4)
-        return;
-    set_pToS_relative(-(num - 4)*4);
-
-    //设置参数传递初始堆栈偏移值
-    cur_use_parameter_offset = (num - 1)*4;    
-
-    //设置参数个数
-    cur_param_number = num-4;
-}
-
-/**
- * @brief 使对栈帧指针的更改生效
- * @update: 2023-4-4 将栈顶相对偏移改为栈帧
-*/
-void update_fp_value()
-{
-    if(!abs(curFP - oriFP))
-        return;
-
-    AssembleOperand offset;
-    
-    offset.addrMode = IMMEDIATE;
-    offset.oprendVal = abs(curFP - oriFP);
-    if(curFP-oriFP > 0)
-        general_data_processing_instructions("ADD",fp,fp,offset," ",false,"\t");
-    else
-        general_data_processing_instructions("SUB",fp,fp,offset," ",false,"\t");
-}
-
-/**
- * @biref 使对栈顶指针的更改生效
-*/
-void update_st_value()
-{
-    if(!abs(curST - oriST))
-        return;
-
-    AssembleOperand sp,offset;
-    sp.addrMode = REGISTER_DIRECT;
-    sp.oprendVal = SP;
-    
-    offset.addrMode = IMMEDIATE;
-    offset.oprendVal = abs(curST - oriST);
-    if(curFP-oriFP > 0)
-        general_data_processing_instructions("ADD",sp,sp,offset," ",false,"\t");
-    else
-        general_data_processing_instructions("SUB",sp,sp,offset," ",false,"\t");    
-}
+                                                                                       
 
 /**
  * @brief 依据局部变量个数和传递参数个数确定两个指针的跳跃位置
  * @birth: Created by LGD on 2023-3-12
 */
 void set_stack_frame_status(size_t param_num,size_t local_var_num)
-{
+{   
+
+    //堆栈LR寄存器和R7
+    bash_push_pop_instruction("PUSH",&fp,&lr,END);
 
     //设置栈帧和栈顶指针的相对位置
-    set_local_variable(local_var_num);
-    set_parameter_passing_number(param_num);
+    currentPF.FPOffset -= local_var_num*4;
+    currentPF.SPOffset -= (local_var_num + param_num)*4;
 
+    //设置当前用户使用的栈帧偏移
+    currentPF.cur_use_variable_offset = local_var_num*4;
+    currentPF.cur_use_parameter_offset = (param_num - 1)*4;
     //执行期间使指针变动生效
     update_fp_value();
     update_st_value();
@@ -199,40 +106,75 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
 }
 
 /**
- * @brief 回复函数的栈帧和栈顶
+ * @brief 恢复函数的栈帧和栈顶
  * @birth: Created by LGD on 2023-4-4
 */
 void reset_stack_frame_status()
 {
+    currentPF.FPOffset = - currentPF.FPOffset;
+    currentPF.SPOffset = - currentPF.SPOffset;
 
+    //执行期间使指针变动生效
+    update_fp_value();
+    update_st_value();
+
+    bash_push_pop_instruction("POP",&fp,&pc,END);
 }
+
+
+/**
+ * @brief 使对栈帧指针的更改生效
+ * @update: 2023-4-4 将栈顶相对偏移改为栈帧
+*/
+void update_fp_value()
+{
+    if(!abs(currentPF.FPOffset))
+        return;
+
+    AssembleOperand offset;
+    
+    offset.addrMode = IMMEDIATE;
+    offset.oprendVal = abs(currentPF.FPOffset);
+    if(currentPF.FPOffset > 0)
+        general_data_processing_instructions("ADD",fp,fp,offset," ",false,"\t");
+    else
+        general_data_processing_instructions("SUB",fp,fp,offset," ",false,"\t");
+}
+
+/**
+ * @biref 使对栈顶指针的更改生效
+*/
+void update_st_value()
+{
+    if(!abs(currentPF.SPOffset))
+        return;
+
+    AssembleOperand offset;
+
+    offset.addrMode = IMMEDIATE;
+    offset.oprendVal = abs(currentPF.SPOffset);
+    if(currentPF.SPOffset > 0)
+        general_data_processing_instructions("ADD",sp,sp,offset," ",false,"\t");
+    else
+        general_data_processing_instructions("SUB",sp,sp,offset," ",false,"\t");    
+}
+
+/**
+ * @brief 定义参数传递候选寄存器列表
+*/
+void init_parameter_register_list()
+{
+    size_t cnt = 0;
+    for(RegisterOrder i = R0;i<PARAMETER_ON_THE_STACK_BOUNDARY;i++,cnt++)
+        param_passing_register[cnt] = i;
+}
+
+
 
 
 /**
  * @brief 恢复当前函数的堆栈状态
 */
-
-
-struct _operand r027[8] = {{REGISTER_DIRECT,R0,0},
-                            {REGISTER_DIRECT,R1,0},
-                            {REGISTER_DIRECT,R2,0},
-                            {REGISTER_DIRECT,R3,0}};
-struct _operand immedOp = {IMMEDIATE,0,0};
-struct _operand sp = {REGISTER_DIRECT,SP,0};
-struct _operand lr = {REGISTER_DIRECT,LR,0};
-struct _operand fp = {REGISTER_DIRECT,R7,0};
-struct _operand pc = {REGISTER_DIRECT,PC,0};
-struct _operand sp_indicate_offset = {
-                REGISTER_INDIRECT_WITH_OFFSET,
-                SP,
-                0
-};
-
-struct _operand trueOp = {IMMEDIATE,1,0};
-struct _operand falseOp = {IMMEDIATE,0,0};
-
-
-
 
 
 
@@ -244,7 +186,7 @@ struct _operand falseOp = {IMMEDIATE,0,0};
 #define ALLOCABLE_REGISTER_NUM 7
 
 //设置可供变量暂时存放的寄存器池全集
-#define ALLOCABLE_REGISTER R4,R5,R6,R7,R8
+#define ALLOCABLE_REGISTER R4,R5,R6,R8
 RegisterOrder allocable_register_pool[ALLOCABLE_REGISTER_NUM] = {ALLOCABLE_REGISTER};
 
 /**
@@ -351,9 +293,9 @@ RegisterOrder get_virtual_register_mapping(HashMap* map,size_t ViOrder)
 */
 int request_new_local_variable_memory_unit()
 {
-    cur_use_variable_offset -= 4;
-    if(cur_use_variable_offset >= 0)
-        return cur_use_variable_offset;
+    currentPF.cur_use_variable_offset -= 4;
+    if(currentPF.cur_use_variable_offset >= 0)
+        return currentPF.cur_use_variable_offset;
     assert(false && "Request for new local variable stack unit more than expected");
 }
 
@@ -436,9 +378,9 @@ int get_virtual_Stack_Memory_mapping(HashMap* map,size_t viMem)
 */
 int request_new_parameter_stack_memory_unit()
 {
-    cur_use_parameter_offset -= 4;
-    if(cur_use_parameter_offset >= 0)
-        return cur_use_parameter_offset;
+    currentPF.cur_use_variable_offset -= 4;
+    if(currentPF.cur_use_variable_offset >= 0)
+        return currentPF.cur_use_variable_offset;
     assert(false && "Request for new local variable stack unit more than expected");
 }
 
@@ -459,6 +401,68 @@ int return_param_offset(size_t i)
 
 
 
+
+
+
+
+
+
+
+
+/**********************************************/
+/*                  throw                     */
+/**********************************************/
+
+
+
+/**
+ * @brief 设置栈帧指针的相对位移
+ * @birth: Created by LGD on 20230312
+*/
+void set_fp_relative(int offset)
+{
+    curFP += offset;
+}
+
+/**
+ * @brief 设置栈顶指针的相对偏移
+ * @birth: Created by LGD on 20230312
+*/
+void set_pToS_relative(int offset)
+{
+    curST += offset;
+}
+
+/**
+ * @brief 设置局部变量的传递个数
+*/
+void set_local_variable(size_t num)
+{
+    set_pToS_relative(-num*4);
+    set_fp_relative(-num*4);
+
+    //设置局部变量初始堆栈偏移值
+    cur_use_variable_offset = num*4;
+
+    //设置局部变量变量
+    cur_local_variable_number = num;
+}
+
+/**
+ * @brief 设置参数传递的个数
+*/
+void set_parameter_passing_number(size_t num)
+{
+    if(num <= 4)
+        return;
+    set_pToS_relative(-(num - 4)*4);
+
+    //设置参数传递初始堆栈偏移值
+    cur_use_parameter_offset = (num - 1)*4;    
+
+    //设置参数个数
+    cur_param_number = num-4;
+}
 
 /**
  * @brief 初始化被管理的内存单元
@@ -494,5 +498,3 @@ void return_a_memoryUnit(size_t memAddr)
 {
     StackPush(MemoryUnit,memAddr);
 }
-
-

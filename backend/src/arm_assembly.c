@@ -114,6 +114,12 @@ void recycle_temp_arm_register(int reg)
 }
 
 
+/**
+ * @brief 创建一个新的段
+*/
+
+
+
 void initDlist()
 {
     /*
@@ -322,7 +328,7 @@ void movif(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand orginal_op1 = op1;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,VFP);
+        op1 = operand_load_from_memory(op1,VFP);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         op1 = operand_ldr_immed(op1,VFP);
 
@@ -345,7 +351,7 @@ void movif(AssembleOperand tar,AssembleOperand op1)
 void movfi(AssembleOperand tar,AssembleOperand op1)
 {
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,VFP);
+        op1 = operand_load_from_memory(op1,VFP);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         op1 = operand_ldr_immed(op1,VFP);
     else
@@ -379,7 +385,7 @@ void movff(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand original_op1 = op1;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,VFP);
+        op1 = operand_load_from_memory(op1,VFP);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         op1 = operand_ldr_immed(op1,VFP);
     
@@ -401,7 +407,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand original_op1 = op1;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,ARM);
+        op1 = operand_load_from_memory(op1,ARM);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         op1 = operand_ldr_immed(op1,ARM);
 
@@ -426,10 +432,10 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
     AssembleOperand original_tar = tar;
     AssembleOperand original_op1 = op1;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,ARM);
+        op1 = operand_load_from_memory(op1,ARM);
 
     if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
-        tar = operand_load_in_mem(tar,ARM);
+        tar = operand_load_from_memory(tar,ARM);
     
     general_data_processing_instructions("CMP",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
 
@@ -446,7 +452,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
 {
     AssembleOperand original_op1 = op1;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,ARM);
+        op1 = operand_load_from_memory(op1,ARM);
 
     general_data_processing_instructions("MOV",tar,op1,nullop,from_tac_op_2_str(opCode),false,NONELABEL);
 
@@ -469,14 +475,14 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
     AssembleOperand cvtOp1;
     AssembleOperand cvtOp2;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        cvtOp1 = operand_load_in_mem(op1,ARM);
+        cvtOp1 = operand_load_from_memory(op1,ARM);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         cvtOp1 = operand_ldr_immed(op1,ARM);
     else
         cvtOp1 = op1;
 
     if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
-        cvtOp2 = operand_load_in_mem(op2,ARM);
+        cvtOp2 = operand_load_from_memory(op2,ARM);
     else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
         cvtOp2 = operand_ldr_immed(op2,ARM);
     else
@@ -497,7 +503,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
     AssembleOperand cvtOp1;
     AssembleOperand cvtOp2;
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        cvtOp1 = operand_load_in_mem(op1,VFP);
+        cvtOp1 = operand_load_from_memory(op1,VFP);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         cvtOp1 = operand_ldr_immed(op1,VFP);
     else
@@ -513,7 +519,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
         }
     } 
     if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
-        cvtOp2 = operand_load_in_mem(op2,VFP);
+        cvtOp2 = operand_load_from_memory(op2,VFP);
     else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
         cvtOp2 = operand_ldr_immed(op2,VFP);
     else
@@ -539,12 +545,12 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
 BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2)
 {
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_in_mem(op1,VFP);
+        op1 = operand_load_from_memory(op1,VFP);
     else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         op1 = operand_ldr_immed(op1,VFP);
 
     if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
-        op2 = operand_load_in_mem(op2,VFP);
+        op2 = operand_load_from_memory(op2,VFP);
     else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
         op2 = operand_ldr_immed(op2,VFP);
 

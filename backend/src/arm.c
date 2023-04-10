@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "arm_assembly.h"
 #include "value.h"
+#include <stdarg.h>
 
 int CntAssemble = 0;
 
@@ -85,6 +86,9 @@ assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOp
     linkNode(node);
 }
 
+/**
+ * @update:2023-4-9 更改了PUSH POP 语句的打印方式
+*/
 void push_pop_instructions(char* opcode,AssembleOperand reg)
 {
     // @brief:生成出入栈的汇编指令
@@ -92,6 +96,7 @@ void push_pop_instructions(char* opcode,AssembleOperand reg)
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     node->op[0] = reg;
     node->op_len = 1;
+    node->op[0].addrMode = PP;
     strcpy(node->opCode,opcode);
     node->assemType = ASSEM_INSTRUCTION;
 
@@ -99,6 +104,39 @@ void push_pop_instructions(char* opcode,AssembleOperand reg)
     linkNode(node);
 }
 
+/**
+ * @brief 变长的push尝试
+ * @birth: Created by LGD on 2023-4-9
+*/
+void bash_push_pop_instruction(char* opcode,...)
+{
+    //参数列表
+    va_list ap;
+    va_start(ap,opcode);
+    
+    size_t cnt = 0;
+    AssembleOperand* ops;
+    while((ops = va_arg(ap,AssembleOperand*)) != END)
+        ++cnt;
+
+    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    strcpy(node->opCode,opcode);
+    node->op_len = cnt;
+    node->opList = (AssembleOperand*)malloc(sizeof(AssembleOperand)*cnt);
+    node->assemType = ASSEM_PUSH_POP_INSTRUCTION;
+
+    va_start(ap,opcode);
+    cnt = 0;
+    while((ops = va_arg(ap,AssembleOperand*)) != END)
+    {
+        node->opList[cnt] = *ops;
+        node->opList[cnt].addrMode = PP;
+        ++cnt;
+    }
+    va_end(ap);
+
+    linkNode(node);
+}
 
 
 void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label)
@@ -403,6 +441,7 @@ void linkNode(assmNode* now)
 //打印指令
 /**
  * @update last 20230124 添加对VFP浮点指令的编号
+ *         2023-4-9 添加了基于PUSH POP的新打印方式
 */
 void print_operand(AssembleOperand op)
 {
@@ -473,8 +512,8 @@ void print_operand(AssembleOperand op)
             break;
         //PUSH {R0}
         case PP:
-            printf("{R%d}",op.oprendVal);
-            break;
+            printf("R%d",op.oprendVal);
+        break;
         default:
             printf("EOF");
             break;
@@ -484,6 +523,7 @@ void print_operand(AssembleOperand op)
 /**
  * @brief 对单个汇编语句节点的格式化输出
  * @birth: Created by LGD on 20230227
+ * @update: 2023-4-9 添加了针对PUSH POP 的打印方式
 */
 void print_single_assembleNode(assmNode* p)
 {
@@ -503,6 +543,26 @@ void print_single_assembleNode(assmNode* p)
                 if(i!=p->op_len-1)
                     printf(", ");
             }
+            printf("\n");
+        break;
+        case ASSEM_PUSH_POP_INSTRUCTION:
+            //打印标号
+            printf("\t");
+            //打印操作码
+            printf("%s",p->opCode);
+            //打印后缀Cond
+            printf("%s\t",p->suffix);
+            //打印前括号
+            printf("{");
+            //打印操作数
+            for(int i=0;i<p->op_len;i++)
+            {
+                print_operand(p->opList[i]);
+                if(i!=p->op_len-1)
+                    printf(", ");
+            }
+            //打印后括号
+            printf("}");
             printf("\n");
         break;
         case LABEL:

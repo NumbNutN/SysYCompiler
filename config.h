@@ -6,6 +6,9 @@
 //开启逻辑运算指令的翻译
 #define OPEN_TRANSLATE_LOGICAL
 
+
+//除法使用abi
+#define USE_DIV_ABI
 /*开启函数带返回值调用*/
 //#define OPEN_FUNCTION_WITH_RETURN_VALUE
 

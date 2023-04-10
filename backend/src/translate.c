@@ -49,7 +49,7 @@ void translate_function_entrance(Instruction* this)
     // general_data_processing_instructions("SUB",sp,sp,immedOp,NONESUFFIX,false,NONELABEL);
 
     //第四步 设定当前函数的各项参数
-    set_stack_frame_status(2,20);
+    //set_stack_frame_status(2,20);
     
 
 }
@@ -254,6 +254,12 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
                 general_data_processing_instructions("MUL",
                     middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
             break;
+#ifdef USE_DIV_ABI
+            case DivOP:
+                branch_instructions_test("__aeabi_idiv","L",false,NONELABEL);
+            break;
+#else
+#endif
                 
         }
 

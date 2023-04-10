@@ -83,6 +83,17 @@ typedef struct _BinaryOperand
 
 } BinaryOperand;
 
+extern struct _operand immedOp;
+extern struct _operand r027[8];
+extern struct _operand sp;
+extern struct _operand lr;
+extern struct _operand fp;
+extern struct _operand pc;
+extern struct _operand sp_indicate_offset;
+
+extern struct _operand trueOp;
+extern struct _operand falseOp;
+
 /**
  * @brief 依据Value* 返回 operand
  * @birth: Created by LGD on 2023-3-16

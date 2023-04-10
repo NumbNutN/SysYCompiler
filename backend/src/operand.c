@@ -4,6 +4,26 @@
 #include "variable_map.h"
 #include "interface_zzq.h"
 
+
+
+struct _operand r027[8] = {{REGISTER_DIRECT,R0,0},
+                            {REGISTER_DIRECT,R1,0},
+                            {REGISTER_DIRECT,R2,0},
+                            {REGISTER_DIRECT,R3,0}};
+struct _operand immedOp = {IMMEDIATE,0,0};
+struct _operand sp = {REGISTER_DIRECT,SP,0};
+struct _operand lr = {REGISTER_DIRECT,LR,0};
+struct _operand fp = {REGISTER_DIRECT,R7,0};
+struct _operand pc = {REGISTER_DIRECT,PC,0};
+struct _operand sp_indicate_offset = {
+                REGISTER_INDIRECT_WITH_OFFSET,
+                SP,
+                0
+};
+
+struct _operand trueOp = {IMMEDIATE,1,0};
+struct _operand falseOp = {IMMEDIATE,0,0};
+
 /**
  * @brief 将Instruction中的变量转换为operand格式的方法
  * @birth: Created by LGD on 20230130
@@ -82,7 +102,7 @@ AssembleOperand operand_load_in_mem_throw(AssembleOperand op)
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
 */
-AssembleOperand operand_load_in_mem(AssembleOperand op,ARMorVFP type)
+AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
 {
     AssembleOperand tempReg;
     switch(judge_operand_in_RegOrMem(op))

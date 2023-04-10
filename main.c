@@ -111,6 +111,43 @@ int main() {
       "  return b;"
       "}";
 
+    char *input5_mul =
+      "int main() {"
+      "  int a, b;"
+      "  a = 10;"
+      "  b = 120;"
+      "  while (a < 5) {"
+      "    a = a * 1;"
+      "    if (b < 70) {"
+      "      b = 100;"
+      "      continue;"
+      "    } else {"
+      "      b = b *10;"
+      "      break;"
+      "    }"
+      "  }"
+      "  return b;"
+      "}";
+
+    char *input5_lib =
+      "int main() {"
+      "  int a, b;"
+      "  a = 10;"
+      "  b = 120;"
+      "  while (a < 5) {"
+      "  putint(a);"
+      "    a = a - 1;"
+      "    if (b < 70) {"
+      "      b = 100;"
+      "      continue;"
+      "    } else {"
+      "      b = b -10;"
+      "      break;"
+      "    }"
+      "  }"
+      "  return b;"
+      "}";
+
   char *input6 =
       "int main() {"
       "  int a = 10;"
@@ -129,7 +166,7 @@ int main() {
   //     exit(-1);
   //   }
 
-  parser(input5);
+  parser(input5_mul);
 
   //   print_ins_pass(ins_list);
   printf("遍历结束\n");

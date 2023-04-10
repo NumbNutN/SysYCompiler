@@ -18,16 +18,6 @@ extern HashMap* cur_register_mapping_map;
 //当前函数的内存映射表
 extern HashMap* cur_memory_mapping_map;
 
-extern struct _operand immedOp;
-extern struct _operand r027[8];
-extern struct _operand sp;
-extern struct _operand lr;
-extern struct _operand fp;
-extern struct _operand pc;
-extern struct _operand sp_indicate_offset;
-
-extern struct _operand trueOp;
-extern struct _operand falseOp;
 
 //定义了当前已被处理的参数个数
 extern size_t passed_param_number;
@@ -53,6 +43,15 @@ void vitual_Stack_Memory_map_init(HashMap** map);
 */
 int request_new_local_variable_memory_unit();
 
+/**
+ * @brief 使对栈帧指针的更改生效
+ * @update: 2023-4-4 将栈顶相对偏移改为栈帧
+*/
+void update_fp_value();
+/**
+ * @biref 使对栈顶指针的更改生效
+*/
+void update_st_value();
 
 /**********************************************/
 /*                 外部调用                    */
@@ -85,6 +84,12 @@ int request_new_parameter_stack_memory_unit();
  * @birth: Created by LGD on 2023-3-12
 */
 void set_stack_frame_status(size_t param_num,size_t local_var_num);
+
+/**
+ * @brief 恢复函数的栈帧和栈顶
+ * @birth: Created by LGD on 2023-4-4
+*/
+void reset_stack_frame_status();
 
 
 

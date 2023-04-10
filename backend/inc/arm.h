@@ -21,10 +21,14 @@ typedef enum _AssemInstruction
 
 
 
-
+/**
+ * @brief 定义了所有的语句类型
+ * @update: 2023-4-9 添加了ASSEM_PUSH_POP_INSTRUCTION
+*/
 typedef enum
 {
     ASSEM_INSTRUCTION,
+    ASSEM_PUSH_POP_INSTRUCTION,
     ASSEM_PSEUDO_INSTRUCTION,
     LABEL,
     BI,      //Branch Instructions
@@ -51,6 +55,9 @@ typedef struct _assemNode
 
     //说明节点是指令/伪指令   //20221203
     ASSEMBLE_TYPE assemType;
+
+    //push pop的扩展   2023-4-9
+    AssembleOperand* opList;
     //指向下一个节点
     struct _assemNode* next;
 
@@ -64,6 +71,13 @@ extern assmNode* prev;
 
 //ARM指令
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label);
+
+#define END -1LL
+/**
+ * @brief 变长的push尝试
+ * @birth: Created by LGD on 2023-4-9
+*/
+void bash_push_pop_instruction(char* opcode,...);
 void push_pop_instructions(char* opcode,AssembleOperand reg);
 assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,AssembleOperand op1,AssembleOperand op2,char* suffix,bool symbol,char* label);
 void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label);
