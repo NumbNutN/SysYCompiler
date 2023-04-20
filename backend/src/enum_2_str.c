@@ -1,4 +1,6 @@
 #include "operand.h"
+#include "arm.h"
+
 
 char* enum_shift_2_str(enum SHIFT_WAY shiftWay)
 {
@@ -16,6 +18,35 @@ char* enum_shift_2_str(enum SHIFT_WAY shiftWay)
             return "RRX";
         default:
             return "";
+    }
+}
+
+char* enum_instruction_mnemonic_2_str(enum _ARM_Instruction_Mnemonic aim)
+{
+    switch(aim)
+    {
+        case ADD:
+            return "ADD";
+        case SUB:
+            return "SUB";
+        case MUL:
+            return "MUL";
+        case MLA:
+            return "MLA";
+        case MOV:
+            return "MOV";
+        case FADD:
+            return "FADD";
+        case FSUB:
+            return "FSUB";
+        case FMUL:
+            return "FMUL";
+        case FDIV:
+            return "FDIV";
+        case LDR:
+            return "LDR";
+        case STR:
+            return "STR";
     }
 }
 

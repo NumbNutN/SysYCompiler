@@ -12,8 +12,9 @@ int CntAssemble = 0;
 /**
  * @brief 翻译通用数据传输指令
  * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换
+ * @update: 2023-4-20 更改了指令助记符的类型   删去了label选项
 */
-assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,AssembleOperand op1,AssembleOperand op2,char* suffix,bool symbol,char* label)
+void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,AssembleOperand rd,AssembleOperand rn,AssembleOperand second_operand,char* cond,bool symbol)
 {
     /*
         ARM General Data Processing Instructions
@@ -25,34 +26,34 @@ assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,
             目标操作数寄存器寻址
             源操作数为立即数寻址、直接寻址、寄存器直接寻址
     */
+
+    //创建新的节点
     AddrMode mode;
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     memset(node,0,sizeof(assmNode));
-    strcpy(node->opCode,opCode);
 
-    mode = tar.addrMode;
+
+    strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
+
     //对于目标数  允许 寄存器寻址
-    assert(mode==REGISTER_DIRECT);
-    node->op[0] = tar;
+    assert(rd.addrMode==REGISTER_DIRECT);
+    node->op[Rd] = rd;
 
-    mode = op1.addrMode;
-    //对于后面的操作数 允许 立即寻址 寄存器寻址
-    assert(mode==IMMEDIATE || mode==REGISTER_DIRECT);
-    node->op[1] = op1;
-
-    node->op_len = 2;
-
-    //判断op2 是否不存在   20221202
-    if(!op2_is_empty(op2))
+    if(!op_is_empty(rn))
     {
-        mode = op2.addrMode;
-        assert(mode==IMMEDIATE || mode==REGISTER_DIRECT);
-        node->op[2] = op2;
-        node->op_len += 1;
+        //对于rn 允许 寄存器寻址
+        assert(rn.addrMode==REGISTER_DIRECT);
+        node->op[Rn] = rn;
     }
+    
+    //对于第二操作数 允许 寄存器寻址 直接寻址
+    assert(second_operand.addrMode==IMMEDIATE || second_operand.addrMode==REGISTER_DIRECT);
+    node->op[2] = second_operand;    
+
+    node->op_len = 3;
 
     //乘法安全性检查
-    if(!strcmp(node->opCode,"MUL") && (node->op[1].oprendVal == node->op[2].oprendVal))
+    if(opCode == MUL && (node->op[1].oprendVal == node->op[2].oprendVal))
     {
         AssembleOperand tmp = node->op[1];
         node->op[1] = node->op[2];
@@ -60,10 +61,10 @@ assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,
     }
     
     //Cond后缀
-    strcpy(node->suffix,suffix);          //20221202  添加后缀
+    strcpy(node->suffix,cond);          //20221202  添加后缀
 
     //Label标号
-    strcpy(node->label,label);
+    strcpy(node->label,"label");
 
     //指令类型   20221203
     node->assemType = ASSEM_INSTRUCTION;

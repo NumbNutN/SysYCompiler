@@ -43,7 +43,7 @@ void ins_mul_2_lsl(Instruction* ins)
         operand_set_shift(&cvtOp2,LSL,log(op1.oprendVal)/log(2));
         
         //第二操作数需要放置在合适的位置
-        general_data_processing_instructions("MOV",tarOp,cvtOp2,nullop,NONESUFFIX,false,NONELABEL);
+        general_data_processing_instructions(MOV,tarOp,nullop,cvtOp2,NONESUFFIX,false);
     }
     else
     {
@@ -58,7 +58,7 @@ void ins_mul_2_lsl(Instruction* ins)
             
         operand_set_shift(&cvtOp1,LSL,log(op1.oprendVal)/log(2));
 
-        general_data_processing_instructions("MOV",tarOp,cvtOp1,nullop,NONESUFFIX,false,NONELABEL);
+        general_data_processing_instructions(MOV,tarOp,nullop,cvtOp1,NONESUFFIX,false);
     }
 }
 

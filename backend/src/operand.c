@@ -319,9 +319,9 @@ size_t operand_get_immediate(AssembleOperand op)
  * @brief 设置操作数的移位操作
  * @birth: Created by LGD on 2023-4-20
 */
-void operand_set_shift(AssembleOperand* Rm,enum SHIFT_WAY shiftWay,size_t shiftNum)
+void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftNum)
 {
-    Rm->shiftWay = shiftWay;
-    Rm->shiftNum = shiftNum;
+    rm->shiftWay = shiftWay;
+    rm->shiftNum = shiftNum;
 }
 

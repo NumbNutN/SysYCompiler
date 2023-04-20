@@ -136,9 +136,9 @@ void update_fp_value()
     offset.addrMode = IMMEDIATE;
     offset.oprendVal = abs(currentPF.FPOffset);
     if(currentPF.FPOffset > 0)
-        general_data_processing_instructions("ADD",fp,fp,offset," ",false,"\t");
+        general_data_processing_instructions(ADD,fp,fp,offset," ",false);
     else
-        general_data_processing_instructions("SUB",fp,fp,offset," ",false,"\t");
+        general_data_processing_instructions(SUB,fp,fp,offset," ",false);
 }
 
 /**
@@ -154,9 +154,9 @@ void update_st_value()
     offset.addrMode = IMMEDIATE;
     offset.oprendVal = abs(currentPF.SPOffset);
     if(currentPF.SPOffset > 0)
-        general_data_processing_instructions("ADD",sp,sp,offset," ",false,"\t");
+        general_data_processing_instructions(ADD,sp,sp,offset," ",false);
     else
-        general_data_processing_instructions("SUB",sp,sp,offset," ",false,"\t");    
+        general_data_processing_instructions(SUB,sp,sp,offset," ",false);    
 }
 
 /**

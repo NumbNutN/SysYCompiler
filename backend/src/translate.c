@@ -105,7 +105,7 @@ void translate_param_instructions(Instruction* this)
     int offset;
     if(passed_param_number <= 3)
     //小于等于4个则直接丢内存
-        general_data_processing_instructions("MOV",r027[passed_param_number],param_op,nullop,NONESUFFIX,false,NONELABEL);
+        general_data_processing_instructions(MOV,r027[passed_param_number],nullop,param_op,NONESUFFIX,false);
     else
     //申请一个新的参数存放的内存单元
     {
@@ -162,7 +162,7 @@ translate_call_with_return_value_instructions(Instruction* this)
     r0.addrMode = REGISTER_DIRECT;
     r0.oprendVal = R0;
 
-    general_data_processing_instructions("MOV",op,r0,nullop,NONESUFFIX,false,NONELABEL);
+    general_data_processing_instructions(MOV,op,nullop,r0,NONESUFFIX,false);
 
     //暂存寄存器回收
     general_recycle_temp_register_conditional(this,0,op);
@@ -253,18 +253,18 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         {
             case AddOP:
                 middleOp = operand_pick_temp_register(ARM);
-                general_data_processing_instructions("ADD",
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
+                general_data_processing_instructions(ADD,
+                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
             break;
             case SubOP:
                 middleOp = operand_pick_temp_register(ARM);
-                general_data_processing_instructions("SUB",
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
+                general_data_processing_instructions(SUB,
+                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
             break;
             case MulOP:
                 middleOp = operand_pick_temp_register(ARM);
-                general_data_processing_instructions("MUL",
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
+                general_data_processing_instructions(MUL,
+                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
             break;
 #ifdef USE_DIV_ABI
             case DivOP:
@@ -390,7 +390,7 @@ void translate_goto_instruction_test_bool(Instruction* this)
         trueOp.addrMode = IMMEDIATE;
         trueOp.oprendVal = 1;
         //比较指令
-        general_data_processing_instructions("CMP",op,trueOp,nullop,NONESUFFIX,false,NONELABEL);
+        general_data_processing_instructions(CMP,op,trueOp,nullop,NONESUFFIX,false);
 
         branch_instructions_test(ins_get_tarLabel(this),"NE",false,NONELABEL);
     }

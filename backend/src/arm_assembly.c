@@ -135,9 +135,9 @@ void initDlist()
     nullop.oprendVal = 0;
 }
 
-bool op2_is_empty(AssembleOperand op2)
+bool op_is_empty(AssembleOperand op)
 {
-    return (op2.addrMode == 0 && op2.addtion == 0 && op2.oprendVal == 0);
+    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
 }
 
 /*
@@ -426,7 +426,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
-        general_data_processing_instructions("MOV",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
+        general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
     else
     {
@@ -438,7 +438,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
         if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
             memory_access_instructions("STR",op1,tar,NONESUFFIX,false,NONELABEL);
         else
-            general_data_processing_instructions("MOV",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
+            general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
 
         if(judge_operand_in_RegOrMem(oriOp1) == IN_MEMORY ||
         (judge_operand_in_RegOrMem(oriOp1) == IN_INSTRUCTION))
@@ -462,7 +462,7 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
     if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
         tar = operand_load_from_memory(tar,ARM);
     
-    general_data_processing_instructions("CMP",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
+    general_data_processing_instructions(CMP,tar,op1,nullop,NONESUFFIX,false);
 
     if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
     (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
@@ -479,7 +479,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
     if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
         op1 = operand_load_from_memory(op1,ARM);
 
-    general_data_processing_instructions("MOV",tar,op1,nullop,from_tac_op_2_str(opCode),false,NONELABEL);
+    general_data_processing_instructions(MOV,tar,nullop,op1,from_tac_op_2_str(opCode),false);
 
     if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
     (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))

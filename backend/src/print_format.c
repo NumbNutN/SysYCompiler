@@ -116,6 +116,10 @@ void print_single_assembleNode(assmNode* p)
             //打印操作数
             for(int i=0;i<p->op_len;i++)
             {
+                /***********************MOV指令****************************/
+                if(!strcmp(p->opCode,"MOV") && i == Rn)
+                    continue;
+                /**********************************************************/
                 print_operand(p->op[i],i);
                 if(i!=p->op_len-1)
                     printf(", ");
