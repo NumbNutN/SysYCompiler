@@ -558,7 +558,11 @@ void print_info_map(Instruction* p,bool print_info)
         {
             HashMap_foreach(p->map,var,var_info)
             {
+#ifdef VARIABLE_MAP_BASE_ON_NAME
+                printf("| %10s ",AddrMode_2_str(var_info->ori.addrMode));
+#elif defined VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
                 printf("| %10s ",RegOrMem_2_str(get_variable_place(p,var)));
+#endif
             }
             printf("\n");
             for(int i=0;i<cnt;++i)
@@ -566,10 +570,15 @@ void print_info_map(Instruction* p,bool print_info)
             printf("\n");
             HashMap_foreach(p->map,var,var_info)
             {
+#ifdef VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
                 if(get_variable_place(p,var)==IN_REGISTER)
                     printf("| R%-9d ",get_variable_register_order(p,var));
                 else
                     printf("| %10d ",get_variable_stack_offset(p,var));
+#elif defined VARIABLE_MAP_BASE_ON_NAME
+                if(var_info->ori.addrMode == REGISTER_DIRECT || var_info->ori.addrMode == REGISTER_INDIRECT_WITH_OFFSET)
+                    printf("| R%-9d ",var_info->ori.oprendVal);
+#endif
             }
 
             for(int j=0;j<2;j++)
@@ -650,6 +659,7 @@ void print_single_info_map_map(List* this,int order,bool print_info)
  * @param   order 函数的序号
  * @param   print_info 若为假，仅打印活跃信息；若为真，将打印变量的全部信息，包括存储空间和偏移量
  * @update: 20230305 根据VarInfo新的设计修改
+ * @update: 2023-4-18 基于名字的查表方式的新修改
 */
 void print_list_info_map(List* this,int order,bool print_info)
 {
@@ -667,7 +677,11 @@ void print_list_info_map(List* this,int order,bool print_info)
     printf("\n");
     HashMap_foreach(p->map,var,var_info)
     {
-       printf("| %10s ",var->name);
+#ifdef VARIABLE_MAP_BASE_ON_NAME
+       printf("| %10s ",var);
+#elif defined VARIABLE_MAP_BASE_ON_VALUE_ADDRESS
+        printf("| %10s ",var->name);
+#endif
     }
     printf("\n");
     for(int i=0;i<cnt;++i)
@@ -712,5 +726,21 @@ char* Register_order_2_str(int order)
     char* str = (char*)malloc(sizeof(char)*3);
     sprintf(str,"R%d",order);
     return str;
+}
+
+/**
+ * @brief 将寻址方式转换为字符串
+*/
+char* AddrMode_2_str(enum _AddrMode addrMode)
+{
+    switch(addrMode)
+    {
+        case IMMEDIATE:
+            return "IMME";
+        case REGISTER_DIRECT:
+            return "REG";
+        case REGISTER_INDIRECT_WITH_OFFSET:
+            return "MEM";
+    }
 }
 

@@ -5,6 +5,7 @@
 #include "interface_zzq.h"
 #include "dependency.h"
 #include "memory_manager.h"
+#include "operand.h"
 
 /* Global Variable */
 AssembleOperand nullop;
@@ -184,6 +185,7 @@ void variable_place_shift(Instruction* this,Value* var,AssembleOperand cur)
  * @brief 翻译所有的双目赋值运算,但是采用add + mov 的新方法
  * @birth: Created by LGD on 20230226
  * @update: 20230306 新的变量位置切换
+ *          2023-4-10 添加除法运算
 */
 void translate_binary_expression_binary_and_assign(Instruction* this)
 {
@@ -238,33 +240,42 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     {
         binaryOp = binaryOpii(op1,op2);
 
-        middleOp = operand_pick_temp_register(ARM);
+        
 
         switch(ins_get_opCode(this))
         {
             case AddOP:
+                middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions("ADD",
                     middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
             break;
             case SubOP:
+                middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions("SUB",
                     middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
             break;
             case MulOP:
+                middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions("MUL",
                     middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false,NONELABEL);
             break;
 #ifdef USE_DIV_ABI
             case DivOP:
+                middleOp = r0;
+                movii(r0,binaryOp.op1);
+                movii(r1,binaryOp.op2);
                 branch_instructions_test("__aeabi_idiv","L",false,NONELABEL);
             break;
+            case ModOP:
+                middleOp = r0;
+                movii(r0,binaryOp.op1);
+                movii(r1,binaryOp.op2);
+                branch_instructions_test("__aeabi_idivmod","L",false,NONELABEL);
 #else
-#endif
-                
+            assert("未实现不调用库的除法");
+#endif  
         }
-
     }
-
     //释放第一、二操作数
     general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
     general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
@@ -287,7 +298,6 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 
     //释放中间操作数
     operand_recycle_temp_register(middleOp);
-
 }
 
 
@@ -330,6 +340,7 @@ void translate_assign_instructions(Instruction* this)
 
 /**
  * @brief 翻译双目逻辑运算表达式重构版
+ * @birth: Created by LGD on 2023-4-18
 */
 void translate_logical_binary_instruction_new(Instruction* this)
 {
@@ -541,7 +552,7 @@ void translate_logical_binary_instruction(Instruction* this)
 
         //2023-3-28 如果目标操作数为立即数
         if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
-            opList[FIRST_OPERAND] = operand_ldr_immed(opList[FIRST_OPERAND],VFP);
+            opList[FIRST_OPERAND] = operand_load_immediate(opList[FIRST_OPERAND],VFP);
         fcmp_instruction(opList[FIRST_OPERAND],opList[SECOND_OPERAND],FloatTyID);
         //回收寄存器
         operand_recycle_temp_register(opList[FIRST_OPERAND]);
@@ -553,7 +564,7 @@ void translate_logical_binary_instruction(Instruction* this)
         
         //2023-3-28 如果目标操作数为立即数
         if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
-            opList[FIRST_OPERAND] = operand_ldr_immed(opList[FIRST_OPERAND],ARM);
+            opList[FIRST_OPERAND] = operand_load_immediate(opList[FIRST_OPERAND],ARM);
         general_data_processing_instructions("CMP",opList[FIRST_OPERAND],opList[SECOND_OPERAND],nullop,NONESUFFIX,false,NONELABEL);
         //回收寄存器
         operand_recycle_temp_register(opList[FIRST_OPERAND]);

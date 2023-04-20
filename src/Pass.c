@@ -5,6 +5,7 @@
 
 #include "interface_zzq.h"
 #include "memory_manager.h"
+#include "variable_map.h"
 
 typedef struct _dom_tree {
   List *child;
@@ -1741,8 +1742,11 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0,&VariableInfoMap);    
   }
+
   //翻译前初始化
   TranslateInit();
+
+  //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
   // VarInfo testVarInfo;
   // VarInfo* testVarInfoPtr;
@@ -1762,6 +1766,10 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ins_deepSet_varMap(element,VariableInfoMap);
 
   }
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
+  }
+  
 
   //第三次function遍历，翻译每一个list
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -1770,7 +1778,10 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
 
+  //恢复当前函数栈帧
   reset_stack_frame_status();
+
+  
   // Pair *ptr_pair;
   // HashMapFirst(var_location);
   // while ((ptr_pair = HashMapNext(var_location)) != NULL) {

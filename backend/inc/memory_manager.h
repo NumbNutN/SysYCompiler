@@ -80,6 +80,12 @@ int get_virtual_Stack_Memory_mapping(HashMap* map,size_t viMem);
 int request_new_parameter_stack_memory_unit();
 
 /**
+ * @brief 申请一块新的局部变量的内存空间
+ * @update: Created by LGD on 2023-4-11
+*/
+int request_new_local_variable_memory_units(size_t wordLength);
+
+/**
  * @brief 依据局部变量个数和传递参数个数确定两个指针的跳跃位置
  * @birth: Created by LGD on 2023-3-12
 */

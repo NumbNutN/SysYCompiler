@@ -14,6 +14,10 @@
 #define FIRST_OPERAND 1
 #define SECOND_OPERAND 2
 
+#define Rd  TARGET_OPERAND
+#define RM  FIRST_OPERAND
+#define RD  SECOND_OPERAND
+
 typedef enum{
     GT,LT,GE,LE,EQ,NE,
     S

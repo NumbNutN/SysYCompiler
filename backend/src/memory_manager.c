@@ -299,6 +299,17 @@ int request_new_local_variable_memory_unit()
     assert(false && "Request for new local variable stack unit more than expected");
 }
 
+/**
+ * @brief 申请一块新的局部变量的内存空间
+ * @update: Created by LGD on 2023-4-11
+*/
+int request_new_local_variable_memory_units(size_t wordLength)
+{
+    currentPF.cur_use_variable_offset -= 4*wordLength;
+    if(currentPF.cur_use_variable_offset >= 0)
+        return currentPF.cur_use_variable_offset;
+    assert(false && "Request for new local variable stack units more than expected");
+}
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED
 

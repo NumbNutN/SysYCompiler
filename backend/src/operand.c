@@ -6,10 +6,8 @@
 
 
 
-struct _operand r027[8] = {{REGISTER_DIRECT,R0,0},
-                            {REGISTER_DIRECT,R1,0},
-                            {REGISTER_DIRECT,R2,0},
-                            {REGISTER_DIRECT,R3,0}};
+struct _operand r0 = {REGISTER_DIRECT,R0,0};
+struct _operand r1 = {REGISTER_DIRECT,R1,0};
 struct _operand immedOp = {IMMEDIATE,0,0};
 struct _operand sp = {REGISTER_DIRECT,SP,0};
 struct _operand lr = {REGISTER_DIRECT,LR,0};
@@ -20,7 +18,7 @@ struct _operand sp_indicate_offset = {
                 SP,
                 0
 };
-
+struct _operand r027[8];
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
 
@@ -67,40 +65,9 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
 
 
 /**
- * @brief AssembleOperand 将内存中的操作数加载到临时寄存器
- * @birth: Created by LGD on 20230130
-*/
-AssembleOperand operand_load_in_mem_throw(AssembleOperand op)
-{
-    AssembleOperand tempReg;
-    switch(judge_operand_in_RegOrMem(op))
-    {
-        case IN_REGISTER:
-            return op;
-        case IN_MEMORY:
-            switch(op.format)
-            {
-                case INTERGER_TWOSCOMPLEMENT:
-                    tempReg.addrMode = REGISTER_DIRECT;
-                    tempReg.oprendVal = pick_one_free_temp_arm_register();
-                    tempReg.format = INTERGER_TWOSCOMPLEMENT;
-                    memory_access_instructions("LDR",tempReg,op,NONESUFFIX,false,NONELABEL);
-                break;
-                case IEEE754_32BITS:
-                    tempReg.addrMode = REGISTER_DIRECT;
-                    tempReg.oprendVal = pick_one_free_vfp_register();
-                    tempReg.format = IEEE754_32BITS;
-                    vfp_memory_access_instructions("FLD",tempReg,op,FloatTyID);
-                break;
-            }
-        return tempReg;
-    }
-    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
-}
-
-/**
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
+ * @update: 2023-4-10 更改名字为load_from_memory
 */
 AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
 {
@@ -126,6 +93,41 @@ AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
             return tempReg;
     }
     assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
+}
+
+/**
+ * @brief 
+ * @param op 需要读取到寄存器的operand
+ * @param type 读取到的寄存器类型
+ * @update: Created by LGD on 2023-4-11
+*/
+AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,ARMorVFP type,AssembleOperand dst)
+{
+    switch(judge_operand_in_RegOrMem(op))
+    {
+        case IN_REGISTER:
+            return op;
+        case IN_MEMORY:
+            switch(type)
+            {
+                case ARM:
+                    memory_access_instructions("LDR",dst,op,NONESUFFIX,false,NONELABEL);
+                break;
+                case VFP:
+                    vfp_memory_access_instructions("FLD",dst,op,FloatTyID);
+                break;
+            }
+            return dst;
+    }
+    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
+}
+/**
+ * @brief 将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
+ * @birth: Created by LGD on 2023-4-10
+*/
+AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp)
+{
+    
 }
 
 /**
@@ -245,7 +247,7 @@ AssembleOperand operand_float_convert(AssembleOperand src,bool recycleSrc)
  * @brief 将立即数用FLD伪指令读取到临时寄存器中，LDR / FLD通用
  * @birth: Created by LGD on 20230202
 */
-AssembleOperand operand_ldr_immed(AssembleOperand src,ARMorVFP type)
+AssembleOperand operand_load_immediate(AssembleOperand src,ARMorVFP type)
 {
     AssembleOperand temp;
     switch(type)
@@ -267,11 +269,51 @@ AssembleOperand operand_ldr_immed(AssembleOperand src,ARMorVFP type)
 }
 
 /**
+ * @brief 立即数读取到指令寄存器
+ * @update:Created by LGD on 2023-4-11
+*/
+AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,ARMorVFP type,AssembleOperand dst)
+{
+    switch(type)
+    {
+        case ARM:
+            pseudo_ldr("LDR",dst,src);
+        break;
+        case VFP:
+            pseudo_fld("FLD",dst,src,FloatTyID);
+        break;
+    }
+    return dst;
+}
+
+/**
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
 bool opernad_is_in_instruction(AssembleOperand op)
 {
     return (op.addrMode == IMMEDIATE);
+}
+
+
+
+/**
+ * @brief 获取操作数的立即数
+ * @birth: Created by LGD on 2023-4-18
+*/
+size_t operand_get_immediate(AssembleOperand op)
+{
+    assert(op.addrMode == IMMEDIATE);
+    return op.oprendVal;
+}
+
+/**
+ * @brief 设置操作数的移位操作
+ * @birth: Created by LGD on 2023-4-20
+*/
+void operand_set_shift(AssembleOperand* Rm,enum SHIFT_WAY shiftWay,size_t shiftNum)
+{
+    Rm->shiftWay = shiftWay;
+    Rm->shiftNum = shiftNum;
 }
 

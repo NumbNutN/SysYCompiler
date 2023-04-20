@@ -122,7 +122,7 @@ int main() {
       "      b = 100;"
       "      continue;"
       "    } else {"
-      "      b = b *10;"
+      "      b = b /10;"
       "      break;"
       "    }"
       "  }"
@@ -157,6 +157,21 @@ int main() {
       "    int d = b;"
       "    b = c;"
       "    c = d;"
+      "  }"
+      "  return c;"
+      "}";
+
+    
+  char *my_input1 =
+      "int main() {"
+      "  int a=10;"
+      "  int b = 111;"
+      "  int c = 222;"
+      "  while (a > 5) {"
+      "    int d = b;"
+      "    b = c;"
+      "    c = d;"
+      "    a = a - 1;"
       "  }"
       "  return c;"
       "}";

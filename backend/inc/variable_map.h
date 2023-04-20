@@ -28,6 +28,26 @@ typedef struct _VarInfo
     
 } VarInfo;
 
+//MUL R0,R0, #2^n
+//LSL R0,#n
+
+//MOV R0,#0
+//XOR R0,R0
+
+//DO WHILE
+//ADD I
+//ADD II
+// BNE I
+
+//ADDNE I
+//ADDNE I
+
+//BL
+
+//bool a = R4 <5
+//if(a)
+    //
+
 
 /*===========================================================================*
  *                              Common Method                                *
@@ -292,6 +312,11 @@ RegorMem judge_operand_in_RegOrMem(AssembleOperand op);
  * @todo    根据Value的数据类型安排等量的栈空间,目前暂定统一为4个字节
 */
 VarInfo* set_in_memory(Value* var);
+
+/**
+ * @brief 将寻址方式转换为字符串
+*/
+char* AddrMode_2_str(enum _AddrMode addrMode);
 
 extern char *op_string[];
 /**记录当前函数的栈总容量*/

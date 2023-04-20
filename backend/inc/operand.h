@@ -59,6 +59,16 @@ typedef enum _ARMorVFP
     VFP
 } ARMorVFP;
 
+//2023-4-20
+enum SHIFT_WAY{
+    NONE_SHIFT,
+    LSL,
+    LSR,
+    ASR,
+    ROR,
+    RRX
+};
+
 typedef struct _operand
 {
     //定义了操作数的寻址方式
@@ -69,9 +79,14 @@ typedef struct _operand
     unsigned addtion;
     //定义当前存储的数据的格式
     DataFormat format;
+    //定义了第二操作数的左移选项  2023-4-20
+    enum SHIFT_WAY shiftWay;
+    //定义了移位的数量  2023-4-20
+    size_t shiftNum;
 
 
 } AssembleOperand;
+//ADD [SP,#4]
 
 /**
  * @brief 这个结构体用于双目运算的返回结果
@@ -85,6 +100,9 @@ typedef struct _BinaryOperand
 
 extern struct _operand immedOp;
 extern struct _operand r027[8];
+extern struct _operand r0;
+extern struct _operand r1;
+
 extern struct _operand sp;
 extern struct _operand lr;
 extern struct _operand fp;
@@ -109,16 +127,18 @@ AssembleOperand toOperand(Instruction* this,int i);
 
 
 /**
- * @brief AssembleOperand 将内存中的操作数加载到临时寄存器
- * @birth: Created by LGD on 20230130
-*/
-AssembleOperand operand_load_in_mem_throw(AssembleOperand op);
-
-/**
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
 */
-AssembleOperand operand_load_in_mem(AssembleOperand op,ARMorVFP type);
+AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type);
+
+/**
+ * @brief 
+ * @param op 需要读取到寄存器的operand
+ * @param type 读取到的寄存器类型
+ * @update: Created by LGD on 2023-4-11
+*/
+AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,ARMorVFP type,AssembleOperand dst);
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -159,12 +179,36 @@ AssembleOperand operand_float_convert(AssembleOperand src,bool recycleSrc);
  * @brief 将立即数用FLD伪指令读取到临时寄存器中，LDR / FLD通用
  * @birth: Created by LGD on 20230202
 */
-AssembleOperand operand_ldr_immed(AssembleOperand src,ARMorVFP type);
-
+AssembleOperand operand_load_immediate(AssembleOperand src,ARMorVFP type);
+/**
+ * @brief 立即数读取到指令寄存器
+ * @update:Created by LGD on 2023-4-11
+*/
+AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,ARMorVFP type,AssembleOperand dst);
 /**
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
 bool opernad_is_in_instruction(AssembleOperand op);
+
+/**
+ * @brief 设置操作数的移位操作
+ * @birth: Created by LGD on 2023-4-20
+*/
+void operand_set_shift(AssembleOperand* Rm,enum SHIFT_WAY shiftWay,size_t shiftNum);
+
+
+
+
+
+
+
+
+
+/**
+ * @brief 获取操作数的立即数
+ * @birth: Created by LGD on 2023-4-18
+*/
+size_t operand_get_immediate(AssembleOperand op);
 
 #endif

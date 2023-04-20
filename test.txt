@@ -107,3 +107,103 @@ end_label:
         ADD     R13, R13, #0
         POP     R7
         POP     R15
+
+
+
+
+
+
+        labelID number:               opcode                         name              use
+        address:0x555555582060  entry:
+                     0:              LabelOP                        entry             null
+                     1:             AssignOP                    %phi_var3               10
+                     2:             AssignOP                    %phi_var2              120
+                     3:               GotoOP                  goto label1             null
+
+        address:0x555555584180  label1:
+                     4:              LabelOP                       label1             null
+                     5:           LessThanOP                       %temp2        %phi_var3,          5
+                     6:  GotoWithConditionOP    true:label3  false:label2           %temp2
+
+        address:0x555555584720  label3:
+                     7:              LabelOP                       label3             null
+                     8:                DivOP                       %temp4        %phi_var3,          1
+                     9:           LessThanOP                       %temp6        %phi_var2,         70
+                     10:  GotoWithConditionOP   true:label5  false:label4           %temp6
+
+        address:0x555555586c10  label5:
+                     11:              LabelOP                      label5             null
+                     12:               GotoOP        (continue)br :label1             null
+                     13:             AssignOP                   %phi_var1              100
+                     14:               GotoOP                 goto label6             null
+
+        address:0x555555586e40  label6:
+                     15:              LabelOP                      label6             null
+                     16:             AssignOP                   %phi_var2        %phi_var1
+                     17:             AssignOP                   %phi_var3           %temp4
+                     18:               GotoOP                 goto label1             null
+
+        address:0x555555586b40  label4:
+                     19:              LabelOP                      label4             null
+                     20:                DivOP                      %temp8        %phi_var2,         10
+                     21:               GotoOP           (break)br :label2             null
+                     22:             AssignOP                   %phi_var1           %temp8
+                     23:               GotoOP                 goto label6             null
+
+        address:0x555555584650  label2:
+                     24:              LabelOP                      label2             null
+                     25:             ReturnOP                      return        %phi_var2
+
+        address:0x555555582170  end_label:
+                     26:              LabelOP                   end_label             null
+                     27:            FuncEndOP             func_label1 end             null
+
+
+
+
+        PUSH    {R7, R14}
+        SUB     R7, R7, #28
+        SUB     R13, R13, #28
+        LDR     R1, =10
+        MOV     R5, R1
+        LDR     R1, =120
+        STR     R1, [R7, #24]
+label1:
+        CMP     R5, #5
+        MOVLT   R6, #0
+        MOV     R6, #1
+        CMP     R6, #1
+        BNE     label2
+label3:
+        LDR     R1, =1
+        MOV     R0, R5
+        MOV     R1, R1
+        BL      __aeabi_idiv
+        MOV     R8, R0
+        LDR     R1, [R7, #24]
+        CMP     R1, #70
+        MOVLT   R0, #0
+        MOV     R0, #1
+        CMP     R0, #1
+        BNE     label4
+label5:
+        LDR     R1, =100
+        MOV     R4, R1
+label6:
+        STR     R4, [R7, #24]
+        MOV     R5, R8
+label4:
+        LDR     R1, [R7, #24]
+        LDR     R2, =10
+        MOV     R0, R1
+        MOV     R1, R2
+        BL      __aeabi_idiv
+        MOV     R0, R0
+        MOV     R4, R0
+label2:
+end_label:
+        POP     R7
+        POP     R15
+        ADD     R7, R7, #28
+        ADD     R13, R13, #28
+        POP     {R7, R15}

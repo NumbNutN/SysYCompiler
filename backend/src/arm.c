@@ -4,8 +4,14 @@
 #include "value.h"
 #include <stdarg.h>
 
+#include "enum_2_str.h"
+
 int CntAssemble = 0;
 
+/**
+ * @brief 翻译通用数据传输指令
+ * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换
+*/
 assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,AssembleOperand op1,AssembleOperand op2,char* suffix,bool symbol,char* label)
 {
     /*
@@ -41,6 +47,14 @@ assmNode* general_data_processing_instructions(char* opCode,AssembleOperand tar,
         assert(mode==IMMEDIATE || mode==REGISTER_DIRECT);
         node->op[2] = op2;
         node->op_len += 1;
+    }
+
+    //乘法安全性检查
+    if(!strcmp(node->opCode,"MUL") && (node->op[1].oprendVal == node->op[2].oprendVal))
+    {
+        AssembleOperand tmp = node->op[1];
+        node->op[1] = node->op[2];
+        node->op[2] = tmp;
     }
     
     //Cond后缀
@@ -195,16 +209,7 @@ void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* labe
     linkNode(node);
 }
 
-char* vfp_suffix_from_type(TypeID type)
-{
-    switch(type)
-    {
-        case FloatTyID:
-            return "S";
-        case DoubleTyID:
-            return "D";
-    }
-}
+
 /**
  * @brief   浮点数的访存指令
  * @author  Created by LGD on 20230111
@@ -439,11 +444,13 @@ void linkNode(assmNode* now)
 
 //-------------------------------------------------------------------------------
 //打印指令
+
 /**
  * @update last 20230124 添加对VFP浮点指令的编号
  *         2023-4-9 添加了基于PUSH POP的新打印方式
+ *         2023-4-20 为移位添加了打印方式
 */
-void print_operand(AssembleOperand op)
+void print_operand(AssembleOperand op,size_t opernadIdx)
 {
     /*
         依据寻址方式打印单个操作数的文本格式
@@ -470,7 +477,14 @@ void print_operand(AssembleOperand op)
                 printf("%c%d",'S',op.oprendVal - FLOATING_POINT_REG_BASE);
             else
                 printf("?%d",op.oprendVal);
-            break;
+            
+            //2023-4-20 第二操作数
+            if(opernadIdx == SECOND_OPERAND && op.addrMode == REGISTER_DIRECT)
+                if(op.shiftWay == NONE_SHIFT)
+                    break;
+                else
+                    printf(",%s #%d",enum_shift_2_str(op.shiftWay),op.shiftNum);
+        break;
         case REGISTER_INDIRECT:
             //LDR R0,[R1]
             if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
@@ -539,7 +553,7 @@ void print_single_assembleNode(assmNode* p)
             //打印操作数
             for(int i=0;i<p->op_len;i++)
             {
-                print_operand(p->op[i]);
+                print_operand(p->op[i],i);
                 if(i!=p->op_len-1)
                     printf(", ");
             }
@@ -557,7 +571,7 @@ void print_single_assembleNode(assmNode* p)
             //打印操作数
             for(int i=0;i<p->op_len;i++)
             {
-                print_operand(p->opList[i]);
+                print_operand(p->opList[i],i);
                 if(i!=p->op_len-1)
                     printf(", ");
             }
@@ -571,7 +585,7 @@ void print_single_assembleNode(assmNode* p)
         case LDR_PSEUDO_INSTRUCTION:
             printf("\t");
             printf("%s\t",p->opCode);
-            print_operand(p->op[0]);
+            print_operand(p->op[0],0);
             printf(", ");
             printf("=%d\n",p->op[1].oprendVal);
         break;
