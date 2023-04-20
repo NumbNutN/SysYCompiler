@@ -1766,9 +1766,10 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ins_deepSet_varMap(element,VariableInfoMap);
 
   }
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
-  }
+  //打印变量信息表
+  // for (int i = 0; i < self_cfg->node_num; i++) {
+  //   print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
+  // }
   
 
   //第三次function遍历，翻译每一个list

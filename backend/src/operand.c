@@ -38,10 +38,12 @@ AssembleOperand toOperand(Instruction* this,int i)
  * @brief 依据Value* 返回 operand
  * @birth: Created by LGD on 2023-3-16
  * @update: 2023-4-4 将栈顶指针改为栈帧
+ * @update； 2023-4-20 清空内存
 */
 AssembleOperand ValuetoOperand(Instruction* this,Value* var)
 {
     AssembleOperand op;
+    memset(&op,0,sizeof(AssembleOperand));
     RegorMem rOm = get_variable_place(this,var);
     switch(rOm)
     {
@@ -68,10 +70,12 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
  * @update: 2023-4-10 更改名字为load_from_memory
+ * @update: 2023-4-20 初始化时清空内存
 */
 AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
 {
     AssembleOperand tempReg;
+    memset(&tempReg,0,sizeof(AssembleOperand));
     switch(judge_operand_in_RegOrMem(op))
     {
         case IN_REGISTER:
@@ -133,10 +137,12 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
 /**
  * @brief 把暂存器存器再封装一层
  * @birth: Created by LGD on 20230130
+ * @update: 2023-4-20 初始化内存
 */
 AssembleOperand operand_pick_temp_register(ARMorVFP type)
 {
     AssembleOperand tempReg;
+    memset(&tempReg,0,sizeof(AssembleOperand));
     tempReg.addrMode = REGISTER_DIRECT;
     switch(type)
     {
@@ -246,10 +252,12 @@ AssembleOperand operand_float_convert(AssembleOperand src,bool recycleSrc)
 /**
  * @brief 将立即数用FLD伪指令读取到临时寄存器中，LDR / FLD通用
  * @birth: Created by LGD on 20230202
+ * @update: 2023-4-20 初始化内存
 */
 AssembleOperand operand_load_immediate(AssembleOperand src,ARMorVFP type)
 {
     AssembleOperand temp;
+    memset(&temp,0,sizeof(AssembleOperand));
     switch(type)
     {
         case ARM:

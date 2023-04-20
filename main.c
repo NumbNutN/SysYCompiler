@@ -176,12 +176,26 @@ int main() {
       "  return c;"
       "}";
 
+    char *my_input4 = 
+      "int main() {"
+      "  int a=10;"
+      "  int b = 111;"
+      "  int c = 222;"
+      "  int d;"
+      "  d = a * 2;"
+      "  d = 2 * d;"
+      "  d = d * 2;"
+      "  d = d - 2;"
+      "  d = 2 - d;"
+      "  return d;"
+      "}";    
+
   //   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
   //     fprintf(stderr, "打开文件失败！");
   //     exit(-1);
   //   }
 
-  parser(input5_mul);
+  parser(my_input4);
 
   //   print_ins_pass(ins_list);
   printf("遍历结束\n");

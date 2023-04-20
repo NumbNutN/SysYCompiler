@@ -128,55 +128,6 @@ Value* get_op_from_param_instruction(Instruction* this)
     return this->user.value.pdata->param_pdata.param_value;
 }
 
-char* from_tac_op_2_str(TAC_OP op)
-{
-    switch(op)
-    {
-        case AddOP:
-            return "ADD";
-        case SubOP:
-            return "SUB";
-        case MulOP:
-            return "MUL";
-        // case Goto:
-        //     return "B";
-        case LessEqualOP:
-            return "LE";
-        case GreatEqualOP:
-            return "GE";
-        case LessThanOP:
-            return "LT";
-        case GreatThanOP:
-            return "GT";
-        case EqualOP:
-            return "EQ";
-        case NotEqualOP:
-            return "NE";
-
-
-        // case Goto_LessEqual:
-        //     return "LE";
-        // case Goto_GreatEqual:
-        //     return "GE";
-        // case Goto_LessThan:
-        //     return "LT";
-        // case Goto_GreatThan:
-        //     return "GT";
-        // case Goto_Equal:
-        //     return "E";
-        // case Goto_NotEqual:
-        //     return "NE";
-        
-        case GotoWithConditionOP:
-            return "E";
-        //add on 20221208
-        case AssignOP:
-            return "MOV";
-
-        default:
-            return "";
-    }
-}
 
 
 void translate_IR_test(struct _Instruction* this)
@@ -503,21 +454,22 @@ HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* z
     Pair* pair_ptr;
     while((pair_ptr = HashMapNext(zzqMap)) != NULL)
     {
-        // //Debug
-        char* var = (char*)pair_ptr->key;
-        enum _LOCATION* varInfo = pair_ptr->value;
         if(*((enum _LOCATION*)pair_ptr->value) == MEMORY)
         {
             //为该变量（名）进行物理地址映射
             int offset = request_new_local_variable_memory_unit();
             //TODO 为什么是size_t
             set_variable_stack_offset_by_name(myMap,pair_ptr->key,offset);
+            //打印分配结果
+            printf("%s分配了地址%d\n",pair_ptr->key,offset);
         }
         else
         {
             RegisterOrder reg_order = request_new_allocable_register();
             //为该变量(名)创建寄存器映射
             set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
+            //打印分配结果
+            printf("%s分配了寄存器%d\n",pair_ptr->key,reg_order);
         }
     }
 

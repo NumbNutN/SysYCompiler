@@ -9,3 +9,6 @@ struct _operand AssemblyNode_get_opernad(struct _assemNode* assemNode,size_t idx
 {
     return assemNode->op[idx];
 }
+
+
+

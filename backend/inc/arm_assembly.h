@@ -29,6 +29,8 @@ typedef enum{
 #define FIRST_VFP_REGISTER S0
 #define LAST_VFP_REGISTER S32
 
+extern AssembleOperand nullop;
+
 
 void initDlist();
 //assmNode* Add(Instruction* ins);

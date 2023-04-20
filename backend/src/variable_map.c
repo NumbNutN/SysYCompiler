@@ -512,7 +512,7 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
                 void* isFound = variable_map_get_value(*map,val);
                 if(isFound)break;
                 VarInfo* var_info = (VarInfo*)malloc(sizeof(VarInfo));
-                reset_var_info(var_info);
+                memset(var_info,0,sizeof(VarInfo));
                 printf("插入新的变量名：%s 地址%lx\n",val->name,val);
                 variable_map_insert_pair(*map,val,var_info);
                 totalSize += 4;

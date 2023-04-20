@@ -7,6 +7,9 @@
 #include "memory_manager.h"
 #include "operand.h"
 
+#include "optimize.h"
+#include "enum_2_str.h"
+
 /* Global Variable */
 AssembleOperand nullop;
 Instruction* functionEntrance = NULL;
@@ -189,7 +192,11 @@ void variable_place_shift(Instruction* this,Value* var,AssembleOperand cur)
 */
 void translate_binary_expression_binary_and_assign(Instruction* this)
 {
-    
+    if(ins_mul_2_lsl_trigger(this))
+    {
+        ins_mul_2_lsl(this);
+        return;
+    }
     AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
     AssembleOperand op2 = toOperand(this,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
@@ -237,7 +244,7 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 
     }
     else
-    {
+    {   
         binaryOp = binaryOpii(op1,op2);
 
         

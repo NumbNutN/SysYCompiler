@@ -9,4 +9,4 @@ main:
     MOV R0,R0, LSL #1
 
     ;ADD R0,R1,LSL #2,R2
-    ADD R0,R1,R2,LSL #2
+    ;ADD R0,R1,R2,LSL #2

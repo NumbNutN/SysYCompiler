@@ -4,6 +4,7 @@
 #include "dependency.h"
 #include "arm.h"
 #include "operand.h"
+#include "enum_2_str.h"
 
 /*
 *将Instruction翻译为汇编后，
@@ -35,7 +36,7 @@ assmNode* prev;
 
 TempReg TempARMRegList[TEMP_REG_NUM];
 TempReg TempVFPRegList[TEMP_REG_NUM];
-extern AssembleOperand nullop;
+
 
 
 Stack* Free_Vps_Register_list;
@@ -425,6 +426,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
+        general_data_processing_instructions("MOV",tar,op1,nullop,NONESUFFIX,false,NONELABEL);
     }
     else
     {

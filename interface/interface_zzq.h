@@ -84,7 +84,7 @@ void traverse_instruction_list_init(List* this);
 */
 Instruction* get_next_instruction(List* this);
 
-char* from_tac_op_2_str(TAC_OP op);
+
 
 /**
  * @brief 判断一个变量是不是return_value

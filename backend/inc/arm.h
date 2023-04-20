@@ -46,12 +46,15 @@ typedef struct _assemNode
     //定义了操作数的数量
     unsigned op_len;
 
-    //定义了助记符                  //20221202
+    //定义了助记符   2022-12-02
     char suffix[3];
     //是否要影响标记位
     bool symbol;
     //定义了语句前标号
     char label[10];
+
+    //mov 扩展 移位位数  2023-4-19
+    int lslnum;
 
     //说明节点是指令/伪指令   //20221203
     ASSEMBLE_TYPE assemType;
@@ -149,12 +152,15 @@ void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi);
 
 void linkNode(assmNode* now);
 
+
+
+
+
+
 /**
- * @brief 对单个汇编语句节点的格式化输出
- * @birth: Created by LGD on 20230227
+ * @brief 返回汇编指令指定的操作数
+ * @birth: Created by LGD on 2023-4-18
 */
-void print_single_assembleNode(assmNode* p);
-//打印输出
-void print_model();
+struct _operand AssemblyNode_get_opernad(struct _assemNode* assemNode,size_t idx);
 
 #endif
