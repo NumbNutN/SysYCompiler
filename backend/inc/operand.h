@@ -3,114 +3,6 @@
 
 #include "instruction.h"
 
-typedef enum _DataFormat
-{
-    INTERGER_TWOSCOMPLEMENT,
-    IEEE754_32BITS
-} DataFormat;
-
-typedef enum _AddrMode
-{
-    NONE_ADDRMODE,      //留空符
-    IMMEDIATE,          //立即寻址     MOV R0, #15
-    DIRECT,             //直接寻址     LDR R0, MEM
-                        //            LDR R0, [3102H]
-    REGISTER_DIRECT,    //寄存器寻址   MOV R0, R1
-    REGISTER_INDIRECT,   //寄存器间接寻址 LDR R0, [R1]
-    REGISTER_INDIRECT_WITH_OFFSET,     //前变址
-    REGISTER_INDIRECT_PRE_INCREMENTING, //自动变址
-    REGISTER_INDIRECT_POST_INCREMENTING, //后变址
-
-    //不是寻址方式 作为操作数的标记
-    TARGET_LABEL, //B/BL/BX 语句的标号           //20221202     
-    PP            //PUSH/POP 语句的标号 
-
-} AddrMode;
-
-#define FLOATING_POINT_REG_BASE 20
-typedef enum _RegisterOrder
-{
-    IN_MEM = -1,  //内存
-    R0,R1,R2,R3,R4,R5,R6,R7,R8,      //通用寄存器
-    R9_SB,R10_SL,R11_FP,R12_IP,      //分组寄存器
-    R13,                             //堆栈指针，最多允许六个不同的堆栈空间                           
-    R14,                              //链接寄存器，子程序调用保存返回地址
-    R15,                              //(R15)
-    CPSR,
-    SPSR,
-
-    S0 = FLOATING_POINT_REG_BASE,
-    S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,
-    S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,
-    S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,
-    S31,S32,
-
-    SP = R13,
-    LR = R14,
-    PC = R15
-
-} RegisterOrder;
-
-#define FP R7
-
-typedef enum _ARMorVFP
-{
-    ARM,
-    VFP
-} ARMorVFP;
-
-//2023-4-20
-enum SHIFT_WAY{
-    NONE_SHIFT,
-    LSL,
-    LSR,
-    ASR,
-    ROR,
-    RRX
-};
-
-typedef struct _operand
-{
-    //定义了操作数的寻址方式
-    enum _AddrMode addrMode;
-    //定义了操作数的值
-    uint64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
-    //附加内容
-    unsigned addtion;
-    //定义当前存储的数据的格式
-    DataFormat format;
-    //定义了第二操作数的左移选项  2023-4-20
-    enum SHIFT_WAY shiftWay;
-    //定义了移位的数量  2023-4-20
-    size_t shiftNum;
-
-
-} AssembleOperand;
-//ADD [SP,#4]
-
-/**
- * @brief 这个结构体用于双目运算的返回结果
-*/
-typedef struct _BinaryOperand
-{
-    struct _operand op1;
-    struct _operand op2;
-
-} BinaryOperand;
-
-extern struct _operand immedOp;
-extern struct _operand r027[8];
-extern struct _operand r0;
-extern struct _operand r1;
-
-extern struct _operand sp;
-extern struct _operand lr;
-extern struct _operand fp;
-extern struct _operand pc;
-extern struct _operand sp_indicate_offset;
-
-extern struct _operand trueOp;
-extern struct _operand falseOp;
 
 /**
  * @brief 依据Value* 返回 operand
@@ -190,19 +82,33 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
  * @birth: Created by LGD on 20230328
 */
 bool opernad_is_in_instruction(AssembleOperand op);
+/**
+ * @brief 判断一个operand是否在内存中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_memory(AssembleOperand op);
+/**
+ * @brief 判断一个operand是否在寄存器中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_register(AssembleOperand op);
+
+/**
+ * @brief 将操作数取到一个寄存器中，或者其他定制化需求
+ * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载
+ * @param mask 为1时表示第四个参数为屏蔽选项，及当前操作数处于这些位置时不加载到寄存器
+ *             为0时表示第四个参数为选择选项，及当前操作数处于这些位置时要加载到寄存器
+ *             选项包括 IN_MEMORY IN_REGISTER IN_INSTRUCTION 这些选项可以或在一起
+ * @param rom 见第三个参数的描述
+ * @birth: Created by LGD on 2023-4-24
+*/
+struct _operand operandConvert(AssembleOperand op,enum _ARMorVFP aov,bool mask,enum _RegorMem rom);
 
 /**
  * @brief 设置操作数的移位操作
  * @birth: Created by LGD on 2023-4-20
 */
 void operand_set_shift(AssembleOperand* Rm,enum SHIFT_WAY shiftWay,size_t shiftNum);
-
-
-
-
-
-
-
 
 
 /**

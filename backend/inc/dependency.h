@@ -115,4 +115,9 @@ bool op_is_a_variable(Value* op);
 
 TypeID value_get_type(Value* val);
 
+/**
+ * @brief 判断一个数是否是2的指数
+*/
+bool number_is_power_of_2(int num);
+
 #endif

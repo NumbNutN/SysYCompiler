@@ -191,10 +191,16 @@ void variable_place_shift(Instruction* this,Value* var,AssembleOperand cur)
  *          2023-4-10 添加除法运算
 */
 void translate_binary_expression_binary_and_assign(Instruction* this)
-{
+{   
+    //乘法左移优化
     if(ins_mul_2_lsl_trigger(this))
     {
         ins_mul_2_lsl(this);
+        return;
+    }
+    if(ins_get_opCode(this) == SubOP)
+    {
+        translate_sub(this);
         return;
     }
     AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
@@ -302,6 +308,79 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         else
             movii(tarOp,middleOp);
     }
+
+    //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
+
+/**
+ * @brief 采用add + mov 的减法翻译
+ * @birth: Created by LGD on 2023-4-24
+*/
+void translate_sub(Instruction* this)
+{   
+
+    AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
+    AssembleOperand op2 = toOperand(this,SECOND_OPERAND);
+    AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
+    AssembleOperand middleOp;
+
+    BinaryOperand binaryOp;
+
+    if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
+    {
+        //双目中任一不是浮点数
+        if(!ins_operand_is_float(this,FIRST_OPERAND) || !ins_operand_is_float(this,SECOND_OPERAND))
+        {
+            binaryOp = binaryOpfi(op1,op2);
+        }
+        else
+        {
+            binaryOp = binaryOpff(op1,op2);
+        }
+        middleOp = operand_pick_temp_register(VFP);
+
+        fadd_and_fsub_instruction("FSUB",
+            middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+    }
+    else
+    {   
+        middleOp = operand_pick_temp_register(ARM);
+        assert(!(opernad_is_in_instruction(op1) && opernad_is_in_instruction(op2)) && "减法中两个操作数都是立即数是不允许的");
+        //如果第2个操作数为立即数，使用SUB指令
+        if(opernad_is_in_instruction(op2))
+        {
+            op1 = operandConvert(op1,ARM,false,IN_MEMORY);
+            general_data_processing_instructions(SUB,
+                middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+        }
+        if(opernad_is_in_instruction(op1))
+        {
+            op2 = operandConvert(op2,ARM,false,IN_MEMORY);
+            general_data_processing_instructions(RSB,
+                middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+        }
+    }
+
+    //中间量传给目标变量
+    if(ins_operand_is_float(this,TARGET_OPERAND))
+    {
+        if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
+            movff(tarOp,middleOp);
+        else
+            movfi(tarOp,middleOp);
+    }
+    else
+    {
+        if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
+            movif(tarOp,middleOp);
+        else
+            movii(tarOp,middleOp);
+    }
+
+    //释放第一、二操作数
+    general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
+    general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
 
     //释放中间操作数
     operand_recycle_temp_register(middleOp);

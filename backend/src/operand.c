@@ -1,9 +1,7 @@
-#include "operand.h"
 #include "arm.h"
 #include "arm_assembly.h"
 #include "variable_map.h"
 #include "interface_zzq.h"
-
 
 
 struct _operand r0 = {REGISTER_DIRECT,R0,0};
@@ -38,7 +36,7 @@ AssembleOperand toOperand(Instruction* this,int i)
  * @brief 依据Value* 返回 operand
  * @birth: Created by LGD on 2023-3-16
  * @update: 2023-4-4 将栈顶指针改为栈帧
- * @update； 2023-4-20 清空内存
+ * @update: 2023-4-20 清空内存
 */
 AssembleOperand ValuetoOperand(Instruction* this,Value* var)
 {
@@ -133,6 +131,7 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
 {
     
 }
+
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -303,6 +302,27 @@ bool opernad_is_in_instruction(AssembleOperand op)
     return (op.addrMode == IMMEDIATE);
 }
 
+/**
+ * @brief 判断一个operand是否在内存中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_memory(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
+            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
+            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
+            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
+}
+
+/**
+ * @brief 判断一个operand是否在寄存器中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_register(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_DIRECT);
+}
+
 
 
 /**
@@ -325,3 +345,41 @@ void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftN
     rm->shiftNum = shiftNum;
 }
 
+/**
+ * @brief 将操作数取到一个寄存器中，或者其他定制化需求
+ * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载
+ * @param mask 为1时表示第四个参数为屏蔽选项，及当前操作数处于这些位置时不加载到寄存器
+ *             为0时表示第四个参数为选择选项，及当前操作数处于这些位置时要加载到寄存器
+ *             选项包括 IN_MEMORY IN_REGISTER IN_INSTRUCTION 这些选项可以或在一起
+ * @param rom 见第三个参数的描述
+ * @birth: Created by LGD on 2023-4-24
+*/
+struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,enum _RegorMem rom)
+{
+    struct _operand cvtOp = op;
+    assert(!(mask == true && rom == false) && "operandConvert failed");
+
+    if(!mask)
+    {
+        if( ((rom & IN_MEMORY == IN_MEMORY) || !rom) &&  
+            judge_operand_in_RegOrMem(op) == IN_MEMORY)
+            cvtOp = operand_load_from_memory(op,aov);
+        if(((rom & IN_INSTRUCTION == IN_INSTRUCTION) || !rom ) && 
+            judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
+            cvtOp = operand_load_immediate(op,aov);
+    }
+    else
+    {
+        if( ((rom & IN_MEMORY == IN_MEMORY) || !rom) && 
+            judge_operand_in_RegOrMem(op) == IN_MEMORY)
+            return cvtOp;
+        if(((rom & IN_INSTRUCTION == IN_INSTRUCTION) || !rom ) &&
+            judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
+            return cvtOp;
+        if(judge_operand_in_RegOrMem(op) == IN_MEMORY)
+            return operand_load_from_memory(op,aov);
+        if(judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
+            return operand_load_immediate(op,aov);
+    }
+    return cvtOp;
+}

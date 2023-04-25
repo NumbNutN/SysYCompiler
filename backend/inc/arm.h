@@ -11,7 +11,8 @@ extern int CntAssemble;
 typedef enum _ARM_Instruction_Mnemonic
 {
     ADD,     //加法指令
-    SUB,
+    SUB,     //减法
+    RSB,     //32位逆向减法
     MUL,     //32位乘法指令
     MLA,     //32位乘加指令
 
@@ -63,8 +64,9 @@ typedef struct _assemNode
     char suffix[3];
     //是否要影响标记位
     bool symbol;
-    //定义了语句前标号
-    char label[10];
+
+    //标号节点的标号
+    char label[20];
 
     //mov 扩展 移位位数  2023-4-19
     int lslnum;
@@ -84,6 +86,116 @@ typedef struct _assemNode
 extern assmNode* head;
 //该指针始终指向当前上一个节点
 extern assmNode* prev;
+
+typedef enum _DataFormat
+{
+    INTERGER_TWOSCOMPLEMENT,
+    IEEE754_32BITS
+} DataFormat;
+
+typedef enum _AddrMode
+{
+    NONE_ADDRMODE,      //留空符
+    IMMEDIATE,          //立即寻址     MOV R0, #15
+    DIRECT,             //直接寻址     LDR R0, MEM
+                        //            LDR R0, [3102H]
+    REGISTER_DIRECT,    //寄存器寻址   MOV R0, R1
+    REGISTER_INDIRECT,   //寄存器间接寻址 LDR R0, [R1]
+    REGISTER_INDIRECT_WITH_OFFSET,     //前变址
+    REGISTER_INDIRECT_PRE_INCREMENTING, //自动变址
+    REGISTER_INDIRECT_POST_INCREMENTING, //后变址
+
+    //不是寻址方式 作为操作数的标记
+    TARGET_LABEL, //B/BL/BX 语句的标号           //20221202     
+    PP            //PUSH/POP 语句的标号 
+
+} AddrMode;
+
+#define FLOATING_POINT_REG_BASE 20
+typedef enum _RegisterOrder
+{
+    IN_MEM = -1,  //内存
+    R0,R1,R2,R3,R4,R5,R6,R7,R8,      //通用寄存器
+    R9_SB,R10_SL,R11_FP,R12_IP,      //分组寄存器
+    R13,                             //堆栈指针，最多允许六个不同的堆栈空间                           
+    R14,                              //链接寄存器，子程序调用保存返回地址
+    R15,                              //(R15)
+    CPSR,
+    SPSR,
+
+    S0 = FLOATING_POINT_REG_BASE,
+    S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,
+    S11,S12,S13,S14,S15,S16,S17,S18,S19,S20,
+    S21,S22,S23,S24,S25,S26,S27,S28,S29,S30,
+    S31,S32,
+
+    SP = R13,
+    LR = R14,
+    PC = R15
+
+} RegisterOrder;
+
+#define FP R7
+
+typedef enum _ARMorVFP
+{
+    ARM,
+    VFP
+} ARMorVFP;
+
+//2023-4-20
+enum SHIFT_WAY{
+    NONE_SHIFT,
+    LSL,
+    LSR,
+    ASR,
+    ROR,
+    RRX
+};
+
+typedef struct _operand
+{
+    //定义了操作数的寻址方式
+    enum _AddrMode addrMode;
+    //定义了操作数的值
+    uint64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
+    //附加内容
+    unsigned addtion;
+    //定义当前存储的数据的格式
+    DataFormat format;
+    //定义了第二操作数的左移选项  2023-4-20
+    enum SHIFT_WAY shiftWay;
+    //定义了移位的数量  2023-4-20
+    size_t shiftNum;
+
+
+} AssembleOperand;
+//ADD [SP,#4]
+
+/**
+ * @brief 这个结构体用于双目运算的返回结果
+*/
+typedef struct _BinaryOperand
+{
+    struct _operand op1;
+    struct _operand op2;
+
+} BinaryOperand;
+
+extern struct _operand immedOp;
+extern struct _operand r027[8];
+extern struct _operand r0;
+extern struct _operand r1;
+
+extern struct _operand sp;
+extern struct _operand lr;
+extern struct _operand fp;
+extern struct _operand pc;
+extern struct _operand sp_indicate_offset;
+
+extern struct _operand trueOp;
+extern struct _operand falseOp;
+
 
 //ARM指令
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label);

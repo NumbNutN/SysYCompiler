@@ -63,9 +63,6 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     //Cond后缀
     strcpy(node->suffix,cond);          //20221202  添加后缀
 
-    //Label标号
-    strcpy(node->label,"label");
-
     //指令类型   20221203
     node->assemType = ASSEM_INSTRUCTION;
 
@@ -283,7 +280,6 @@ void fsito_and_fuito_instruction(char* opCode,AssembleOperand fd,AssembleOperand
 
     node->op[0] = fd;
     node->op[1] = sm;
-    strcpy(node->label,NONELABEL);
 
     node->assemType = ASSEM_INSTRUCTION;
 
@@ -335,7 +331,6 @@ void fmrs_and_fmsr_instruction(char* opCode,AssembleOperand rd,AssembleOperand s
         node->op[0] = sn;
         node->op[1] = rd;
     }
-    strcpy(node->label,NONELABEL);
     node->assemType = ASSEM_INSTRUCTION;
     linkNode(node);
 
@@ -352,7 +347,6 @@ void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type)
     node->op_len = 2;
     node->op[0] = fd;
     node->op[1] = fm;
-    strcpy(node->label,NONELABEL);
     node->assemType = ASSEM_INSTRUCTION;
     linkNode(node);
 }
@@ -373,7 +367,6 @@ void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOper
     node->op_len = 2;
     node->op[0] = fd;
     node->op[1] = fm;
-    strcpy(node->label,NONELABEL);
     node->assemType = ASSEM_INSTRUCTION;
     linkNode(node);
 }

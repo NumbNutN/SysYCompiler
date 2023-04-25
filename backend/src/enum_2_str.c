@@ -29,6 +29,8 @@ char* enum_instruction_mnemonic_2_str(enum _ARM_Instruction_Mnemonic aim)
             return "ADD";
         case SUB:
             return "SUB";
+        case RSB:
+            return "RSB";
         case MUL:
             return "MUL";
         case MLA:

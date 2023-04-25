@@ -14,6 +14,12 @@ void Label(char* label);
 
 
 void translate_goto_instruction_test(Instruction* this);
+
+/**
+ * @brief 采用add + mov 的减法翻译
+ * @birth: Created by LGD on 2023-4-24
+*/
+void translate_sub(Instruction* this);
 void translate_binary_expression_test(Instruction* ins);
 
 

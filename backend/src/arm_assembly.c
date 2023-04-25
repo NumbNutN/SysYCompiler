@@ -495,7 +495,6 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
 */
  BinaryOperand binaryOpii(AssembleOperand op1,AssembleOperand op2)
  {
-
     AssembleOperand tarOp;
     AssembleOperand cvtOp1;
     AssembleOperand cvtOp2;

@@ -3,6 +3,9 @@
 #include "arm.h"
 #include "variable_map.h"
 #include "instruction.h"
+#include "operand.h"
+
+#include "dependency.h"
 
 #include <assert.h>
 #include <string.h>
@@ -17,7 +20,11 @@ bool ins_mul_2_lsl_trigger(Instruction* ins)
     AssembleOperand op1 = toOperand(ins,FIRST_OPERAND);
     AssembleOperand op2 = toOperand(ins,SECOND_OPERAND);
 
-    return ins_get_opCode(ins) == MulOP && (op1.oprendVal % 2 == 0 || op2.oprendVal % 2 == 0);
+    return ins_get_opCode(ins) == MulOP &&
+    (
+        (op1.addrMode == IMMEDIATE && number_is_power_of_2(op1.oprendVal))||
+        (op2.addrMode == IMMEDIATE && number_is_power_of_2(op2.oprendVal))
+    );
 }
 
 /**
@@ -30,7 +37,7 @@ void ins_mul_2_lsl(Instruction* ins)
     AssembleOperand op2 = toOperand(ins,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(ins,TARGET_OPERAND);
 
-    if(op1.oprendVal % 2 == 0)
+    if(op1.addrMode == IMMEDIATE && number_is_power_of_2(op1.oprendVal))
     {
         AssembleOperand cvtOp2;
         if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
@@ -56,7 +63,7 @@ void ins_mul_2_lsl(Instruction* ins)
         else
             cvtOp1 = op1;
             
-        operand_set_shift(&cvtOp1,LSL,log(op1.oprendVal)/log(2));
+        operand_set_shift(&cvtOp1,LSL,log(op2.oprendVal)/log(2));
 
         general_data_processing_instructions(MOV,tarOp,nullop,cvtOp1,NONESUFFIX,false);
     }
