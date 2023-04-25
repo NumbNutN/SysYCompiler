@@ -2,7 +2,7 @@
 #define _MEMORY_MANAGER_H
 
 #include "cds.h"
-#include "operand.h"
+#include "arm.h"
 
 typedef struct _MemUnitInfo
 {

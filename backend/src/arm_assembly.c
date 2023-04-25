@@ -1,10 +1,10 @@
-#include "arm_assembly.h"
 #include "variable_map.h"
-#include "interface_zzq.h"
 #include "dependency.h"
-#include "arm.h"
 #include "operand.h"
+#include "arm.h"
 #include "enum_2_str.h"
+
+#include "interface_zzq.h"
 
 /*
 *将Instruction翻译为汇编后，
@@ -235,6 +235,19 @@ bool ins_operand_is_float(Instruction* this,int opType)
     }
 }
 
+/**
+ * @brief 返回当前寄存器的类型
+ * @return 两类 arm寄存器 或vfp浮点寄存器
+ * @author Created by LGD on 20230113
+*/
+ARMorVFP register_type(RegisterOrder reg)
+{
+    if(reg >= R0 && reg <= SPSR)
+        return ARM;
+    if(reg >= S0 && reg <= S31)
+        return VFP;
+}
+
 
 /**
  * @brief 统一为整数和浮点数变量归还寄存器
@@ -285,19 +298,6 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
     if((recycle_status | NO_NEED_TO_RECYCLE) != NO_NEED_TO_RECYCLE)
         general_recycle_temp_register(this,specificOperand,recycleRegister);
         
-}
-
-/**
- * @brief 返回当前寄存器的类型
- * @return 两类 arm寄存器 或vfp浮点寄存器
- * @author Created by LGD on 20230113
-*/
-ARMorVFP register_type(RegisterOrder reg)
-{
-    if(reg >= R0 && reg <= SPSR)
-        return ARM;
-    if(reg >= S0 && reg <= S31)
-        return VFP;
 }
 
 //----------------------------------------//

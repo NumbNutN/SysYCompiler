@@ -253,8 +253,7 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     {   
         binaryOp = binaryOpii(op1,op2);
 
-        
-
+    
         switch(ins_get_opCode(this))
         {
             case AddOP:
@@ -325,10 +324,9 @@ void translate_sub(Instruction* this)
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
     AssembleOperand middleOp;
 
-    BinaryOperand binaryOp;
-
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
+        BinaryOperand binaryOp;
         //双目中任一不是浮点数
         if(!ins_operand_is_float(this,FIRST_OPERAND) || !ins_operand_is_float(this,SECOND_OPERAND))
         {
@@ -342,6 +340,10 @@ void translate_sub(Instruction* this)
 
         fadd_and_fsub_instruction("FSUB",
             middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+
+        //释放第一、二操作数
+        general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
     }
     else
     {   
@@ -352,14 +354,18 @@ void translate_sub(Instruction* this)
         {
             op1 = operandConvert(op1,ARM,false,IN_MEMORY);
             general_data_processing_instructions(SUB,
-                middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+                middleOp,op1,op2,NONESUFFIX,false);
         }
         if(opernad_is_in_instruction(op1))
         {
             op2 = operandConvert(op2,ARM,false,IN_MEMORY);
             general_data_processing_instructions(RSB,
-                middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+                middleOp,op2,op1,NONESUFFIX,false);
         }
+
+        //释放第一、二操作数
+        general_recycle_temp_register_conditional(this,FIRST_OPERAND,op1);
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,op2);
     }
 
     //中间量传给目标变量
@@ -378,9 +384,7 @@ void translate_sub(Instruction* this)
             movii(tarOp,middleOp);
     }
 
-    //释放第一、二操作数
-    general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
-    general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
+
 
     //释放中间操作数
     operand_recycle_temp_register(middleOp);

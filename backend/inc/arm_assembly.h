@@ -7,31 +7,6 @@
 #include <assert.h>
 #include "arm.h"
 
-#define NONESUFFIX ""
-#define NONELABEL "\t"
-
-#define TARGET_OPERAND 0
-#define FIRST_OPERAND 1
-#define SECOND_OPERAND 2
-
-#define Rd  TARGET_OPERAND
-#define Rn  FIRST_OPERAND
-#define Rm  SECOND_OPERAND
-
-typedef enum{
-    GT,LT,GE,LE,EQ,NE,
-    S
-} Suffix;
-
-
-#define FIRST_ARM_REGISTER R0
-#define LAST_ARM_REGISTER SPSR
-#define FIRST_VFP_REGISTER S0
-#define LAST_VFP_REGISTER S32
-
-extern AssembleOperand nullop;
-
-
 void initDlist();
 //assmNode* Add(Instruction* ins);
 
@@ -46,14 +21,14 @@ void initDlist();
  *          20220109 当选取的是目的操作数时，不再访存
  *          20220103 offset报错,raspberry OS 和编译器的奇怪问题 遂将声明提前
 */
-size_t ins_variable_load_in_register(Instruction* this,int i,ARMorVFP regType,AssembleOperand* op);
+size_t ins_variable_load_in_register(Instruction* this,int i,ARMorVFP regType,struct _operand* op);
 
 /**
  * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器,若在寄存器和指令中，返回对应的寄存器或常数
  * @author created by LGD on 20221225
  * @return 若使用了临时寄存器，返回寄存器的编号，否则返回-1
 */
-size_t variable_load_in_register(Instruction* this,Value* op,AssembleOperand* assem_op);
+size_t variable_load_in_register(Instruction* this,Value* op,struct _operand* assem_op);
 
 void variable_storage_back(Instruction* this,int i,int order);
 
@@ -93,7 +68,7 @@ bool ins_operand_is_float(Instruction* this,int opType);
  * @author created by LGD on 20230113
  * @update: 20230122 添加了operandType来区分赋值语句和算术语句的操作数个数
 */
-void ins_target_operand_load_in_register(Instruction* this,AssembleOperand* op,int operandType);
+void ins_target_operand_load_in_register(Instruction* this,struct _operand* op,int operandType);
 /**
  * @brief 将变量存储回原来的位置
  *          若在内存中，将最终结果存到内存
@@ -107,22 +82,14 @@ void variable_storage_back_new(Instruction* this,int i,RegisterOrder order);
 /**
  * @brief 统一为整数和浮点数变量归还寄存器
 */
-void general_recycle_temp_register(Instruction* this,int i,AssembleOperand op);
-
-typedef enum _RecycleCondition
-{
-    NO_NEED_TO_RECYCLE = 0,
-    VARIABLE_IN_MEMORY = 1,
-    VARIABLE_LDR_FROM_IMMEDIATE = 2,
-    INTERGER_PART_IN_MIX_CALCULATE = 4
-} RecycleCondition;
+void general_recycle_temp_register(Instruction* this,int i,struct _operand op);
 
 /**
  * @brief 回收寄存器的特殊情况，在操作数取自内存或者发生了隐式类型转换
  * @param specificOperand 可选 FIRST_OPERAND SECOND_OPERAND
  * @birth: Created by LGD on 20230227
 */
-void general_recycle_temp_register_conditional(Instruction* this,int specificOperand,AssembleOperand recycleRegister);
+void general_recycle_temp_register_conditional(Instruction* this,int specificOperand,struct _operand recycleRegister);
 
 /**
  * @brief 返回当前寄存器的类型
@@ -137,55 +104,55 @@ ARMorVFP register_type(RegisterOrder reg);
  * @birth: Created by LGD on 20230130
  * @todo 反思一下为什么一个函数要调用这么多复杂的形参呢？
 */
-AssembleOperand toOperand(Instruction* this,int i);
+struct _operand toOperand(Instruction* this,int i);
 /***
  * tar:int = op:float
  * @birth: Created by LGD on 20230130
 */
-void movif(AssembleOperand tar,AssembleOperand op1);
+void movif(struct _operand tar,struct _operand op1);
 /***
  * tar:float = op:int
  * @birth: Created by LGD on 20230130
 */
-void movfi(AssembleOperand tar,AssembleOperand op1);
+void movfi(struct _operand tar,struct _operand op1);
 /**
  * @brief movff
  * @birth: Created by LGD on 20230201
 */
-void movff(AssembleOperand tar,AssembleOperand op1);
+void movff(struct _operand tar,struct _operand op1);
 /**
  * @brief movii
  * @birth: Created by LGD on 20230201
 */
-void movii(AssembleOperand tar,AssembleOperand op1);
+void movii(struct _operand tar,struct _operand op1);
 
 /**
  * @brief movCondition
  * @birth: Created by LGD on 20230201
 */
-void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode);
+void movCondition(struct _operand tar,struct _operand op1,TAC_OP opCode);
 /**
  * @brief cmpii
  * @birth: Created by LGD on 2023-4-4
  * @todo 更改回收寄存器的方式
 */
-void cmpii(AssembleOperand tar,AssembleOperand op1);
+void cmpii(struct _operand tar,struct _operand op1);
 
 
 /**
  * @brief 双目运算 双整型
  * @birth: Created by LGD on 20230226
 */
- BinaryOperand binaryOpii(AssembleOperand op1,AssembleOperand op2);
+ BinaryOperand binaryOpii(struct _operand op1,struct _operand op2);
  /**
  * @brief 双目运算 整数浮点混合双目运算
  * @birth: Created by LGD on 20230226
 */
- BinaryOperand binaryOpfi(AssembleOperand op1,AssembleOperand op2);
+ BinaryOperand binaryOpfi(struct _operand op1,struct _operand op2);
  /**
  * @brief 双目运算 浮点运算
  * @birth: Created by LGD on 20230226
 */
-BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2);
+BinaryOperand binaryOpff(struct _operand op1,struct _operand op2);
 
 #endif

@@ -6,15 +6,9 @@
 #include "cds.h"
 #include "operand.h"
 #include "config.h"
+#include "arm.h"
 
 
-typedef enum _RegorMem
-{
-    IN_REGISTER     = 1,
-    IN_MEMORY       = 2,
-    IN_INSTRUCTION  = 4,
-    UNALLOCATED     = 8
-} RegorMem;
 
 /**
  * @update 20230306 重构了变量信息节点的内容组织方式

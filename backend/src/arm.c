@@ -28,7 +28,6 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     */
 
     //创建新的节点
-    AddrMode mode;
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     memset(node,0,sizeof(assmNode));
 
@@ -68,7 +67,110 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
 
     linkNode(node);
 }
+/**
+ * @brief 翻译通用数据传输指令
+ * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换
+ * @update: 2023-4-20 更改了指令助记符的类型   删去了label选项
+*/
+void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic opCode,char* cond,bool symbol,...)
+{
 
+    //创建新的节点
+    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    memset(node,0,sizeof(assmNode));
+
+    strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
+
+    //处理不定长参数列表
+    va_list ops;
+    va_start(ops,symbol);
+    int cnt=-1;
+    AssembleOperand tmp;
+    do{
+        tmp = va_arg(ops,AssembleOperand);
+        ++cnt;
+    }while(!memcmp(&tmp,&nullop,sizeof(AssembleOperand)));
+
+    struct _operand rd = nullop;
+    struct _operand rn= nullop;
+    struct _operand rm= nullop;
+    struct _operand operand2= nullop;
+    struct _operand ra= nullop;
+
+    va_start(ops,symbol);
+    if(cnt == 2)
+    {
+        rd = va_arg(ops,AssembleOperand);
+        operand2 = va_arg(ops,AssembleOperand);
+
+
+        //对于第二操作数 允许 寄存器寻址 直接寻址
+        assert(operand2.addrMode==IMMEDIATE || operand2.addrMode==REGISTER_DIRECT);
+        node->op[2] = operand2;
+
+        node->op_len = 3;
+    }
+    else if(cnt == 3)
+    {
+        rd = va_arg(ops,AssembleOperand);
+        rn = va_arg(ops,AssembleOperand);
+        operand2 = va_arg(ops,AssembleOperand);
+
+        //对于rn 允许 寄存器寻址
+        assert(rn.addrMode==REGISTER_DIRECT);
+        node->op[Rn] = rn;
+
+        //对于第二操作数 允许 寄存器寻址 直接寻址
+        assert(operand2.addrMode==IMMEDIATE || operand2.addrMode==REGISTER_DIRECT);
+        node->op[Rm] = operand2;
+
+        node->op_len = 3;
+    }
+    else if(cnt == 4)
+    {
+        rd = va_arg(ops,AssembleOperand);
+        rn = va_arg(ops,AssembleOperand);
+        rm = va_arg(ops,AssembleOperand);
+        ra = va_arg(ops,AssembleOperand);
+
+        //对于rn 允许 寄存器寻址
+        assert(rn.addrMode==REGISTER_DIRECT);
+        node->op[Rn] = rn;
+
+        //对于rm 允许 寄存器寻址
+        assert(rm.addrMode==REGISTER_DIRECT);
+        node->op[Rm] = rm;
+
+        //对于ra 允许 寄存器寻址
+        assert(ra.addrMode==REGISTER_DIRECT);
+        node->op[Ra] = ra;
+
+        node->op_len = 4;
+    }
+    va_end(ops);
+
+    //对于目标数  允许 寄存器寻址
+    assert(rd.addrMode==REGISTER_DIRECT);
+    node->op[Rd] = rd;
+
+
+
+    //乘法安全性检查
+    if(opCode == MUL && (node->op[1].oprendVal == node->op[2].oprendVal))
+    {
+        AssembleOperand tmp = node->op[1];
+        node->op[1] = node->op[2];
+        node->op[2] = tmp;
+    }
+    
+    //Cond后缀
+    strcpy(node->suffix,cond);          //20221202  添加后缀
+
+    //指令类型   20221203
+    node->assemType = ASSEM_INSTRUCTION;
+
+    linkNode(node);
+}
 
 
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label)

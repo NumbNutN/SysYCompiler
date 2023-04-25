@@ -1,6 +1,6 @@
 #include "arm.h"
 #include "arm_assembly.h"
-#include "variable_map.h"
+
 #include "interface_zzq.h"
 
 
@@ -19,18 +19,6 @@ struct _operand sp_indicate_offset = {
 struct _operand r027[8];
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
-
-/**
- * @brief 将Instruction中的变量转换为operand格式的方法
- * @birth: Created by LGD on 20230130
- * @todo 反思一下为什么一个函数要调用这么多复杂的形参呢？
- * @update: 2023-3-16 封装一层基础调用
-*/
-AssembleOperand toOperand(Instruction* this,int i)
-{
-    Value* var = ins_get_operand(this,i);
-    return ValuetoOperand(this,var);
-}
 
 /**
  * @brief 依据Value* 返回 operand
@@ -63,6 +51,18 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
     return op;
 }
 
+/**
+ * @brief 将Instruction中的变量转换为operand格式的方法
+ * @birth: Created by LGD on 20230130
+ * @todo 反思一下为什么一个函数要调用这么多复杂的形参呢？
+ * @update: 2023-3-16 封装一层基础调用
+*/
+AssembleOperand toOperand(Instruction* this,int i)
+{
+    Value* var = ins_get_operand(this,i);
+    return ValuetoOperand(this,var);
+}
+
 
 /**
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
@@ -70,7 +70,7 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
  * @update: 2023-4-10 更改名字为load_from_memory
  * @update: 2023-4-20 初始化时清空内存
 */
-AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
+AssembleOperand operand_load_from_memory(AssembleOperand op,enum _ARMorVFP type)
 {
     AssembleOperand tempReg;
     memset(&tempReg,0,sizeof(AssembleOperand));
@@ -103,7 +103,7 @@ AssembleOperand operand_load_from_memory(AssembleOperand op,ARMorVFP type)
  * @param type 读取到的寄存器类型
  * @update: Created by LGD on 2023-4-11
 */
-AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,ARMorVFP type,AssembleOperand dst)
+AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,enum _ARMorVFP type,AssembleOperand dst)
 {
     switch(judge_operand_in_RegOrMem(op))
     {
@@ -138,7 +138,7 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
  * @birth: Created by LGD on 20230130
  * @update: 2023-4-20 初始化内存
 */
-AssembleOperand operand_pick_temp_register(ARMorVFP type)
+AssembleOperand operand_pick_temp_register(enum _ARMorVFP type)
 {
     AssembleOperand tempReg;
     memset(&tempReg,0,sizeof(AssembleOperand));
@@ -253,7 +253,7 @@ AssembleOperand operand_float_convert(AssembleOperand src,bool recycleSrc)
  * @birth: Created by LGD on 20230202
  * @update: 2023-4-20 初始化内存
 */
-AssembleOperand operand_load_immediate(AssembleOperand src,ARMorVFP type)
+AssembleOperand operand_load_immediate(AssembleOperand src,enum _ARMorVFP type)
 {
     AssembleOperand temp;
     memset(&temp,0,sizeof(AssembleOperand));
@@ -279,7 +279,7 @@ AssembleOperand operand_load_immediate(AssembleOperand src,ARMorVFP type)
  * @brief 立即数读取到指令寄存器
  * @update:Created by LGD on 2023-4-11
 */
-AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,ARMorVFP type,AssembleOperand dst)
+AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,enum _ARMorVFP type,AssembleOperand dst)
 {
     switch(type)
     {

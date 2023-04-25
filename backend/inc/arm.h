@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "type.h"
-#include "operand.h"
 
 extern int CntAssemble;
 
@@ -50,42 +49,6 @@ typedef enum
     
 } ASSEMBLE_TYPE;
 
-
-typedef struct _assemNode
-{
-    //操作码
-    char opCode[4];
-    //操作数
-    AssembleOperand op[3];
-    //定义了操作数的数量
-    unsigned op_len;
-
-    //定义了助记符   2022-12-02
-    char suffix[3];
-    //是否要影响标记位
-    bool symbol;
-
-    //标号节点的标号
-    char label[20];
-
-    //mov 扩展 移位位数  2023-4-19
-    int lslnum;
-
-    //说明节点是指令/伪指令   //20221203
-    ASSEMBLE_TYPE assemType;
-
-    //push pop的扩展   2023-4-9
-    AssembleOperand* opList;
-    //指向下一个节点
-    struct _assemNode* next;
-
-} assmNode;
-
-
-//链式汇编节点的头节点
-extern assmNode* head;
-//该指针始终指向当前上一个节点
-extern assmNode* prev;
 
 typedef enum _DataFormat
 {
@@ -172,6 +135,50 @@ typedef struct _operand
 } AssembleOperand;
 //ADD [SP,#4]
 
+typedef struct _assemNode
+{
+    //操作码
+    char opCode[4];
+    //操作数
+    AssembleOperand op[4];
+    //定义了操作数的数量
+    unsigned op_len;
+
+    //定义了助记符   2022-12-02
+    char suffix[3];
+    //是否要影响标记位
+    bool symbol;
+
+    //标号节点的标号
+    char label[20];
+
+    //mov 扩展 移位位数  2023-4-19
+    int lslnum;
+
+    //说明节点是指令/伪指令   //20221203
+    ASSEMBLE_TYPE assemType;
+
+    //push pop的扩展   2023-4-9
+    AssembleOperand* opList;
+    //指向下一个节点
+    struct _assemNode* next;
+
+} assmNode;
+
+
+//链式汇编节点的头节点
+extern assmNode* head;
+//该指针始终指向当前上一个节点
+extern assmNode* prev;
+
+typedef enum _RegorMem
+{
+    IN_REGISTER     = 1,
+    IN_MEMORY       = 2,
+    IN_INSTRUCTION  = 4,
+    UNALLOCATED     = 8
+} RegorMem;
+
 /**
  * @brief 这个结构体用于双目运算的返回结果
 */
@@ -195,6 +202,41 @@ extern struct _operand sp_indicate_offset;
 
 extern struct _operand trueOp;
 extern struct _operand falseOp;
+
+
+//arm_assemble
+#define NONESUFFIX ""
+#define NONELABEL "\t"
+
+#define TARGET_OPERAND 0
+#define FIRST_OPERAND 1
+#define SECOND_OPERAND 2
+
+#define Rd  TARGET_OPERAND
+#define Rn  FIRST_OPERAND
+#define Rm  SECOND_OPERAND
+#define Ra  3
+
+typedef enum{
+    GT,LT,GE,LE,EQ,NE,
+    S
+} Suffix;
+
+
+#define FIRST_ARM_REGISTER R0
+#define LAST_ARM_REGISTER SPSR
+#define FIRST_VFP_REGISTER S0
+#define LAST_VFP_REGISTER S32
+
+extern struct _operand nullop;
+
+typedef enum _RecycleCondition
+{
+    NO_NEED_TO_RECYCLE = 0,
+    VARIABLE_IN_MEMORY = 1,
+    VARIABLE_LDR_FROM_IMMEDIATE = 2,
+    INTERGER_PART_IN_MIX_CALCULATE = 4
+} RecycleCondition;
 
 
 //ARM指令
