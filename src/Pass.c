@@ -29,33 +29,34 @@ typedef struct _var_live_interval {
 } var_live_interval;
 
 
-char *op_string[] = {"DefaultOP",
-                     "AddOP",
-                     "SubOP",
-                     "MulOP",
-                     "DivOP",
-                     "EqualOP",
-                     "NotEqualOP",
-                     "GreatThanOP",
-                     "LessThanOP",
-                     "GreatEqualOP",
-                     "LessEqualOP",
-                     "AssignOP",
-                     "PhiAssignOp",
-                     "ReturnOP",
-                     "AllocateOP",
-                     "LoadOP",
-                     "StoreOP",
-                     "GotoWithConditionOP",
-                     "ParamOP",
-                     "GotoOP",
-                     "CallOP",
-                     "CallWithReturnValueOP",
-                     "LabelOP",
-                     "FuncLabelOP",
-                     "FuncEndOP",
-                     "PhiFuncOp"
-
+char *op_string[] = {
+    "DefaultOP",
+    "AddOP",
+    "SubOP",
+    "MulOP",
+    "DivOP",
+    "EqualOP",
+    "NotEqualOP",
+    "GreatThanOP",
+    "LessThanOP",
+    "GreatEqualOP",
+    "LessEqualOP",
+    "AssignOP",
+    "PhiAssignOp",
+    "GetelementptrOP",
+    "ReturnOP",
+    "AllocateOP",
+    "LoadOP",
+    "StoreOP",
+    "GotoWithConditionOP",
+    "ParamOP",
+    "GotoOP",
+    "CallOP",
+    "CallWithReturnValueOP",
+    "LabelOP",
+    "FuncLabelOP",
+    "FuncEndOP",
+    "PhiFuncOp",
 };
 
 
@@ -588,7 +589,8 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
   // 遍历当前bblock的instruction找出赋值语句
   while (ListNext(cur_bblock->bblock_node->bblock_head->inst_list, &element)) {
     // 如果是赋值语句则将操作数放在栈顶 用于后续的替换
-    if (((Instruction *)element)->opcode == StoreOP) {
+    if (((Instruction *)element)->opcode == StoreOP &&
+        user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
       if (HashMapContain(
               num_of_var_def,
               user_get_operand_use(((User *)element), 0)->Val->name)) {
@@ -627,7 +629,8 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
               rename_var_stack_hashmap,
               ((Value *)element)->pdata->phi_func_pdata.phi_pointer->name),
           element);
-    } else if (((Instruction *)element)->opcode == LoadOP) {
+    } else if (((Instruction *)element)->opcode == LoadOP &&
+               user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
       void *stack_top_var;
       StackTop(
           HashMapGet(rename_var_stack_hashmap,
@@ -748,27 +751,30 @@ void rename_pass(Function *self) {
 }
 
 // 删除alloca store load语句
-void delete_alloca_store_load_ins_pass(BasicBlock *self) {
-  if (self != NULL && HashSetFind(bblock_pass_hashset, self) == false) {
-    // printf("begin %s: %p\n", self->label->name, self->label);
+void delete_alloca_store_load_ins_pass(ALGraph *self) {
+  for (int ii = 0; ii < self->node_num; ii++) {
+    List *cur_handle = (self->node_set)[ii]->bblock_head->inst_list;
 
-    unsigned i = 0;
+    ListSetClean(cur_handle, CommonCleanInstruction);
     void *element;
-    ListFirst(self->inst_list, false);
-    ListSetClean(self->inst_list, CommonCleanInstruction);
-
-    while (i != ListSize(self->inst_list)) {
+    int i = 0;
+    while (i != ListSize(cur_handle)) {
       // printf("in %s: %p\n", self->label->name, self->label);
-      ListGetAt(self->inst_list, i, &element);
+      ListGetAt(cur_handle, i, &element);
       switch (((Instruction *)element)->opcode) {
-        case AllocateOP:
-          ListRemove(self->inst_list, i);
-          break;
         case StoreOP:
-          ListRemove(self->inst_list, i);
+          if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
+            ListRemove(cur_handle, i);
+          } else {
+            i++;
+          }
           break;
         case LoadOP:
-          ListRemove(self->inst_list, i);
+          if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
+            ListRemove(cur_handle, i);
+          } else {
+            i++;
+          }
           break;
         case PhiFuncOp:
           // memset(user_get_operand_use((User *)self, 1), 0, sizeof(Use));
@@ -780,18 +786,78 @@ void delete_alloca_store_load_ins_pass(BasicBlock *self) {
           break;
       }
     }
-
-    // if (entry->false_bblock != false_situation ||
-    //     entry->true_bblock != true_situation) {
-    //   printf("!11\n");
-    // }
-
-    HashSetAdd(bblock_pass_hashset, self);
-
-    delete_alloca_store_load_ins_pass(self->true_bblock);
-
-    delete_alloca_store_load_ins_pass(self->false_bblock);
   }
+
+  List *cur_handle = (self->node_set)[0]->bblock_head->inst_list;
+  ListSetClean(cur_handle, CommonCleanInstruction);
+  void *element;
+  int i = 0;
+  while (i != ListSize(cur_handle)) {
+    // printf("in %s: %p\n", self->label->name, self->label);
+    ListGetAt(cur_handle, i, &element);
+    if (((Instruction *)element)->opcode == AllocateOP &&
+        ((Value *)element)->VTy->TID != ArrayTyID) {
+      ListRemove(cur_handle, i);
+    } else {
+      i++;
+    }
+  }
+
+  // if (self != NULL && HashSetFind(bblock_pass_hashset, self) == false) {
+  //   // printf("begin %s: %p\n", self->label->name, self->label);
+
+  //   unsigned i = 0;
+  //   void *element;
+  //   ListFirst(self->inst_list, false);
+  //   ListSetClean(self->inst_list, CommonCleanInstruction);
+
+  //   while (i != ListSize(self->inst_list)) {
+  //     // printf("in %s: %p\n", self->label->name, self->label);
+  //     ListGetAt(self->inst_list, i, &element);
+  //     switch (((Instruction *)element)->opcode) {
+  //       // case AllocateOP:
+  //       //   if (((Value *)element)->VTy->TID != ArrayTyID) {
+  //       //     ListRemove(self->inst_list, i);
+  //       //   } else {
+  //       //     i++;
+  //       //   }
+  //       //   break;
+  //       case StoreOP:
+  //         if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
+  //           ListRemove(self->inst_list, i);
+  //         } else {
+  //           i++;
+  //         }
+  //         break;
+  //       case LoadOP:
+  //         if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
+  //           ListRemove(self->inst_list, i);
+  //         } else {
+  //           i++;
+  //         }
+  //         break;
+  //       case PhiFuncOp:
+  //         // memset(user_get_operand_use((User *)self, 1), 0, sizeof(Use));
+  //         // ((Instruction *)element)->user.num_oprands--;
+  //         i++;
+  //         break;
+  //       default:
+  //         i++;
+  //         break;
+  //     }
+  //   }
+
+  //   // if (entry->false_bblock != false_situation ||
+  //   //     entry->true_bblock != true_situation) {
+  //   //   printf("!11\n");
+  //   // }
+
+  //   HashSetAdd(bblock_pass_hashset, self);
+
+  //   delete_alloca_store_load_ins_pass(self->true_bblock);
+
+  //   delete_alloca_store_load_ins_pass(self->false_bblock);
+  // }
 }
 
 void printf_cur_func_ins(Function *self) {
@@ -992,7 +1058,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
                 strdup(user_get_operand_use((User *)element, j)->Val->name));
           }
         }
-        if (((Instruction *)element)->opcode < 13) {
+        if (((Instruction *)element)->opcode < TWO_OPRANDS_INS) {
           printf("%s live def add %s\n",
                  (self->node_set)[i]->bblock_head->label->name,
                  ((Value *)element)->name);
@@ -1179,7 +1245,7 @@ void calculate_live_interval(ALGraph *self_cfg, Function *self_func) {
     while (ListReverseNext((self_cfg->node_set)[i]->bblock_head->inst_list,
                            &element)) {
       if (element->opcode < 19) {
-        if (((Instruction *)element)->opcode < 13) {
+        if (((Instruction *)element)->opcode < TWO_OPRANDS_INS) {
           var_live_interval *cur_var_live_interval = NULL;
           cur_var_live_interval = is_list_contain_item(
               self_func->all_var_live_interval, ((Value *)element)->name);
@@ -1887,7 +1953,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   printf("rename pass over\n");
 
   // 删除alloca store load语句
-  delete_alloca_store_load_ins_pass(cur_func->entry_bblock);
+  delete_alloca_store_load_ins_pass(graph_for_dom_tree);
 
   printf("delete alloca,store,load instruction over\n");
 
