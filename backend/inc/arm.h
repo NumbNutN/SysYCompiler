@@ -255,6 +255,12 @@ void push_pop_instructions(char* opcode,AssembleOperand reg);
  * @update: 2023-4-20 更改了指令助记符的类型   删去了label选项
 */
 void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,AssembleOperand rd,AssembleOperand rn,AssembleOperand second_operand,char* cond,bool symbol);
+/**
+ * @brief 翻译通用数据传输指令
+ * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换
+ * @update: 2023-4-20 更改了指令助记符的类型   删去了label选项
+*/
+void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic opCode,char* cond,bool symbol,...);
 void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label);
 void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* label);
 

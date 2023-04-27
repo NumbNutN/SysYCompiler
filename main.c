@@ -190,12 +190,18 @@ int main() {
       "  return d;"
       "}";    
 
+      char* main_000 = 
+      "int main(){"
+      "return 3;"
+      "}";
+
   //   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
   //     fprintf(stderr, "打开文件失败！");
   //     exit(-1);
   //   }
 
-  parser(my_input4);
+  parser(main_000);
+  //yyparse();
 
   //   print_ins_pass(ins_list);
   printf("遍历结束\n");

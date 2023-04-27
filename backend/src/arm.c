@@ -154,7 +154,6 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
     node->op[Rd] = rd;
 
 
-
     //乘法安全性检查
     if(opCode == MUL && (node->op[1].oprendVal == node->op[2].oprendVal))
     {

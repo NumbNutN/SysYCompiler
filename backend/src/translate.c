@@ -390,7 +390,13 @@ void translate_sub(Instruction* this)
     operand_recycle_temp_register(middleOp);
 }
 
+/**
+ * @brief 拆出数组的地址
+*/
+void translate_getelementptr_instruction(Instruction* this)
+{
 
+}
 
  
 /**
