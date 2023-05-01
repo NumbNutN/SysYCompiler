@@ -348,15 +348,15 @@ void translate_sub(Instruction* this)
     else
     {   
         middleOp = operand_pick_temp_register(ARM);
-        assert(!(opernad_is_in_instruction(op1) && opernad_is_in_instruction(op2)) && "减法中两个操作数都是立即数是不允许的");
+        assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
         //如果第2个操作数为立即数，使用SUB指令
-        if(opernad_is_in_instruction(op2))
+        if(opernad_is_immediate(op2))
         {
             op1 = operandConvert(op1,ARM,false,IN_MEMORY);
             general_data_processing_instructions(SUB,
                 middleOp,op1,op2,NONESUFFIX,false);
         }
-        if(opernad_is_in_instruction(op1))
+        if(opernad_is_immediate(op1))
         {
             op2 = operandConvert(op2,ARM,false,IN_MEMORY);
             general_data_processing_instructions(RSB,
@@ -392,13 +392,39 @@ void translate_sub(Instruction* this)
 
 /**
  * @brief 拆出数组的地址
+ * @birth: Created by LGD on 2023-5-1
 */
 void translate_getelementptr_instruction(Instruction* this)
 {
+    struct _operand tarOp = toOperand(this,TARGET_OPERAND);
+    struct _operand arrBase = toOperand(this,FIRST_OPERAND);
+    struct _operand idx = toOperand(this,SECOND_OPERAND);
+    struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this));
+
+    //使用乘加指令
+    step_long = operand_load_to_register(step_long,nullop);
+    arrBase = operand_load_to_register(arrBase,nullop);
+    idx = operand_load_to_register(idx,nullop);
+
+    struct _operand middleOp;
+    middleOp = operand_load_to_register(tarOp,nullop);
+
+
+    //乘加计算目标地址
+    general_data_processing_instructions_extend(MLA,NONESUFFIX,false,middleOp,step_long,idx,arrBase,nullop);
+    
+    //送入变量位置
+    if(!opernad_is_same(tarOp,middleOp))
+    {
+        movii(tarOp,middleOp);
+        general_recycle_temp_register_conditional(this,TARGET_OPERAND,middleOp);
+    }
+    general_recycle_temp_register_conditional(this,FIRST_OPERAND,arrBase);
+    general_recycle_temp_register_conditional(this,SECOND_OPERAND,idx);
+    //回收step_long 步长
+    recycle_temp_arm_register(step_long.oprendVal);
 
 }
-
- 
 /**
  * @brief 翻译值传的三地址代码 a = b
  * @author created by LGD on 20221208
@@ -647,7 +673,7 @@ void translate_logical_binary_instruction(Instruction* this)
         ins_variable_load_in_register(this,SECOND_OPERAND,VFP,&opList[SECOND_OPERAND]);
 
         //2023-3-28 如果目标操作数为立即数
-        if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
+        if(opernad_is_immediate(opList[FIRST_OPERAND]))
             opList[FIRST_OPERAND] = operand_load_immediate(opList[FIRST_OPERAND],VFP);
         fcmp_instruction(opList[FIRST_OPERAND],opList[SECOND_OPERAND],FloatTyID);
         //回收寄存器
@@ -659,7 +685,7 @@ void translate_logical_binary_instruction(Instruction* this)
         ins_variable_load_in_register(this,SECOND_OPERAND,ARM,&opList[SECOND_OPERAND]);
         
         //2023-3-28 如果目标操作数为立即数
-        if(opernad_is_in_instruction(opList[FIRST_OPERAND]))
+        if(opernad_is_immediate(opList[FIRST_OPERAND]))
             opList[FIRST_OPERAND] = operand_load_immediate(opList[FIRST_OPERAND],ARM);
         general_data_processing_instructions("CMP",opList[FIRST_OPERAND],opList[SECOND_OPERAND],nullop,NONESUFFIX,false,NONELABEL);
         //回收寄存器

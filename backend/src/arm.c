@@ -38,7 +38,7 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     assert(rd.addrMode==REGISTER_DIRECT);
     node->op[Rd] = rd;
 
-    if(!op_is_empty(rn))
+    if(!operand_is_NULL(rn))
     {
         //对于rn 允许 寄存器寻址
         assert(rn.addrMode==REGISTER_DIRECT);
@@ -89,7 +89,7 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
     do{
         tmp = va_arg(ops,AssembleOperand);
         ++cnt;
-    }while(!memcmp(&tmp,&nullop,sizeof(AssembleOperand)));
+    }while(memcmp(&tmp,&nullop,sizeof(AssembleOperand)));
 
     struct _operand rd = nullop;
     struct _operand rn= nullop;

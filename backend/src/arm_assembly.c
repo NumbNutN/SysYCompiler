@@ -135,11 +135,6 @@ void initDlist()
     nullop.oprendVal = 0;
 }
 
-bool op_is_empty(AssembleOperand op)
-{
-    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
-}
-
 /*
 **二元运算**
 设计模式：

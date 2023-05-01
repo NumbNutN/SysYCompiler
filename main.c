@@ -68,17 +68,17 @@ int main() {
   parser(multidimensional_arrays);
 
   // 重定向输出回终端
-  if (freopen("/dev/stdout", "w", stdout) == NULL) {
+  if (freopen(tty_path, "w", stdout) == NULL) {
     fprintf(stderr, "打开文件tty失败！");
     exit(-1);
   }
 
   print_ins_pass(ins_list);
 
-  if (freopen("out.txt", "w", stdout) == NULL) {
-    fprintf(stderr, "打开文件失败！");
-    exit(-1);
-  }
+  // if (freopen("out.txt", "w", stdout) == NULL) {
+  //   fprintf(stderr, "打开文件失败！");
+  //   exit(-1);
+  // }
 
   // delete_return_deadcode_pass(ins_list);
 

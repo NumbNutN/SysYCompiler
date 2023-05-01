@@ -19,6 +19,29 @@ struct _operand toOperand(Instruction* this,int i);
 
 
 /**
+ * @brief 创建一个立即数操作数
+ * @birth: Created by LGD on 2023-5-1
+*/
+struct _operand operand_create_immediate_op(int immd);
+
+/**
+ * @brief 从内存或者将立即数加载到一个寄存器中，将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
+ * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
+ * @birth: Created by LGD on 2023-5-1
+*/
+struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp);
+
+/**
+ * @brief 比较两个操作数是否一致
+*/
+bool opernad_is_same(struct _operand dst,struct _operand src);
+
+/**
+ * @brief 判断一个操作数是否是空指针
+ * @birth: Created by LGD on 2023-5-2
+*/
+bool operand_is_NULL(AssembleOperand op);
+/**
  * @brief struct _operand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
 */
@@ -81,7 +104,7 @@ struct _operand operand_load_immediate_to_specified_register(struct _operand src
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
-bool opernad_is_in_instruction(struct _operand op);
+bool opernad_is_immediate(struct _operand op);
 /**
  * @brief 判断一个operand是否在内存中
  * @birth: Created by LGD on 2023-4-24

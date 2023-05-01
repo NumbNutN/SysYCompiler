@@ -30,6 +30,11 @@ void translate_logical_binary_instruction_new(Instruction* this);
 
 void translate_assign_instructions(Instruction* this);
 
+/**
+ * @brief 拆出数组的地址
+ * @birth: Created by LGD on 2023-5-1
+*/
+void translate_getelementptr_instruction(Instruction* this);
 
 
 /**************************************************************/

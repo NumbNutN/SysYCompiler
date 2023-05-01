@@ -63,6 +63,16 @@ AssembleOperand toOperand(Instruction* this,int i)
     return ValuetoOperand(this,var);
 }
 
+/**
+ * @brief 创建一个立即数操作数
+ * @birth: Created by LGD on 2023-5-1
+*/
+struct _operand operand_create_immediate_op(int immd)
+{
+    struct _operand op = {.addrMode = IMMEDIATE,.oprendVal = immd};
+    return op;
+}
+
 
 /**
  * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
@@ -123,13 +133,18 @@ AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op
     }
     assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
 }
+
+
+
 /**
- * @brief 将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
- * @birth: Created by LGD on 2023-4-10
+ * @brief 比较两个操作数是否一致
 */
-AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp)
+bool opernad_is_same(struct _operand dst,struct _operand src)
 {
-    
+    if(memcmp(&dst,&src,sizeof(struct _operand)))
+        return false;
+    else 
+        return true;
 }
 
 
@@ -297,7 +312,7 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
-bool opernad_is_in_instruction(AssembleOperand op)
+bool opernad_is_immediate(AssembleOperand op)
 {
     return (op.addrMode == IMMEDIATE);
 }
@@ -315,12 +330,50 @@ bool operand_is_in_memory(AssembleOperand op)
 }
 
 /**
+ * @brief 判断一个操作数是否是空指针
+ * @birth: Created by LGD on 2023-5-2
+*/
+bool operand_is_NULL(AssembleOperand op)
+{
+    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
+}
+
+/**
  * @brief 判断一个operand是否在寄存器中
  * @birth: Created by LGD on 2023-4-24
 */
 bool operand_is_in_register(AssembleOperand op)
 {
     return (op.addrMode == REGISTER_DIRECT);
+}
+
+/**
+ * @brief 从内存或者将立即数加载到一个寄存器中，将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
+ * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
+ * @birth: Created by LGD on 2023-5-1
+*/
+AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp)
+{
+    if(operand_is_NULL(tarOp))
+    {
+        if(operand_is_in_memory(srcOp))
+        {
+            tarOp = operand_load_from_memory(srcOp,ARM);
+        }
+        else if(opernad_is_immediate(srcOp))
+        {
+            tarOp = operand_load_immediate(srcOp,ARM);
+        }
+        else if(operand_is_in_register(srcOp))
+        {
+            tarOp = srcOp;
+        }
+    }
+    else
+    {
+        movii(tarOp,srcOp);
+    }
+    return tarOp;
 }
 
 

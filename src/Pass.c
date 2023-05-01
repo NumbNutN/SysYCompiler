@@ -1780,9 +1780,9 @@ void line_scan_register_allocation(ALGraph *self_cfg, Function *self_func,
   }
 }
 
-char *location_string[] = {"null", "R1", "R2", "R3", "M"};
+char *location_string[] = {"null", "R1", "R2", "R3","R4","R5","R6","R7" "M"};
 
-int REGISTER_NUM = 3;
+int REGISTER_NUM = 7;
 
 void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {

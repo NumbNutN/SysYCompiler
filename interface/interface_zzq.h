@@ -114,4 +114,10 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order);
  * @birth: Created by LGD on 2023-3-26
 */
 HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap);
+
+/**
+ * @brief 从指令中返回步长
+ * @birth: Created by LGD on 2023-5-1
+*/
+int ins_getelementptr_get_step_long(Instruction* this);
 #endif

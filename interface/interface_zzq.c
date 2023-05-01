@@ -192,6 +192,9 @@ void translate_IR_test(struct _Instruction* this)
         case AssignOP:
             translate_assign_instructions(this);
         break;
+        case GetelementptrOP:
+            translate_getelementptr_instruction(this);
+        break;
         case LabelOP:
             translate_label(this);
         break;
@@ -465,6 +468,7 @@ HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* z
         }
         else
         {
+            printf("正在为变量%s分配寄存器\n",pair_ptr->key);
             RegisterOrder reg_order = request_new_allocable_register();
             //为该变量(名)创建寄存器映射
             set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
@@ -473,4 +477,14 @@ HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* z
         }
     }
 
+}
+
+
+/**
+ * @brief 从指令中返回步长
+ * @birth: Created by LGD on 2023-5-1
+*/
+int ins_getelementptr_get_step_long(Instruction* this)
+{
+    return ins_get_operand(this,1)->pdata->array_pdata.step_long;
 }

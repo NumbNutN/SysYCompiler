@@ -79,7 +79,8 @@ typedef enum _RegisterOrder
 {
     IN_MEM = -1,  //内存
     R0,R1,R2,R3,R4,R5,R6,R7,R8,      //通用寄存器
-    R9_SB,R10_SL,R11_FP,R12_IP,      //分组寄存器
+    R9,R10,R11,R12,
+    SB=R9,SL=R10,FP=R11,IP=R12,      //分组寄存器
     R13,                             //堆栈指针，最多允许六个不同的堆栈空间                           
     R14,                              //链接寄存器，子程序调用保存返回地址
     R15,                              //(R15)

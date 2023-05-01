@@ -485,7 +485,8 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
 {
     Instruction* p;
     size_t totalSize = 0;
-
+    void* isFound;
+    VarInfo* var_info;
     if(*map == NULL)
         variable_map_init(map);
     
@@ -508,15 +509,29 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
             case GreatThanOP:
             case LessEqualOP:
             case LessThanOP:
+            //2023-4-28
+            case GetelementptrOP:
+            //2023-5-1
+            case LoadOP:
                 val = ins_get_assign_left_value(p);
-                void* isFound = variable_map_get_value(*map,val);
+                isFound = variable_map_get_value(*map,val);
                 if(isFound)break;
                 VarInfo* var_info = (VarInfo*)malloc(sizeof(VarInfo));
                 memset(var_info,0,sizeof(VarInfo));
                 printf("插入新的变量名：%s 地址%lx\n",val->name,val);
                 variable_map_insert_pair(*map,val,var_info);
                 totalSize += 4;
-                break;
+            break;
+            case AllocateOP:
+                val = ins_get_assign_left_value(p);
+                isFound = variable_map_get_value(*map,val);
+                assert(!isFound && "不可能对同一个数组Assert两次");
+                var_info = (VarInfo*)malloc(sizeof(VarInfo));
+                memset(var_info,0,sizeof(VarInfo));
+                printf("插入新的数组：%s 地址%lx\n",val->name,val);
+                variable_map_insert_pair(*map,val,var_info);
+                totalSize += val->pdata->array_pdata.total_member*4;
+            break;
         }
         
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
