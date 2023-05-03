@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #include "config.h"
+#include "operand.h"
 
 
 //栈帧指针
@@ -138,14 +139,17 @@ void update_fp_value()
     if(!abs(currentPF.FPOffset))
         return;
 
-    AssembleOperand offset;
-    
-    offset.addrMode = IMMEDIATE;
-    offset.oprendVal = abs(currentPF.FPOffset);
-    if(currentPF.FPOffset > 0)
-        general_data_processing_instructions(ADD,fp,fp,offset," ",false);
-    else
-        general_data_processing_instructions(SUB,fp,fp,offset," ",false);
+    // AssembleOperand offset;
+    // offset.addrMode = IMMEDIATE;
+    // offset.oprendVal = abs(currentPF.FPOffset);
+    // if(currentPF.FPOffset > 0)
+    //     general_data_processing_instructions(ADD,fp,fp,offset," ",false);
+    // else
+    //     general_data_processing_instructions(SUB,fp,fp,offset," ",false);
+    struct _operand immd = operand_create_immediate_op(currentPF.FPOffset);
+    struct _operand reg_off = operand_load_immediate(immd,ARM);
+    general_data_processing_instructions(ADD,fp,fp,reg_off," ",false);
+    operand_recycle_temp_register(reg_off);
 }
 
 /**
@@ -156,14 +160,17 @@ void update_st_value()
     if(!abs(currentPF.SPOffset))
         return;
 
-    AssembleOperand offset;
-
-    offset.addrMode = IMMEDIATE;
-    offset.oprendVal = abs(currentPF.SPOffset);
-    if(currentPF.SPOffset > 0)
-        general_data_processing_instructions(ADD,sp,sp,offset," ",false);
-    else
-        general_data_processing_instructions(SUB,sp,sp,offset," ",false);    
+    // AssembleOperand offset;
+    // offset.addrMode = IMMEDIATE;
+    // offset.oprendVal = abs(currentPF.SPOffset);
+    // if(currentPF.SPOffset > 0)
+    //     general_data_processing_instructions(ADD,sp,sp,offset," ",false);
+    // else
+    //     general_data_processing_instructions(SUB,sp,sp,offset," ",false);
+    struct _operand immd = operand_create_immediate_op(currentPF.SPOffset);
+    struct _operand reg_off = operand_load_immediate(immd,ARM);
+    general_data_processing_instructions(ADD,sp,sp,reg_off," ",false);
+    operand_recycle_temp_register(reg_off);
 }
 
 /**

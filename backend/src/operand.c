@@ -308,6 +308,78 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
     return dst;
 }
 
+
+/**
+ * @brief 创建一个相对FP/SP偏移的寻址方式操作数
+ * @birth: Created by LGD on 2023-5-3
+*/
+struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _OffsetType immedORreg,int offset)
+{
+    struct _operand memOff = 
+    {
+        .addrMode = REGISTER_INDIRECT_WITH_OFFSET,
+        .oprendVal = SPorFP,
+        .offsetType = immedORreg,
+        .addtion = offset
+    };
+    //为寄存器时
+    if(immedORreg == OFFSET_IN_REGISTER)return memOff;
+    //为立即数时
+    if(abs(offset) <= ARM_WORD_IMMEDIATE_OFFSET_RANGE)return memOff;
+    //超过立即数限制时，需要调用临时寄存器
+    else
+    {
+        struct _operand immd = operand_create_immediate_op(offset);
+        struct _operand regStoreImmd = operand_load_immediate(immd,ARM);
+        return regStoreImmd;
+    }
+    
+}
+
+/**
+ * @brief 创建一个相对FP/SP偏移的寻址方式操作数
+ *        这个方法不负责回收多余的寄存器
+ * @birth: Created by LGD on 2023-5-3
+*/
+struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _operand offset)
+{
+    struct _operand memOff = \
+    {.addrMode = REGISTER_INDIRECT_WITH_OFFSET,.oprendVal = SPorFP};
+    //为寄存器时
+    if(operand_is_in_register(offset))
+    {
+        memOff.offsetType = OFFSET_IN_REGISTER;
+        memOff.addtion = offset.oprendVal;
+    }
+    //为立即数时
+    if(opernad_is_immediate(offset))
+    {
+        //为合法立即数时
+        if(abs(offset.oprendVal) <= ARM_WORD_IMMEDIATE_OFFSET_RANGE)
+        {
+            memOff.offsetType = OFFSET_IMMED;
+            memOff.addtion = offset.oprendVal;
+        }
+        //超过立即数限制时，需要调用临时寄存器
+        else
+        {
+            struct _operand regStoreImmd = operand_load_immediate(offset,ARM);
+            memOff.offsetType = OFFSET_IN_REGISTER;
+            memOff.addtion = regStoreImmd.oprendVal;
+        }
+    }
+    //在内存中时
+    if(operand_is_in_memory(offset))
+    {
+        struct _operand regStore = operand_load_from_memory(offset,ARM);
+        memOff.offsetType = OFFSET_IN_REGISTER;
+        memOff.addtion = regStore.oprendVal;
+    }
+    return memOff;
+    
+    
+}
+
 /**
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328

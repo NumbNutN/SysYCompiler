@@ -1,3 +1,4 @@
+.global main
 main:
         PUSH    {R7, R14}
         SUB     R7, R7, #24040

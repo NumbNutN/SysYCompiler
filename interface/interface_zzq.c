@@ -181,7 +181,7 @@ void translate_IR_test(struct _Instruction* this)
             translate_param_instructions(this);
         break;
         case FuncEndOP:
-            translate_function_end(this);
+            //translate_function_end(this);
         break;
         case CallOP:
             translate_call_instructions(this);

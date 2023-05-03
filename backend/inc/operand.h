@@ -25,6 +25,18 @@ struct _operand toOperand(Instruction* this,int i);
 struct _operand operand_create_immediate_op(int immd);
 
 /**
+ * @brief 创建一个相对FP/SP偏移的寻址方式操作数
+ * @birth: Created by LGD on 2023-5-3
+*/
+struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _OffsetType immedORreg,int offset);
+/**
+ * @brief 创建一个相对FP/SP偏移的寻址方式操作数
+ *        这个方法不负责回收多余的寄存器
+ * @birth: Created by LGD on 2023-5-3
+*/
+struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _operand offset);
+
+/**
  * @brief 从内存或者将立即数加载到一个寄存器中，将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
  * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
  * @birth: Created by LGD on 2023-5-1

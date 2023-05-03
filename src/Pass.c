@@ -1863,6 +1863,9 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //恢复当前函数栈帧
   reset_stack_frame_status();
 
+  freopen("out.txt","w",stdout);
+  print_model();
+
   
   // Pair *ptr_pair;
   // HashMapFirst(var_location);

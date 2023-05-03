@@ -171,12 +171,13 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
     linkNode(node);
 }
 
-
+/**
+ * @brief 访存指令
+ * @update: 2023-5-3 新增了对偏移寻址的支持
+*/
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label)
 {
-    /*
-        ARM memory access instructions
-    */
+
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     strcpy(node->opCode,opCode);
     node->op_len = 2;
@@ -186,7 +187,7 @@ assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOp
     assert(mode == REGISTER_DIRECT);
     node->op[0] = reg;
 
-
+    //确定访存方式
     mode = mem.addrMode;
     assert(mode == REGISTER_INDIRECT || mode == DIRECT || mode == REGISTER_INDIRECT_POST_INCREMENTING || 
     mode == REGISTER_INDIRECT_POST_INCREMENTING || mode == REGISTER_INDIRECT_WITH_OFFSET);

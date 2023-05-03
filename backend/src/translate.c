@@ -425,6 +425,33 @@ void translate_getelementptr_instruction(Instruction* this)
     recycle_temp_arm_register(step_long.oprendVal);
 }
 
+
+/**
+ * @brief 翻译将数据回存到一个指针指向的位置的指令
+ * @birth: Created by LGD on 2023-5-3
+*/
+void translate_store_instruction(Instruction* this)
+{
+    struct _operand addr = toOperand(this,FIRST_OPERAND);
+    struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
+
+    //将基地址加载到寄存器中
+    addr = operand_load_to_register(addr,nullop);
+
+    switch(stored_elem.addrMode)
+    {
+        case REGISTER_INDIRECT_WITH_OFFSET:
+        {
+            if(operand_is_in_register(stored_elem))
+            {
+                struct _operand memOffset = operand_create2_relative_adressing(FP,OFFSET_IN_REGISTER,stored_elem.oprendVal);
+                memory_access_instructions("STR",)
+            }
+            
+        }
+    }
+}
+
 /**
  * @brief 翻译为局部数组分配地址空间的指令
  * @birth:Created by LGD on 2023-5-2

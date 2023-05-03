@@ -7,6 +7,7 @@
 
 extern int CntAssemble;
 
+#define ARM_WORD_IMMEDIATE_OFFSET_RANGE 4096
 typedef enum _ARM_Instruction_Mnemonic
 {
     ADD,     //加法指令
@@ -117,6 +118,11 @@ enum SHIFT_WAY{
     RRX
 };
 
+enum _OffsetType{
+    NONE_OFFSET,
+    OFFSET_IMMED,
+    OFFSET_IN_REGISTER
+};
 typedef struct _operand
 {
     //定义了操作数的寻址方式
@@ -125,6 +131,8 @@ typedef struct _operand
     int64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
     //附加内容
     unsigned addtion;
+    //定义了变址类型
+    enum _OffsetType offsetType;
     //定义当前存储的数据的格式
     DataFormat format;
     //定义了第二操作数的左移选项  2023-4-20
