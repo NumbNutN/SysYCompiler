@@ -86,6 +86,15 @@ bool variable_is_in_instruction(Instruction* this,Value* var)
 }
 
 /**
+ * @brief 判断一个变量是否在寄存器中
+ * @birth: Created by LGD on 2023-5-3
+*/
+bool variable_is_in_register(Instruction* this,Value* var)
+{
+    return get_variable_place(this,var) == IN_REGISTER;
+}
+
+/**
  * @brief 返回指令的操作数个数
  * @birth: Created by LGD on 20230123
  * @update: 2023-3-28 采用ins_get_left_assign基本方法

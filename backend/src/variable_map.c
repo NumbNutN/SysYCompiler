@@ -6,6 +6,8 @@
 #include <string.h>
 #include "config.h"
 
+#include "memory_manager.h"
+
 //记录当前函数的栈总容量
 size_t stackSize;
 //记录当前已经分配了多少容量
@@ -480,19 +482,29 @@ void ins_reset_var_info(Instruction* this,Value* var)
  * @update: 20230109 将到达指定函数入口的方法进行了封装调用
  *          2023-3-26 更新，如果map的值为NULL则初始化，否则为当前map进行增量添加，如果为当前map提供了一个非对应一个HashMap的未定义值，则会发生非法页错误
  *          2023-3-26 更新 使对map的插入键值对受到条件编译的选择
+ *          2023-5-3 对于一个数组，其内存单元空间和其首地址均会保存一份
+ *          2023-5-3 在这个版本中，traverse_list_and_count_total_size_of_var只负责计算栈大小
 */
-size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** map)
+int CompareKeyByName(void* dst,void* src){return !strcmp(dst,src);}
+void RecordMapCleanKey(void* key){}
+void RecordMapCleanValue(void* value){}
+
+size_t traverse_list_and_count_total_size_of_var(List* this,int order)
 {
     Instruction* p;
     size_t totalSize = 0;
-    void* isFound;
-    VarInfo* var_info;
-    if(*map == NULL)
-        variable_map_init(map);
-    
+    const HashMap* recordRepeatMap = NULL;
+    if(!recordRepeatMap)
+    {
+        recordRepeatMap = HashMapInit();
+        HashMapSetHash(recordRepeatMap,HashDjb2);
+        HashMapSetCompare(recordRepeatMap,CompareKeyByName);
+        HashMapSetCleanKey(recordRepeatMap,RecordMapCleanKey);
+        HashMapSetCleanValue(recordRepeatMap,RecordMapCleanValue);
+    }
     p = traverse_to_specified_function(this,order);
 
-    Value* val;
+    Value* val = ins_get_assign_left_value(p);
     do
     {
         switch(ins_get_opCode(p))
@@ -513,24 +525,19 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
             case GetelementptrOP:
             //2023-5-1
             case LoadOP:
+            {
                 val = ins_get_assign_left_value(p);
-                isFound = variable_map_get_value(*map,val);
-                if(isFound)break;
-                VarInfo* var_info = (VarInfo*)malloc(sizeof(VarInfo));
-                memset(var_info,0,sizeof(VarInfo));
-                printf("插入新的变量名：%s 地址%lx\n",val->name,val);
-                variable_map_insert_pair(*map,val,var_info);
-                totalSize += 4;
+                if(HashMapGet(recordRepeatMap,val->name)){continue;}
+                HashMapPut(recordRepeatMap,val->name,(void*)true);
+                totalSize += opTye2size(p->user.value.VTy->TID);
+            }
             break;
             case AllocateOP:
+            {
                 val = ins_get_assign_left_value(p);
-                isFound = variable_map_get_value(*map,val);
-                assert(!isFound && "不可能对同一个数组Assert两次");
-                var_info = (VarInfo*)malloc(sizeof(VarInfo));
-                memset(var_info,0,sizeof(VarInfo));
-                printf("插入新的数组：%s 地址%lx\n",val->name,val);
-                variable_map_insert_pair(*map,val,var_info);
-                totalSize += val->pdata->array_pdata.total_member*4;
+                assert(!HashMapGet(recordRepeatMap,val->name) && "这个数组没有正确的分配空间");
+                totalSize += val->pdata->array_pdata.total_member*4 + 4;
+            }
             break;
         }
         
@@ -538,6 +545,102 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** 
     return totalSize;
 }
 
+/**
+ * @brief 整合了开辟栈空间和寄存器分配
+ * @birth: Created by LGD on 2023-5-3
+*/
+HashMap* traverse_list_and_allocate_for_variable(List* this,int order,HashMap* zzqMap,HashMap** myMap)
+{
+    Instruction* p;
+    size_t totalSize = 0;
+    void* isFound;
+    VarInfo* var_info;
+    int arrayOffset;
+    if(*myMap == NULL)
+        variable_map_init(myMap);
+    p = traverse_to_specified_function(this,order);
+    Value* val;
+    do
+    {
+        switch(ins_get_opCode(p))
+        {
+            case AddOP:
+            case SubOP:
+            case MulOP:
+            case DivOP:
+            case AssignOP:
+            case CallWithReturnValueOP:
+            case NotEqualOP:
+            case EqualOP:
+            case GreatEqualOP:
+            case GreatThanOP:
+            case LessEqualOP:
+            case LessThanOP:
+            case GetelementptrOP:
+            case LoadOP:
+            
+               //新建变量信息项
+                val = ins_get_assign_left_value(p);
+                isFound = variable_map_get_value(*myMap,val);
+                if(isFound)break;
+                var_info = (VarInfo*)malloc(sizeof(VarInfo));
+                memset(var_info,0,sizeof(VarInfo));
+                printf("插入新的变量名：%s 地址%lx\n",val->name,val);
+                variable_map_insert_pair(*myMap,val,var_info);
+
+
+                //分配寄存器或内存单元
+                if(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)) == MEMORY)
+                {
+                    int offset = request_new_local_variable_memory_unit(val->VTy->TID);
+                    set_variable_stack_offset_by_name(*myMap,val->name,offset);
+                    printf("%s分配了地址%d\n",val->name,offset);
+                }
+                else
+                {
+                    RegisterOrder reg_order = request_new_allocable_register();
+                    //为该变量(名)创建寄存器映射
+                    set_variable_register_order_by_name(*myMap,val->name,reg_order);
+                    //打印分配结果
+                    printf("%s分配了寄存器%d\n",val->name,reg_order);                    
+                }
+            break;
+            //为数组也分配空间
+            case AllocateOP:
+                //新建变量信息项
+                val = ins_get_assign_left_value(p);
+                isFound = variable_map_get_value(*myMap,val);
+                if(isFound)break;
+                arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
+                printf("数组%s分配了地址%d\n",val->name,arrayOffset);
+                var_info = (VarInfo*)malloc(sizeof(VarInfo));
+                memset(var_info,0,sizeof(VarInfo));
+                printf("插入新的数组名：%s 地址%lx\n",val->name,val);
+                variable_map_insert_pair(*myMap,val,var_info);
+                //分配寄存器或内存单元
+                if(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)) == MEMORY)
+                {
+                    int offset = request_new_local_variable_memory_unit(val->VTy->TID);
+                    set_variable_stack_offset_by_name(*myMap,val->name,offset);
+                    printf("%s分配了地址%d\n",val->name,offset);
+                }
+                else
+                {
+                    RegisterOrder reg_order = request_new_allocable_register();
+                    //为该变量(名)创建寄存器映射
+                    set_variable_register_order_by_name(*myMap,val->name,reg_order);
+                    //打印分配结果
+                    printf("%s分配了寄存器%d\n",val->name,reg_order);                    
+                }
+                //使用一个指令将数组偏移值填充至对应的变量存储位置
+                struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+                movii(var_info->ori,arrOff);
+
+        }
+    }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
+    return totalSize;
+     
+}
 
 /**
  * @brief 打印每个指令变量信息表的格式化输出子方法

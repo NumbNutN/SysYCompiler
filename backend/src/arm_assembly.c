@@ -87,7 +87,7 @@ void Init_arm_tempReg()
 
     for(int i=0;i<TEMP_REG_NUM;i++)
     {
-        TempARMRegList[i].reg = R1+i;
+        TempARMRegList[i].reg = R0+i;
         TempARMRegList[i].isAviliable = true;
     }
 }
@@ -290,6 +290,11 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
         if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND) && !ins_operand_is_float(this,specificOperand))
             recycle_status |= INTERGER_PART_IN_MIX_CALCULATE;
 
+    //2023-5-3 增加两个寄存器不一致也要归还的逻辑
+    if(variable_is_in_register(this,ins_get_operand(this,specificOperand)))
+        if(!opernad_is_same(toOperand(this,specificOperand),recycleRegister))
+            recycle_status |= REGISTER_ATTRIBUTED_DIFFER_FROM_VARIABLE_REGISTER;
+
     if((recycle_status | NO_NEED_TO_RECYCLE) != NO_NEED_TO_RECYCLE)
         general_recycle_temp_register(this,specificOperand,recycleRegister);
         
@@ -421,7 +426,8 @@ void movii(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
-        general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
+        if(!opernad_is_same(tar,op1))
+            general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
     else
     {

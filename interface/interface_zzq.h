@@ -113,7 +113,7 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order);
  * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
  * @birth: Created by LGD on 2023-3-26
 */
-HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap);
+// HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap);
 
 /**
  * @brief 从指令中返回步长

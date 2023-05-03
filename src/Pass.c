@@ -1803,17 +1803,31 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //遍历每一个block的list
   size_t totalLocalVariableSize = 0;
   HashMap* VariableInfoMap = NULL;
+
+
+  //计算栈帧大小
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0,&VariableInfoMap);    
+    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
   }
 
+  //初始化函数栈帧
+  new_stack_frame_init(totalLocalVariableSize);
   //翻译前初始化
+  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
   TranslateInit();
-
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
+
+  //变量信息表转换
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,0,var_location,&VariableInfoMap); 
+  }
+
+
   // VarInfo testVarInfo;
   // VarInfo* testVarInfoPtr;
   // HashMapPut(VariableInfoMap,"name",&testVarInfo);
@@ -1821,7 +1835,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   
   //由于变量的寄存器和内存地址都是静态的，为变量定义全局固定的寄存器和内存位置
   //将zzq提供的变量定位表转换为变量信息表
-  interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
+  //interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
+
 
   Instruction* element = NULL;
   //第二次function遍历，为每一句Instruction安插一个map

@@ -4,11 +4,22 @@
 #include "cds.h"
 #include "arm.h"
 
+#define STACK_MAX_SIZE 0xFFFF
+
+/**
+ * @brief MemUnitInfo结构体记录每一个分配的内存单元的信息，并串联成内存分配链表
+ *        每一次需要分配新的内存单元时，内存分配调用定位到当前链表第一个未分配且内存足量的内存单元
+ *        其将当前内存单元分离出一个大小足够的内存单元并插入节点前方作为新的内存单元
+ *        在初始时，该链表只含有一个具有STACK_MAX_SIZE个字节大小且未分配的内存单元
+*/
 typedef struct _MemUnitInfo
 {
     int baseAddr;
+    size_t size;
     bool isUsed;
 } MemUnitInfo;
+
+extern struct _MemUnitInfo* stack_frame_mem_header;
 
 //记录当前函数的栈总容量
 extern size_t stackSize;
@@ -58,6 +69,34 @@ void update_st_value();
 /**********************************************/
 
 /**
+ * @brief 根据数据类型返回该类型对应的尺寸，以字节为单位
+ * @birth: Created by LGD on 2023-5-2
+*/
+size_t opTye2size(enum _TypeID type);
+
+/**
+ * @brief 翻译新的函数时调用
+ * @birth: Created by LGD on 2023-5-2
+*/
+void new_stack_frame_init(int totalsize);
+/**
+ * @brief 销毁内存管理块链表
+ * @birth: Created by LGD on 2023-5-2
+*/
+void stack_frame_deinit();
+/**
+ * @brief 申请一块新的参数传递用栈内存单元
+ * @birth: Created by LGD on 2023-3-14
+*/
+int request_new_local_variable_memory_unit(enum _TypeID type);
+
+/**
+ * @brief 申请一块新的局部变量的内存空间
+ * @update: Created by LGD on 2023-4-11
+*/
+int request_new_local_variable_memory_units(size_t req_bytes);
+
+/**
  * @brief 给定虚拟寄存器编号，若有映射，则返回映射的实际寄存器编号；
  *          若未作映射，则尝试申请一个新的寄存器编号
  *          若无法提供更多的寄存器，说明哪里出了问题，甩出错误
@@ -73,17 +112,7 @@ RegisterOrder get_virtual_register_mapping(HashMap* map,size_t ViOrder);
 */
 int get_virtual_Stack_Memory_mapping(HashMap* map,size_t viMem);
 
-/**
- * @brief 申请一块新的参数传递用栈内存单元
- * @birth: Created by LGD on 2023-3-14
-*/
-int request_new_parameter_stack_memory_unit();
 
-/**
- * @brief 申请一块新的局部变量的内存空间
- * @update: Created by LGD on 2023-4-11
-*/
-int request_new_local_variable_memory_units(size_t wordLength);
 
 /**
  * @brief 依据局部变量个数和传递参数个数确定两个指针的跳跃位置

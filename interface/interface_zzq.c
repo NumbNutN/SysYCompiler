@@ -450,34 +450,35 @@ Instruction* traverse_to_specified_function(List* this,int order)
  * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
  * @birth: Created by LGD on 2023-3-26
  * @update: 2023-4-4 不应该判断enum _LOCATION*是否为Memory
+ *          2023-5-3 
 */
-HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap)
-{
-    HashMapFirst(zzqMap);
-    Pair* pair_ptr;
-    while((pair_ptr = HashMapNext(zzqMap)) != NULL)
-    {
-        if(*((enum _LOCATION*)pair_ptr->value) == MEMORY)
-        {
-            //为该变量（名）进行物理地址映射
-            int offset = request_new_local_variable_memory_unit();
-            //TODO 为什么是size_t
-            set_variable_stack_offset_by_name(myMap,pair_ptr->key,offset);
-            //打印分配结果
-            printf("%s分配了地址%d\n",pair_ptr->key,offset);
-        }
-        else
-        {
-            printf("正在为变量%s分配寄存器\n",pair_ptr->key);
-            RegisterOrder reg_order = request_new_allocable_register();
-            //为该变量(名)创建寄存器映射
-            set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
-            //打印分配结果
-            printf("%s分配了寄存器%d\n",pair_ptr->key,reg_order);
-        }
-    }
+// HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap)
+// {
+//     HashMapFirst(zzqMap);
+//     Pair* pair_ptr;
+//     while((pair_ptr = HashMapNext(zzqMap)) != NULL)
+//     {
+//         if(*((enum _LOCATION*)pair_ptr->value) == MEMORY)
+//         {
+//             //为该变量（名）进行物理地址映射
+//             int offset = request_new_local_variable_memory_unit();
+//             //TODO 为什么是size_t
+//             set_variable_stack_offset_by_name(myMap,pair_ptr->key,offset);
+//             //打印分配结果
+//             printf("%s分配了地址%d\n",pair_ptr->key,offset);
+//         }
+//         else
+//         {
+//             printf("正在为变量%s分配寄存器\n",pair_ptr->key);
+//             RegisterOrder reg_order = request_new_allocable_register();
+//             //为该变量(名)创建寄存器映射
+//             set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
+//             //打印分配结果
+//             printf("%s分配了寄存器%d\n",pair_ptr->key,reg_order);
+//         }
+//     }
 
-}
+// }
 
 
 /**

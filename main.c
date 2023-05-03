@@ -60,12 +60,23 @@ int main() {
       "  return d;"
       "}";
 
+  // 多维度数组
+  char *multidimensional_arrays_2 =
+      "int main() {"
+      "  int b = 10;"
+      "  int m = b + 10;"
+      "  int c = 233,arr[10][20][30];"
+      "  arr[3][5][m] = 100;"
+      "  int d = arr[3][5][b+10];"
+      "  return d;"
+      "}";
+
   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件printf_ast失败！");
     exit(-1);
   }
 
-  parser(multidimensional_arrays);
+  parser(multidimensional_arrays_2);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {

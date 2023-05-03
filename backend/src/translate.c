@@ -406,9 +406,9 @@ void translate_getelementptr_instruction(Instruction* this)
     arrBase = operand_load_to_register(arrBase,nullop);
     idx = operand_load_to_register(idx,nullop);
 
-    struct _operand middleOp;
-    middleOp = operand_load_to_register(tarOp,nullop);
-
+    struct _operand middleOp = operand_pick_temp_register(ARM);
+    //乘加指令，且tarOp不会作为立即数，没必要从内存加载
+    //middleOp = operand_load_to_register(tarOp,nullop);
 
     //乘加计算目标地址
     general_data_processing_instructions_extend(MLA,NONESUFFIX,false,middleOp,step_long,idx,arrBase,nullop);
@@ -423,8 +423,19 @@ void translate_getelementptr_instruction(Instruction* this)
     general_recycle_temp_register_conditional(this,SECOND_OPERAND,idx);
     //回收step_long 步长
     recycle_temp_arm_register(step_long.oprendVal);
-
 }
+
+/**
+ * @brief 翻译为局部数组分配地址空间的指令
+ * @birth:Created by LGD on 2023-5-2
+*/
+void translate_allocate_instruction(Instruction* this)
+{
+    //数组变量是一个指针变量，其变量信息记录了一个栈帧中的偏移值作为基地址
+    struct _operand arrayBase = toOperand(this,TARGET_OPERAND);
+    //
+}
+
 /**
  * @brief 翻译值传的三地址代码 a = b
  * @author created by LGD on 20221208

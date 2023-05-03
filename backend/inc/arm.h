@@ -122,7 +122,7 @@ typedef struct _operand
     //定义了操作数的寻址方式
     enum _AddrMode addrMode;
     //定义了操作数的值
-    uint64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
+    int64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
     //附加内容
     unsigned addtion;
     //定义当前存储的数据的格式
@@ -236,7 +236,8 @@ typedef enum _RecycleCondition
     NO_NEED_TO_RECYCLE = 0,
     VARIABLE_IN_MEMORY = 1,
     VARIABLE_LDR_FROM_IMMEDIATE = 2,
-    INTERGER_PART_IN_MIX_CALCULATE = 4
+    INTERGER_PART_IN_MIX_CALCULATE = 4,
+    REGISTER_ATTRIBUTED_DIFFER_FROM_VARIABLE_REGISTER = 8
 } RecycleCondition;
 
 

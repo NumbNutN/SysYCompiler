@@ -91,7 +91,11 @@ bool variable_is_in_memory(Instruction* this,Value* var);
  * @birth: Created by LGD on 20230307
 */
 bool variable_is_in_instruction(Instruction* this,Value* var);
-
+/**
+ * @brief 判断一个变量是否在寄存器中
+ * @birth: Created by LGD on 2023-5-3
+*/
+bool variable_is_in_register(Instruction* this,Value* var);
 
 void recycle_temp_value_register(Value* reg);
 

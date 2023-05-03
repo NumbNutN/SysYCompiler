@@ -280,7 +280,12 @@ void ins_reset_var_info(Instruction* this,Value* var);
  * @param map 传入一个map的指针，填装满的map将返回
  * @return 计算的栈帧大小
 */
-size_t traverse_list_and_count_total_size_of_var(List* this,int order,HashMap** map);
+size_t traverse_list_and_count_total_size_of_var(List* this,int order);
+/**
+ * @brief 整合了开辟栈空间和寄存器分配
+ * @birth: Created by LGD on 2023-5-3
+*/
+HashMap* traverse_list_and_allocate_for_variable(List* this,int order,HashMap* zzqMap,HashMap** myMap);
 /**
  * @brief 为一个函数的变量信息表map中所有的变量分配空间
  * @author Created by LGD on 20230109

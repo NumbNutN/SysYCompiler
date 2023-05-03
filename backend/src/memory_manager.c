@@ -8,6 +8,11 @@
 #include "memory_manager.h"
 #include "arm.h"
 
+#include "type.h"
+#include <assert.h>
+
+#include "config.h"
+
 
 //栈帧指针
 #define FP R7
@@ -33,6 +38,8 @@ struct _Produce_Frame{
     int cur_use_variable_offset;
     //定义了当前已被使用的参数传递用栈内存单元偏移值，其初始值为栈顶至栈帧之差，并在每次分配时自增
     int cur_use_parameter_offset;
+    //@brith:2023-5-2 定义了当前函数的内存单元管理链表
+    List* stack_frame_memory_unit_list;
 
 } currentPF;
 
@@ -289,26 +296,138 @@ RegisterOrder get_virtual_register_mapping(HashMap* map,size_t ViOrder)
 /**********************************************/
 
 /**
- * @brief 申请一块新的局部变量的内存单元
+ * @brief 根据数据类型返回该类型对应的尺寸，以字节为单位
+ * @birth: Created by LGD on 2023-5-2
+ * @update: 2023-5-3 ArrayTyID将被视作一个绝对地址
 */
-int request_new_local_variable_memory_unit()
+size_t opTye2size(enum _TypeID type)
 {
-    currentPF.cur_use_variable_offset -= 4;
-    if(currentPF.cur_use_variable_offset >= 0)
-        return currentPF.cur_use_variable_offset;
-    assert(false && "Request for new local variable stack unit more than expected");
+    switch(type)
+    {
+        case IntegerTyID:         ///< int a;
+        case FloatTyID:           ///< float b;
+        case PointerTyID:         ///< Pointers
+        case ReturnTyID:
+        case ParamTyID:
+            return 4;
+        case ArrayTyID:             //< Arrays
+            return 4;
+            //assert(false && ArrayTyID && "Could not recognize the size of a array type");
+  // PrimitiveTypes
+        case HalfTyID:       ///< 16-bit floating point type
+        case BFloatTyID:     ///< 16-bit floating point type (7-bit significand)
+            return 2;
+        case DoubleTyID:     ///< 64-bit floating point type
+            return 8;
+        case FP128TyID:      ///< 128-bit floating point type (112-bit significand)
+        case PPC_FP128TyID:  ///< 128-bit floating point type (two 64-bits, PowerPC)
+            return 16;
+        default:
+            assert(false && type && "Unrecognized type");
+    }
+}
+
+/**
+ * @brief 翻译新的函数时调用
+ * @birth: Created by LGD on 2023-5-2
+*/
+void new_stack_frame_init(int totalsize)
+{
+    //assert(!currentPF.stack_frame_memory_unit_list && "上一个栈帧内存管理单元链表可能未释放");
+    currentPF.stack_frame_memory_unit_list = ListInit();
+    struct _MemUnitInfo* firstMemUnit = malloc(sizeof(struct _MemUnitInfo));
+    memset(firstMemUnit,0,sizeof(struct _MemUnitInfo));
+    firstMemUnit->baseAddr = -totalsize;
+    firstMemUnit->isUsed = false;
+    firstMemUnit->size = totalsize;
+    ListPushBack(currentPF.stack_frame_memory_unit_list,firstMemUnit);
+}
+
+/**
+ * @brief 销毁内存管理块链表
+ * @birth: Created by LGD on 2023-5-2
+*/
+void stack_frame_deinit()
+{
+    ListDeinit(currentPF.stack_frame_memory_unit_list);
+    currentPF.stack_frame_memory_unit_list = NULL;
 }
 
 /**
  * @brief 申请一块新的局部变量的内存空间
  * @update: Created by LGD on 2023-4-11
 */
-int request_new_local_variable_memory_units(size_t wordLength)
+int request_new_local_variable_memory_units(size_t req_bytes)
 {
-    currentPF.cur_use_variable_offset -= 4*wordLength;
-    if(currentPF.cur_use_variable_offset >= 0)
-        return currentPF.cur_use_variable_offset;
-    assert(false && "Request for new local variable stack units more than expected");
+    // currentPF.cur_use_variable_offset -= 4*wordLength;
+    // if(currentPF.cur_use_variable_offset >= 0)
+    //     return currentPF.cur_use_variable_offset;
+    // assert(false && "Request for new local variable stack units more than expected");
+    
+    struct _MemUnitInfo* memUnit; 
+    ListFirst(currentPF.stack_frame_memory_unit_list,false);
+    size_t idx=0;
+    bool next_result;
+    for(;(next_result = ListNext(currentPF.stack_frame_memory_unit_list,&memUnit))!= false;++idx)
+    {
+        if(memUnit->isUsed == true)continue;
+        if(memUnit->size < req_bytes)continue;
+        break;
+    }
+    assert(next_result && "当前栈帧没有更多的空间可供分配");
+    //未分配内存空间的尺寸刚好符合申请大小，不需要改动链表，将当前单元直接分配即可
+    if(memUnit->size == req_bytes)
+    {
+        memUnit->isUsed = true;
+        return memUnit->baseAddr;
+    }
+    //分拆当前的内存单元
+    memUnit->size -= req_bytes;
+    struct _MemUnitInfo* new_allocated_memUnit=malloc(sizeof(struct _MemUnitInfo));
+#ifdef SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
+    //由于我们现在无法得知栈的总大小，新的分配单元总是从当前可拆分内存单元的最高相对偏移量处划出内存块
+    new_allocated_memUnit->baseAddr = memUnit->baseAddr + memUnit->size ;
+#elif defined SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
+    new_allocated_memUnit->baseAddr = memUnit->baseAddr;
+    memUnit->baseAddr += req_bytes;
+#endif
+    new_allocated_memUnit->size = req_bytes;
+    new_allocated_memUnit->isUsed = true;
+    //由于是从高地址进行拆分的，新的分配单元总是插入原属内存单元的前一个位置
+    ListInsert(currentPF.stack_frame_memory_unit_list,idx,new_allocated_memUnit);
+    return new_allocated_memUnit->baseAddr;
+}
+
+/**
+ * @brief 申请一块新的局部变量的内存单元
+ * @birth: Created by LGD on 2023-5-2
+*/
+int request_new_local_variable_memory_unit(enum _TypeID type)
+{
+    // currentPF.cur_use_variable_offset -= 4;
+    // if(currentPF.cur_use_variable_offset >= 0)
+    //     return currentPF.cur_use_variable_offset;
+    // assert(false && "Request for new local variable stack unit more than expected");
+
+    return request_new_local_variable_memory_units(opTye2size(type));
+}
+
+/**
+ * @brief 回收一块内存单元
+ * @birth: Created by LGD on 2023-5-3
+*/
+void recycle_a_local_variable_memory_unit(int baseAddr)
+{
+    struct _MemUnitInfo* memUnit; 
+    ListFirst(currentPF.stack_frame_memory_unit_list,false);
+    size_t idx=0;
+    bool next_result;
+    for(;(next_result = ListNext(currentPF.stack_frame_memory_unit_list,memUnit))!= false;++idx)
+    {
+        if(memUnit->baseAddr == baseAddr){break;}
+    }
+    assert(next_result && "没有找到需要归还的内存单元");
+    ListRemove(currentPF.stack_frame_memory_unit_list,idx);
 }
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED
