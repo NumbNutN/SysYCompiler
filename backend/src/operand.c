@@ -337,6 +337,45 @@ struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _Off
 }
 
 /**
+ * @brief 判断一个operand是否在指令中
+ * @birth: Created by LGD on 20230328
+*/
+bool opernad_is_immediate(AssembleOperand op)
+{
+    return (op.addrMode == IMMEDIATE);
+}
+
+/**
+ * @brief 判断一个operand是否在内存中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_memory(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
+            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
+            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
+            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
+}
+
+/**
+ * @brief 判断一个操作数是否是空指针
+ * @birth: Created by LGD on 2023-5-2
+*/
+bool operand_is_NULL(AssembleOperand op)
+{
+    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
+}
+
+/**
+ * @brief 判断一个operand是否在寄存器中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_register(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_DIRECT);
+}
+
+/**
  * @brief 创建一个相对FP/SP偏移的寻址方式操作数
  *        这个方法不负责回收多余的寄存器
  * @birth: Created by LGD on 2023-5-3
@@ -378,45 +417,6 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
     return memOff;
     
     
-}
-
-/**
- * @brief 判断一个operand是否在指令中
- * @birth: Created by LGD on 20230328
-*/
-bool opernad_is_immediate(AssembleOperand op)
-{
-    return (op.addrMode == IMMEDIATE);
-}
-
-/**
- * @brief 判断一个operand是否在内存中
- * @birth: Created by LGD on 2023-4-24
-*/
-bool operand_is_in_memory(AssembleOperand op)
-{
-    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
-            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
-            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
-            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
-}
-
-/**
- * @brief 判断一个操作数是否是空指针
- * @birth: Created by LGD on 2023-5-2
-*/
-bool operand_is_NULL(AssembleOperand op)
-{
-    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
-}
-
-/**
- * @brief 判断一个operand是否在寄存器中
- * @birth: Created by LGD on 2023-4-24
-*/
-bool operand_is_in_register(AssembleOperand op)
-{
-    return (op.addrMode == REGISTER_DIRECT);
 }
 
 /**

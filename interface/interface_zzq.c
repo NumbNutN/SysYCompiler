@@ -114,10 +114,10 @@ int op_get_constant(Value* op)
  * @brief 从zzq的return语句中获取op
  * @author Created by LGD on 20220106
 */
-Value* get_op_from_return_instruction(Instruction* this)
-{
-    return this->user.value.pdata->return_pdata.return_value;
-}
+// Value* get_op_from_return_instruction(Instruction* this)
+// {
+//     return this->user.value.pdata->return_pdata.return_value;
+// }
 #endif
 /**
  * @brief 从zzq的param语句中获取op
@@ -174,9 +174,11 @@ void translate_IR_test(struct _Instruction* this)
         case FuncLabelOP:
             translate_function_entrance(this);
         break;
-        // case ReturnOP:
-        //     translate_return_instructions(this);
-        // break;
+#ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
+        case ReturnOP:
+            translate_return_instructions(this);
+        break;
+#endif
         case ParamOP:
             translate_param_instructions(this);
         break;
@@ -194,6 +196,12 @@ void translate_IR_test(struct _Instruction* this)
         break;
         case GetelementptrOP:
             translate_getelementptr_instruction(this);
+        break;
+        case StoreOP:
+            translate_store_instruction(this);
+        break;
+        case LoadOP:
+            translate_load_instruction(this);
         break;
         case LabelOP:
             translate_label(this);

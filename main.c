@@ -26,6 +26,7 @@ int parser(char *input);
 
 char *tty_path;
 
+extern FILE *yyin;
 int main() {
   // 获取当前进程所在的终端设备路径
   tty_path = ttyname(STDIN_FILENO);
@@ -64,19 +65,29 @@ int main() {
   char *multidimensional_arrays_2 =
       "int main() {"
       "  int b = 10;"
-      "  int m = b + 10;"
-      "  int c = 233,arr[10][20][30];"
+      "  int m = b + 10;" 
       "  arr[3][5][m] = 100;"
       "  int d = arr[3][5][b+10];"
       "  return d;"
       "}";
+
+  char *_003_var_defn3 = 
+    "int main(){"
+    "int a, b0, _c;"
+    "a = 1;"
+    "b0 = 2;"
+    "_c = 3;"
+    "return b0 + _c;"
+    "}";
 
   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件printf_ast失败！");
     exit(-1);
   }
 
-  parser(multidimensional_arrays_2);
+  // yyin = fopen("../example/003_var_defn3.sy","r");
+  // yyparse();
+  parser(_003_var_defn3);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {

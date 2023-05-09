@@ -93,6 +93,8 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
 
     //堆栈LR寄存器和R7
     bash_push_pop_instruction("PUSH",&fp,&lr,END);
+    //使当前R7与SP保持一致
+    general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
 
     //设置栈帧和栈顶指针的相对位置
     currentPF.FPOffset -= local_var_num*4;

@@ -91,18 +91,61 @@ void Init_arm_tempReg()
         TempARMRegList[i].isAviliable = true;
     }
 }
+
+/**
+ * @brief 判断当前寄存器是否是限制级别寄存器
+ * @birth: Created by LGD on 2023-5-4
+*/
+bool Is_limited_temp_register(RegisterOrder reg)
+{
+    enum _Pick_Arm_Register_Limited result = NONE_LIMITED;
+    if((global_arm_register_limited & RETURN_VALUE_LIMITED) == RETURN_VALUE_LIMITED)
+        result |= (reg == R0);
+    if((global_arm_register_limited & PARAMETER1_LIMITED) == PARAMETER1_LIMITED)
+        result |= (reg == R0);
+    if((global_arm_register_limited & PARAMETER2_LIMITED) == PARAMETER2_LIMITED)
+        result |= (reg == R1);
+    if((global_arm_register_limited & PARAMETER3_LIMITED) == PARAMETER3_LIMITED)
+        result |= (reg == R2);
+    if((global_arm_register_limited & PARAMETER4_LIMITED) == PARAMETER4_LIMITED)
+        result |= (reg == R3);
+    return (result != NONE_LIMITED);
+}
+
+/**
+ * @brief 添加新的限制级别
+ * @birth: Created by LGD on 2023-5-4
+*/
+void add_register_limited(enum _Pick_Arm_Register_Limited limited)
+{
+    global_arm_register_limited |= limited;
+}
+
+/**
+ * @brief 移除一个限制级别，如果其本身没有这个限制级别，将忽略
+ * @birth: Created by LGD on 2023-5-4
+*/
+void remove_register_limited(enum _Pick_Arm_Register_Limited limited)
+{
+    global_arm_register_limited &= ~limited;
+}
+
+/**
+ * @brief 挑选一个闲置的临时寄存器 这个方法作为底层调用被相当多的方法依赖
+ * @update: 2023-5-4 一个全局指示变量将提示现在不应当选择哪些寄存器作为临时寄存器
+*/
 unsigned pick_one_free_temp_arm_register()
 {
     for(int i=0;i<TEMP_REG_NUM;i++)
     {
-        if(TempARMRegList[i].isAviliable)
-        {
-            TempARMRegList[i].isAviliable = false;
-            return TempARMRegList[i].reg; 
-        }
+        if(!TempARMRegList[i].isAviliable || Is_limited_temp_register(TempARMRegList[i].reg))continue;
+        TempARMRegList[i].isAviliable = false;
+        return TempARMRegList[i].reg;
     }
     assert(0 && "No aviliable temp register");
 }
+
+
 
 void recycle_temp_arm_register(int reg)
 {

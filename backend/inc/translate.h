@@ -35,6 +35,16 @@ void translate_assign_instructions(Instruction* this);
  * @birth: Created by LGD on 2023-5-1
 */
 void translate_getelementptr_instruction(Instruction* this);
+/**
+ * @brief 翻译将数据回存到一个指针指向的位置的指令
+ * @birth: Created by LGD on 2023-5-3
+*/
+void translate_store_instruction(Instruction* this);
+/**
+ * @brief 翻译将数据从一个指针的指向位置取出
+ * @birth: Created by LGD on 2023-5-4
+*/
+void translate_load_instruction(Instruction* this);
 
 
 /**************************************************************/

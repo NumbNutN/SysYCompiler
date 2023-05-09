@@ -9,6 +9,8 @@
 
 int CntAssemble = 0;
 
+enum _Pick_Arm_Register_Limited global_arm_register_limited = NONE_LIMITED;
+
 /**
  * @brief 翻译通用数据传输指令
  * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换

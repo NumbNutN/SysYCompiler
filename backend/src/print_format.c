@@ -9,6 +9,7 @@
  * @update last 20230124 添加对VFP浮点指令的编号
  *         2023-4-9 添加了基于PUSH POP的新打印方式
  *         2023-4-20 为移位添加了打印方式
+ *         2023-5-4 添加了前变址 使用寄存器作为偏移量的打印方式
 */
 void print_operand(AssembleOperand op,size_t opernadIdx)
 {
@@ -76,12 +77,27 @@ void print_operand(AssembleOperand op,size_t opernadIdx)
                 printf("[?%d, #%d]!",op.oprendVal,op.addtion);
         break;
         case REGISTER_INDIRECT_WITH_OFFSET:
-            if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                printf("[%c%d, #%d]",'R',op.oprendVal,op.addtion);
-            else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                printf("[%c%d, #%d]",'S',op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
-            else
-                printf("[?%d, #%d]",op.oprendVal,op.addtion);
+        {
+            if(op.offsetType ==  OFFSET_IMMED|| op.offsetType ==NONE_OFFSET)
+            {
+                if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
+                    printf("[R%d, #%d]",op.oprendVal,op.addtion);
+                else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
+                    printf("[S%d, #%d]",op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                else
+                    printf("[?%d, #%d]",op.oprendVal,op.addtion);
+            }
+            else if(op.offsetType == OFFSET_IN_REGISTER)
+            {
+                 if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
+                    printf("[R%d, R%d]",op.oprendVal,op.addtion);
+                else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
+                    printf("[S%d, R%d]",op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                else
+                    printf("[?%d, R%d]",op.oprendVal,op.addtion);               
+            }
+        }
+
         break;
             //B FOO
         case TARGET_LABEL:

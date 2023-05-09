@@ -10,7 +10,7 @@
 //除法使用abi
 #define USE_DIV_ABI
 /*开启函数带返回值调用*/
-//#define OPEN_FUNCTION_WITH_RETURN_VALUE
+#define OPEN_FUNCTION_WITH_RETURN_VALUE
 
 
 #ifdef OPEN_TRANSLATE_BINARY

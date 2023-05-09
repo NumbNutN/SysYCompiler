@@ -47,6 +47,27 @@ unsigned pick_one_free_temp_arm_register();
 void recycle_temp_arm_register(int reg);
 
 
+/*******************************************/
+/*             限制级别的寄存器             */
+/*  这些方法将对所有获取临时寄存器的行为生效  */
+/*******************************************/
+/**
+ * @brief 判断当前寄存器是否是限制级别寄存器
+ * @birth: Created by LGD on 2023-5-4
+*/
+bool Is_limited_temp_register(RegisterOrder reg);
+
+/**
+ * @brief 添加新的限制级别
+ * @birth: Created by LGD on 2023-5-4
+*/
+void add_register_limited(enum _Pick_Arm_Register_Limited limited);
+/**
+ * @brief 移除一个限制级别，如果其本身没有这个限制级别，将忽略
+ * @birth: Created by LGD on 2023-5-4
+*/
+void remove_register_limited(enum _Pick_Arm_Register_Limited limited);
+
 /**
  * @brief 判断一个变量是否是浮点数
  * @author Created by LGD on 20230113

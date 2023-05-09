@@ -435,21 +435,43 @@ void translate_store_instruction(Instruction* this)
     struct _operand addr = toOperand(this,FIRST_OPERAND);
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
 
-    //将基地址加载到寄存器中
-    addr = operand_load_to_register(addr,nullop);
+    //将需要存储的数据加载到寄存器中
+    stored_elem = operand_load_to_register(stored_elem,nullop);
+    //将偏移装载到前变址寻址中
+    struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
+    memory_access_instructions("STR",stored_elem,memOffset,NONESUFFIX,false,NONELABEL);
 
-    switch(stored_elem.addrMode)
-    {
-        case REGISTER_INDIRECT_WITH_OFFSET:
-        {
-            if(operand_is_in_register(stored_elem))
-            {
-                struct _operand memOffset = operand_create2_relative_adressing(FP,OFFSET_IN_REGISTER,stored_elem.oprendVal);
-                memory_access_instructions("STR",)
-            }
-            
-        }
-    }
+    //归还可能的存储数据的临时寄存器
+    general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
+    //归还可能的存储偏移量的临时寄存器
+    if(memOffset.offsetType == OFFSET_IN_REGISTER)
+        recycle_temp_arm_register(memOffset.addtion);
+}
+
+/**
+ * @brief 翻译将数据从一个指针的指向位置取出
+ * @birth: Created by LGD on 2023-5-4
+*/
+void translate_load_instruction(Instruction* this)
+{
+    struct _operand loaded_target= toOperand(this,TARGET_OPERAND);
+    struct _operand addr = toOperand(this,FIRST_OPERAND);
+
+    //确保加载位置是寄存器
+    struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
+    //将偏移装载到前变址寻址中
+    struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
+    memory_access_instructions("LDR",middle_loaded_target,memOffset,NONESUFFIX,false,NONELABEL);
+
+    //如果原加载位置与当前loaded_target不符，需要再次传输
+    if(!opernad_is_same(middle_loaded_target,loaded_target))
+        movii(loaded_target,middle_loaded_target);
+    
+    //归还加载数据的临时寄存器
+    general_recycle_temp_register_conditional(this,TARGET_OPERAND,middle_loaded_target);
+    //归还可能的存储偏移量的临时寄存器
+    if(memOffset.offsetType == OFFSET_IN_REGISTER)
+        recycle_temp_arm_register(memOffset.addtion);
 }
 
 /**
@@ -556,22 +578,21 @@ void translate_goto_instruction_test_bool(Instruction* this)
 
 
 #ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
+/**
+ * @brief 翻译返回语句
+ * @birth: Created by LGD on 2022-12-11
+ * @update:2022-12-25 封装后使函数更精简
+ *         2023-5-4 重写
+*/
 void translate_return_instructions(Instruction* this)
 {
-    // @brief:翻译返回语句return
-    // @birth:Created by LGD on 20221211
-    // @update:latest 20221225 封装后使函数更精简
-    //Label(ins_get_label(this));
 
-    AssembleOperand op;
+    struct _operand returnOperand = toOperand(this,FIRST_OPERAND);
+    movii(r0,returnOperand);
+    //当翻译返回语句时，此后R0应当是禁用状态
+    add_register_limited(RETURN_VALUE_LIMITED);
     
-    variable_load_in_register(this,get_op_from_return_instruction(this),&op);
-    
-    AssembleOperand r0;
-    r0.addrMode = REGISTER_DIRECT;
-    r0.oprendVal = R0;
-
-    general_data_processing_instructions("MOV",r0,op,nullop,NONESUFFIX,false,NONELABEL);
+//    variable_load_in_register(this,get_op_from_return_instruction(this),&op);
 }
 #endif
 

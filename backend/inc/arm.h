@@ -248,6 +248,20 @@ typedef enum _RecycleCondition
     REGISTER_ATTRIBUTED_DIFFER_FROM_VARIABLE_REGISTER = 8
 } RecycleCondition;
 
+/**
+ * @brief 定义了对当前arm临时寄存器可选列表的限制条件
+*/
+enum _Pick_Arm_Register_Limited{
+    NONE_LIMITED = 0,
+    RETURN_VALUE_LIMITED = 1,
+    PARAMETER1_LIMITED = 1,
+    PARAMETER2_LIMITED = 2,
+    PARAMETER3_LIMITED = 4,
+    PARAMETER4_LIMITED = 8,
+};
+
+/* 当前全局的arm寄存器限制情况 */
+extern enum _Pick_Arm_Register_Limited global_arm_register_limited;
 
 //ARM指令
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label);
