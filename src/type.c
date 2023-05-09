@@ -1,6 +1,6 @@
 #include "type.h"
 
-#include "stdio.h"
+#include <stdio.h>
 
 // 初始化type 修改指针里面的值而不是修改指针
 void type_init(Type **this_addr) {
@@ -8,7 +8,7 @@ void type_init(Type **this_addr) {
   Type *this = *this_addr;
   this = (Type *)malloc(sizeof(Type));
   printf("OX%p\n", this);
-  this->TID = DefaultTyID;
+  this->TID = VoidTyID;
   this->NumContainedTys = 1;
 }
 

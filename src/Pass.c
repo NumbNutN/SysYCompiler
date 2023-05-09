@@ -29,35 +29,34 @@ typedef struct _var_live_interval {
 } var_live_interval;
 
 
-char *op_string[] = {
-    "DefaultOP",
-    "AddOP",
-    "SubOP",
-    "MulOP",
-    "DivOP",
-    "EqualOP",
-    "NotEqualOP",
-    "GreatThanOP",
-    "LessThanOP",
-    "GreatEqualOP",
-    "LessEqualOP",
-    "AssignOP",
-    "PhiAssignOp",
-    "GetelementptrOP",
-    "ReturnOP",
-    "AllocateOP",
-    "LoadOP",
-    "StoreOP",
-    "GotoWithConditionOP",
-    "ParamOP",
-    "GotoOP",
-    "CallOP",
-    "CallWithReturnValueOP",
-    "LabelOP",
-    "FuncLabelOP",
-    "FuncEndOP",
-    "PhiFuncOp",
-};
+char *op_string[] = {"DefaultOP",
+                     "AddOP",
+                     "SubOP",
+                     "MulOP",
+                     "DivOP",
+                     "EqualOP",
+                     "NotEqualOP",
+                     "GreatThanOP",
+                     "LessThanOP",
+                     "GreatEqualOP",
+                     "LessEqualOP",
+                     "AssignOP",
+                     "PhiAssignOp",
+                     "GetelementptrOP",
+                     "CallWithReturnValueOP",
+                     "LoadOP",
+                     "ReturnOP",
+                     "AllocateOP",
+                     "StoreOP",
+                     "GotoWithConditionOP",
+                     "ParamOP",
+                     "GotoOP",
+                     "CallOP",
+                     "LabelOP",
+                     "FuncLabelOP",
+                     "FuncEndOP",
+                     "PhiFuncOp",
+                     "InitArgO"};
 
 
 extern List *func_list;
@@ -583,13 +582,14 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
                           dom_tree *cur_bblock) {
   HashMap *num_of_var_def = NULL;
   hashmap_init(&num_of_var_def);
-  printf("%s\n", cur_bblock->bblock_node->bblock_head->label->name);
+  // printf("%s\n", cur_bblock->bblock_node->bblock_head->label->name);
   ListFirst(cur_bblock->bblock_node->bblock_head->inst_list, false);
   void *element;
   // 遍历当前bblock的instruction找出赋值语句
   while (ListNext(cur_bblock->bblock_node->bblock_head->inst_list, &element)) {
     // 如果是赋值语句则将操作数放在栈顶 用于后续的替换
-    if (((Instruction *)element)->opcode == StoreOP &&
+    if ((((Instruction *)element)->opcode == StoreOP ||
+         ((Instruction *)element)->opcode == InitArgOP) &&
         user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
       if (HashMapContain(
               num_of_var_def,
@@ -605,6 +605,8 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
             strdup(user_get_operand_use(((User *)element), 0)->Val->name),
             num_of_this_var);
       }
+      puts(user_get_operand_use(((User *)element), 0)->Val->name);
+      puts(user_get_operand_use(((User *)element), 1)->Val->name);
       StackPush(
           HashMapGet(rename_var_stack_hashmap,
                      user_get_operand_use(((User *)element), 0)->Val->name),
@@ -763,6 +765,13 @@ void delete_alloca_store_load_ins_pass(ALGraph *self) {
       ListGetAt(cur_handle, i, &element);
       switch (((Instruction *)element)->opcode) {
         case StoreOP:
+          if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
+            ListRemove(cur_handle, i);
+          } else {
+            i++;
+          }
+          break;
+        case InitArgOP:
           if (user_get_operand_use(element, 0)->Val->VTy->TID != ArrayTyID) {
             ListRemove(cur_handle, i);
           } else {
@@ -1058,7 +1067,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
                 strdup(user_get_operand_use((User *)element, j)->Val->name));
           }
         }
-        if (((Instruction *)element)->opcode < TWO_OPRANDS_INS) {
+        if (((Instruction *)element)->opcode < RETURN_USED) {
           printf("%s live def add %s\n",
                  (self->node_set)[i]->bblock_head->label->name,
                  ((Value *)element)->name);
@@ -1244,8 +1253,8 @@ void calculate_live_interval(ALGraph *self_cfg, Function *self_func) {
     Instruction *element;
     while (ListReverseNext((self_cfg->node_set)[i]->bblock_head->inst_list,
                            &element)) {
-      if (element->opcode < 19) {
-        if (((Instruction *)element)->opcode < TWO_OPRANDS_INS) {
+      if (element->opcode < NULL_USED) {
+        if (((Instruction *)element)->opcode < RETURN_USED) {
           var_live_interval *cur_var_live_interval = NULL;
           cur_var_live_interval = is_list_contain_item(
               self_func->all_var_live_interval, ((Value *)element)->name);
@@ -1618,14 +1627,14 @@ void ins_toBBlock_pass(List *self) {
           break;
         }
       }
+      cur_func->num_of_block = num_of_block;
     }
-    cur_func->num_of_block = num_of_block;
 
-    // 打印当前函数的基本块
-    print_bblock_pass(cur_func->entry_bblock);
-    // 清空哈希表 然后重新初始化供后面使用
-    HashSetDeinit(bblock_pass_hashset);
-    hashset_init(&(bblock_pass_hashset));
+    // // 打印当前函数的基本块
+    // print_bblock_pass(cur_func->entry_bblock);
+    // // 清空哈希表 然后重新初始化供后面使用
+    // HashSetDeinit(bblock_pass_hashset);
+    // hashset_init(&(bblock_pass_hashset));
   }
 }
 
@@ -1704,6 +1713,7 @@ void line_scan_register_allocation(ALGraph *self_cfg, Function *self_func,
   ListFirst(self_func->all_var_live_interval, false);
 
   ListNext(self_func->all_var_live_interval, &cur_handle);
+  if (cur_handle == NULL) return;
   LOCATION *cur_add_var_location = (LOCATION *)malloc(sizeof(LOCATION));
   *cur_add_var_location = 1;
   register_situation[1] = true;
@@ -1889,14 +1899,16 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //         // M store load
   //       }
 
-  //       if (((Instruction *)element)->opcode < 13) {
+  //       if (((Instruction *)element)->opcode < RETURN_USED) {
   //         if (HashMapGet(var_location, ((Value *)element)->name)) {
   //           LOCATION cur_var_location = *(
-  //               (LOCATION *)HashMapGet(var_location, ((Value *)element)->name));
+  //               (LOCATION *)HashMapGet(var_location, ((Value
+  //               *)element)->name));
   //           if (cur_var_location == MEMORY) {
   //             // 将当前语句改成store语句
   //           } else {
-  //             char *temp_str = strdup(location_string[*((LOCATION *)HashMapGet(
+  //             char *temp_str = strdup(location_string[*((LOCATION
+  //             *)HashMapGet(
   //                 var_location, ((Value *)element)->name))]);
   //             free(((Value *)element)->name);
   //             ((Value *)element)->name = temp_str;
@@ -1934,6 +1946,7 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   bblock_to_dom_graph_dfs_pass(init_headnode, 0);
   HashMapDeinit(bblock_to_dom_graph_hashmap);
+  hashmap_init(&bblock_to_dom_graph_hashmap);
 
   // 打印邻接边
   for (int i = 0; i < num_of_block; i++) {
@@ -1962,11 +1975,11 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   printf("\n");
 
-  printf_cur_func_ins(cur_func);
+  printf_cur_func_ins(self);
 
   printf("begin rename pass and delete alloca,store,load instruction!\n");
 
-  rename_pass(cur_func);
+  rename_pass(self);
 
   printf("rename pass over\n");
 
@@ -1985,7 +1998,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   //   exit(-1);
   // }
 
-  printf_cur_func_ins(cur_func);
+  printf_cur_func_ins(self);
 
   replace_phi_nodes(dom_tree_root);
 
@@ -1993,22 +2006,21 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   printf("\n\n\n");
 
-  printf_cur_func_ins(cur_func);
+  printf_cur_func_ins(self);
 
   calculate_live_use_def_by_graph(graph_for_dom_tree);
 
   calculate_live_in_out(graph_for_dom_tree);
 
-  calculate_live_interval(graph_for_dom_tree, cur_func);
+  calculate_live_interval(graph_for_dom_tree, self);
 
   // <Value*,*LOCATION>
   HashMap *var_location = HashMapInit();
   hashmap_init(&var_location);
 
-  line_scan_register_allocation(graph_for_dom_tree, cur_func, var_location);
+  line_scan_register_allocation(graph_for_dom_tree, self, var_location);
 
-  
-  register_replace(graph_for_dom_tree, cur_func, var_location);
+  register_replace(graph_for_dom_tree, self, var_location);
 }
 
 

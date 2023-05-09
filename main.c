@@ -35,10 +35,22 @@ int main() {
 
   printf("开始遍历\n");
 
-  return_val = (Value *)malloc(sizeof(Value));
-  value_init(return_val);
-  return_val->name = strdup("return_val");
-  return_val->VTy->TID = DefaultTyID;
+  // return_val = (Value *)malloc(sizeof(Value));
+  // value_init(return_val);
+  // return_val->name = strdup("return_val");
+  // return_val->VTy->TID = DefaultTyID;
+  
+    char *func_call =
+      "int add(int a, int b) {"
+      "a = 10;"
+      "int c = a + b;"
+      "return c;"
+      "}"
+      "void main() {"
+      "int a = 10;"
+      "int b = 20;"
+      "int c = add(add(a,b), b);"
+      "return c;"
 
   char *multi_add =
       "int multi_add() {"
@@ -109,6 +121,7 @@ int main() {
   ListFirst(func_list, false);
   void *element;
   while (ListNext(func_list, &element)) {
+    puts(((Function *)element)->label->name);
     bblock_to_dom_graph_pass((Function *)element);
   }
 
