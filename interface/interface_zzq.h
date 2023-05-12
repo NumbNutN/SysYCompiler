@@ -43,11 +43,7 @@ int64_t ins_get_constant(Instruction* this,int i);
  * @author Created by LGD on 20220106
 */
 Value* get_op_from_return_instruction(Instruction* this);
-/**
- * @brief 从zzq的param语句中获取op
- * @author Created by LGD on 20220106
-*/
-Value* get_op_from_param_instruction(Instruction* this);
+
 
 
 // size_t get_function_stackSize();

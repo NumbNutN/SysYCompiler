@@ -2,6 +2,7 @@
 #include "arm_assembly.h"
 #include "variable_map.h"
 #include "interface_zzq.h"
+#include "memory_manager.h"
 #include <math.h>
 
 // Value* tempReg; //算数运算暂存寄存器
@@ -216,4 +217,28 @@ bool number_is_power_of_2(int num)
         num = num >> 1;
     } while (num != 0);
     return cnt_bit1 == 1;
+}
+
+/**
+ * @brief 翻译前执行的初始化
+ * @birth: Created by LGD on 2023-3-28
+*/
+void TranslateInit()
+{
+    //初始化链表
+    initDlist(); 
+}
+
+/**
+ * @brief 每次翻译新函数前要执行的初始化
+ * @birth:Created by LGD on 2023-5-9
+*/
+void InitBeforeFunction()
+{
+    //初始化用于整型的临时寄存器
+    Init_arm_tempReg();
+    //初始化浮点临时寄存器
+    Free_Vps_Register_Init();
+    //初始化栈帧状态字
+    memset(&currentPF,0,sizeof(struct _Produce_Frame));
 }

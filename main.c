@@ -10,6 +10,7 @@
 #include "c_container_auxiliary.h"
 #include "cds.h"
 #include "symbol_table.h"
+#include "print_format.h"
 
 extern List *ins_list;
 extern List *func_list;
@@ -50,7 +51,7 @@ int main() {
       "int a = 10;"
       "int b = 20;"
       "int c = add(add(a,b), b);"
-      "return c;"
+      "return c;}";
 
   char *multi_add =
       "int multi_add() {"
@@ -99,7 +100,7 @@ int main() {
 
   // yyin = fopen("../example/003_var_defn3.sy","r");
   // yyparse();
-  parser(_003_var_defn3);
+  parser(func_call);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {
@@ -118,6 +119,9 @@ int main() {
 
   ins_toBBlock_pass(ins_list);
 
+  //LGD backend 2023-5-9
+  TranslateInit();
+
   ListFirst(func_list, false);
   void *element;
   while (ListNext(func_list, &element)) {
@@ -127,6 +131,12 @@ int main() {
 
   free(tty_path);
   printf("All over!\n");
+
+  if (freopen("out.txt", "w", stdout) == NULL) {
+    fprintf(stderr, "打开文件tty失败！");
+    exit(-1);
+  }
+  print_model();
 
   return 0;
 }

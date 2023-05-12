@@ -20,7 +20,23 @@ typedef struct _MemUnitInfo
 } MemUnitInfo;
 
 extern struct _MemUnitInfo* stack_frame_mem_header;
+struct _Produce_Frame{
 
+    //栈顶偏移量
+    int SPOffset;
+    //栈帧偏移量
+    int FPOffset;
+    //定义了当前已被使用的局部变量栈内存单元偏移值，其初始值为栈帧至栈底之差，并在每次分配时自增
+    int cur_use_variable_offset;
+    //定义了当前已被使用的参数传递用栈内存单元偏移值，其初始值为栈顶至栈帧之差，并在每次分配时自增
+    int cur_use_parameter_offset;
+    //@brith:2023-5-2 定义了当前函数的内存单元管理链表
+    List* stack_frame_memory_unit_list;
+    //@birth:2023-5-9 定义了当前形参计数器
+    size_t param_counter;
+};
+
+extern struct _Produce_Frame  currentPF;
 //记录当前函数的栈总容量
 extern size_t stackSize;
 

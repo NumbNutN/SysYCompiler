@@ -16,7 +16,14 @@ struct _operand sp_indicate_offset = {
                 SP,
                 0
 };
-struct _operand r027[8];
+struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R1},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R2},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R3},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R4},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R5},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R6},
+                            {.addrMode=REGISTER_DIRECT,.oprendVal=R7}};
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
 

@@ -6,6 +6,7 @@
 #include "interface_zzq.h"
 #include "memory_manager.h"
 #include "variable_map.h"
+#include "dependency.h"
 
 typedef struct _dom_tree {
   List *child;
@@ -1797,7 +1798,7 @@ int REGISTER_NUM = 7;
 void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {
 
-    Pair *ptr_pair;
+  Pair *ptr_pair;
   //变量存储位置映射表
   //|  a   |   b  |   c   |
   //|  M   |  R0  |  ALLOCATE_R1   |
@@ -1809,11 +1810,30 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
            location_string[*((LOCATION *)ptr_pair->value)]);
   }
 
+  self_func->var_location = var_location;
+
+  // printf("打印所有指令的名字\n");
+  // struct _Instruction* get_name;
+  // //名字
+  // for (int i = 0; i < self_cfg->node_num; i++) {
+  //   ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+  //   while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&get_name)!=0)
+  //   {
+  //     printf("%s\n",get_name->user.value.name);
+  //   }
+  // }
+
+  //打印函数标号
+  // struct _Instruction* function_name;
+  // ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
+  // ListNext((self_cfg->node_set)[0]->bblock_head->inst_list,&function_name);
+  // translate_label(function_name);
+  Label(self_func->label->name);
+
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
   //遍历每一个block的list
   size_t totalLocalVariableSize = 0;
   HashMap* VariableInfoMap = NULL;
-
 
   //计算栈帧大小
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -1821,20 +1841,21 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
   }
-
-  //初始化函数栈帧
-  new_stack_frame_init(totalLocalVariableSize);
   //翻译前初始化
   //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
-  TranslateInit();
+  InitBeforeFunction();
+  //初始化函数栈帧
+  new_stack_frame_init(totalLocalVariableSize);
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
+
+  //将形式参数装载到对应的寄存器/内存分配位置
 
   //变量信息表转换
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,0,var_location,&VariableInfoMap); 
+    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
   }
 
 
@@ -1864,8 +1885,13 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   
 
   //第三次function遍历，翻译每一个list
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
+
+  //第一次翻译函数Label所在的块
+  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
+  traverse_list_and_translate_all_instruction((self_cfg->node_set)[0]->bblock_head->inst_list,0);
+
+  //第二次翻译其余的块
+  for (int i = 1; i < self_cfg->node_num; i++) {
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
@@ -1876,53 +1902,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   freopen("out.txt","w",stdout);
   print_model();
 
-  
-  // Pair *ptr_pair;
-  // HashMapFirst(var_location);
-  // while ((ptr_pair = HashMapNext(var_location)) != NULL) {
-  //   printf("\tvar:%s\taddress:%s\n ", (char *)ptr_pair->key,
-  //          location_string[*((LOCATION *)ptr_pair->value)]);
-  // }
 
-  // for (int i = 0; i < self_cfg->node_num; i++) {
-  //   int iter_num = 0;
-  //   while (iter_num <
-  //          ListSize((self_cfg->node_set)[i]->bblock_head->inst_list)) {
-  //     Instruction *element = NULL;
-  //     ListGetAt((self_cfg->node_set)[i]->bblock_head->inst_list, iter_num,
-  //               &element);
-  //     if (element->opcode < 19) {
-  //       for (int j = 0; j < ((User *)element)->num_oprands; j++) {
-  //         Value *cur_handle = user_get_operand_use((User *)element, j)->Val;
-  //         // R replace name
-
-  //         // M store load
-  //       }
-
-  //       if (((Instruction *)element)->opcode < RETURN_USED) {
-  //         if (HashMapGet(var_location, ((Value *)element)->name)) {
-  //           LOCATION cur_var_location = *(
-  //               (LOCATION *)HashMapGet(var_location, ((Value
-  //               *)element)->name));
-  //           if (cur_var_location == MEMORY) {
-  //             // 将当前语句改成store语句
-  //           } else {
-  //             char *temp_str = strdup(location_string[*((LOCATION
-  //             *)HashMapGet(
-  //                 var_location, ((Value *)element)->name))]);
-  //             free(((Value *)element)->name);
-  //             ((Value *)element)->name = temp_str;
-  //           }
-  //         } else {
-  //           ListRemove((self_cfg->node_set)[i]->bblock_head->inst_list,
-  //                      iter_num);
-  //           continue;
-  //         }
-  //       }
-  //     }
-  //     iter_num++;
-  //   }
-  // }
 }
 
 void bblock_to_dom_graph_pass(Function *self) {

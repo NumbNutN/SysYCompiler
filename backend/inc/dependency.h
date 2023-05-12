@@ -124,4 +124,18 @@ TypeID value_get_type(Value* val);
 */
 bool number_is_power_of_2(int num);
 
+
+/**
+ * @brief 翻译前执行的初始化
+ * @birth: Created by LGD on 2023-3-28
+*/
+void TranslateInit();
+
+/**
+ * @brief 每次翻译新函数前要执行的初始化
+ * @birth:Created by LGD on 2023-5-9
+*/
+void InitBeforeFunction();
+
+
 #endif

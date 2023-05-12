@@ -545,11 +545,21 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order)
     return totalSize;
 }
 
+bool name_is_parameter(char* name)
+{
+    return !memcmp(name,"param",5);
+}
+
+size_t get_parameter_order(char* name)
+{
+    return name[5] - '0' - 1;
+}
+
 /**
  * @brief 整合了开辟栈空间和寄存器分配
  * @birth: Created by LGD on 2023-5-3
 */
-HashMap* traverse_list_and_allocate_for_variable(List* this,int order,HashMap* zzqMap,HashMap** myMap)
+HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap** myMap)
 {
     Instruction* p;
     size_t totalSize = 0;
@@ -558,7 +568,44 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,int order,HashMap* z
     int arrayOffset;
     if(*myMap == NULL)
         variable_map_init(myMap);
-    p = traverse_to_specified_function(this,order);
+    //p = traverse_to_specified_function(this,order);
+    //@birth: 2023-5-9  为形式参数分配寄存器
+    char* name;
+    enum _LOCATION loc;
+    ListFirst(this,false);
+    ListNext(this,&p);
+    HashMap_foreach(zzqMap,name,loc)
+    {
+        if(name_is_parameter(name))
+        {
+            isFound = HashMapGet(*myMap,name);
+            if(isFound)break;
+            //新建变量信息项
+            var_info = (VarInfo*)malloc(sizeof(VarInfo));
+            memset(var_info,0,sizeof(VarInfo));
+            printf("插入新的实参名：%s \n",name);
+            HashMapPut(*myMap,name,var_info);
+
+            //分配寄存器或内存单元
+            if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
+            {
+                int offset = request_new_local_variable_memory_unit(IntegerTyID);
+                set_variable_stack_offset_by_name(*myMap,name,offset);
+                printf("%s分配了地址%d\n",name,offset);
+            }
+            else
+            {
+                RegisterOrder reg_order = request_new_allocable_register();
+                //为该变量(名)创建寄存器映射
+                set_variable_register_order_by_name(*myMap,name,reg_order);
+                //打印分配结果
+                printf("%s分配了寄存器%d\n",name,reg_order);                    
+            }    
+            movii(var_info->ori,r027[get_parameter_order(name)]);      
+        }
+        
+        
+    }
     Value* val;
     do
     {

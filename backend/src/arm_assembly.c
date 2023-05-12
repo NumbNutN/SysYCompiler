@@ -161,9 +161,6 @@ void recycle_temp_arm_register(int reg)
 /**
  * @brief 创建一个新的段
 */
-
-
-
 void initDlist()
 {
     /*

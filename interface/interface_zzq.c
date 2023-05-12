@@ -45,9 +45,9 @@ char* ins_get_tarLabel(Instruction* this)
         case GotoOP:
         case CallOP:
         case CallWithReturnValueOP:
-            return ins_get_assign_left_value(this)->pdata->no_condition_goto.goto_location->name;
+            return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;
         case GotoWithConditionOP:
-            return ins_get_assign_left_value(this)->pdata->condition_goto.false_goto_location->name;   //条件跳转时，只需要跳转至正确，错误顺序执行
+            return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;   //条件跳转时，只需要跳转至正确，错误顺序执行
     }
 }
 
@@ -119,14 +119,6 @@ int op_get_constant(Value* op)
 //     return this->user.value.pdata->return_pdata.return_value;
 // }
 #endif
-/**
- * @brief 从zzq的param语句中获取op
- * @author Created by LGD on 20220106
-*/
-Value* get_op_from_param_instruction(Instruction* this)
-{
-    return this->user.value.pdata->param_pdata.param_value;
-}
 
 
 
@@ -357,12 +349,18 @@ size_t traverse_list_and_count_the_number_of_function(List* this)
 /**
  * @biref:遍历所有三地址并翻译
  * @update:20220103 对链表进行初始化
+ *         2023-5-12 order用于标注当前Instruction
 */
 size_t traverse_list_and_translate_all_instruction(List* this,int order)
 {
     Instruction* p;
-    p = traverse_to_specified_function(this,order);
-
+    ListFirst(this,false);
+    ListNext(this,&p);
+    while(order!=0)
+    {
+        ListNext(this,&p);
+        --order;
+    }
     do
     {
         translate_IR_test(p);
@@ -496,4 +494,101 @@ Instruction* traverse_to_specified_function(List* this,int order)
 int ins_getelementptr_get_step_long(Instruction* this)
 {
     return ins_get_operand(this,1)->pdata->array_pdata.step_long;
+}
+
+
+/**
+ * @brief 打印一个函数
+ * @birth: Created by LGD on 2023-5-13
+*/
+void translate_a_function(Function *self_func,ALGraph *self_cfg)
+{
+    printf("打印所有指令的名字\n");
+  struct _Instruction* get_name;
+  //名字
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&get_name)!=0)
+    {
+      printf("%s\n",get_name->user.value.name);
+    }
+  }
+  //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
+  //遍历每一个block的list
+  size_t totalLocalVariableSize = 0;
+  HashMap* VariableInfoMap = NULL;
+
+  //打印函数标号
+  struct _Instruction* function_name;
+  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
+  ListNext((self_cfg->node_set)[0]->bblock_head->inst_list,&function_name);
+  translate_label(function_name);
+
+
+  //计算栈帧大小
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
+  }
+  //翻译前初始化
+  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
+  InitBeforeFunction();
+  //初始化函数栈帧
+  new_stack_frame_init(totalLocalVariableSize);
+  //设置当前函数栈帧
+  set_stack_frame_status(0,totalLocalVariableSize/4);
+
+  //将形式参数装载到对应的寄存器/内存分配位置
+
+  //变量信息表转换
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,self_func->var_location,&VariableInfoMap); 
+  }
+
+
+  // VarInfo testVarInfo;
+  // VarInfo* testVarInfoPtr;
+  // HashMapPut(VariableInfoMap,"name",&testVarInfo);
+  // testVarInfoPtr = HashMapGet(VariableInfoMap,"name");
+  
+  //由于变量的寄存器和内存地址都是静态的，为变量定义全局固定的寄存器和内存位置
+  //将zzq提供的变量定位表转换为变量信息表
+  //interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
+
+
+  Instruction* element = NULL;
+  //第二次function遍历，为每一句Instruction安插一个map
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
+    ins_deepSet_varMap(element,VariableInfoMap);
+
+  }
+  //打印变量信息表
+  // for (int i = 0; i < self_cfg->node_num; i++) {
+  //   print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
+  // }
+  
+
+  //第三次function遍历，翻译每一个list
+
+  //第一次翻译函数Label所在的块
+  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
+  traverse_list_and_translate_all_instruction((self_cfg->node_set)[0]->bblock_head->inst_list,0);
+
+  //第二次翻译其余的块
+  for (int i = 1; i < self_cfg->node_num; i++) {
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
+  }
+
+  //恢复当前函数栈帧
+  reset_stack_frame_status();
+
+  freopen("out.txt","w",stdout);
+  print_model();
 }

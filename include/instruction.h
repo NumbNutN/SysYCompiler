@@ -38,7 +38,8 @@ typedef enum _TAC_OP {
   FuncLabelOP,
   FuncEndOP,
   PhiFuncOp,
-  InitArgOP
+  InitArgOP,
+  ModOP
 } TAC_OP;
 
 struct _BasicBlock;

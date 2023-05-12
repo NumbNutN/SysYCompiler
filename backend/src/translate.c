@@ -85,9 +85,18 @@ void translate_function_end(Instruction* this)
 /**
  * @birth: Created by LGD on 2023-3-16
 */
-size_t func_get_param_number(Instruction* this)
+size_t func_get_param_number()
 {
+    return currentPF.param_counter++;
+}
 
+/**
+ * @brief 刷新参数个数
+ * @birth: Created by LGD on 2023-5-10
+*/
+size_t flush_param_number()
+{
+    currentPF.param_counter=0;
 }
 
 /**
@@ -97,10 +106,9 @@ size_t func_get_param_number(Instruction* this)
 void translate_param_instructions(Instruction* this)
 {
 
-    //获取参数 Value
-    Value* param_var = get_op_from_param_instruction(this);
     //依据存储位置转换为operand类型
-    AssembleOperand param_op = ValuetoOperand(this,param_var);
+    AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
+    size_t passed_param_number = func_get_param_number();
 
     int offset;
     if(passed_param_number <= 3)
@@ -112,9 +120,6 @@ void translate_param_instructions(Instruction* this)
         sp_indicate_offset.addtion = request_new_parameter_stack_memory_unit();
         memory_access_instructions("STR",param_op,sp_indicate_offset,NONESUFFIX,false,NONELABEL);
     }
-
-    //参数计数器自增
-    passed_param_number++;
 }
 
 /**
@@ -123,6 +128,7 @@ void translate_param_instructions(Instruction* this)
 */
 translate_call_instructions(Instruction* this)
 {
+    flush_param_number();
     //获取跳转标签
     char* label = ins_get_tarLabel(this);
     //执行跳转
@@ -145,7 +151,7 @@ translate_call_instructions(Instruction* this)
 */
 translate_call_with_return_value_instructions(Instruction* this)
 {
-
+    flush_param_number();
     //第一步 跳转至对应函数的标号
     char* tarLabel = ins_get_tarLabel(this);
 
@@ -156,20 +162,11 @@ translate_call_with_return_value_instructions(Instruction* this)
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
     AssembleOperand op;
 
-    
-    ins_variable_load_in_register(this,0,ARM,&op);
-    AssembleOperand r0;
-    r0.addrMode = REGISTER_DIRECT;
-    r0.oprendVal = R0;
-
-    general_data_processing_instructions(MOV,op,nullop,r0,NONESUFFIX,false);
+    struct _operand returnVal = toOperand(this,TARGET_OPERAND);
+    movii(returnVal,r0);
 
     //暂存寄存器回收
-    general_recycle_temp_register_conditional(this,0,op);
-    // if(ins_get_op_place(this,0)==IN_MEMORY)
-    //     recycle_temp_arm_register(op.oprendVal);
-
-    variable_storage_back(this,0,op.oprendVal);
+    general_recycle_temp_register_conditional(this,TARGET_OPERAND,op);
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
@@ -602,10 +599,15 @@ void translate_return_instructions(Instruction* this)
 /**
  * @brief 翻译Label指令 zzq专用
  * @date 20220103
+ * @update:2023-5-9 entry 转译为main
 */
 void translate_label(Instruction* this)
 {
-    if(label_is_entry(this))return;
+    if(label_is_entry(this))
+    {
+        Label("entry");
+        return;
+    }
     Label(ins_get_label(this));
 }
 
@@ -777,16 +779,3 @@ void translate_logical_binary_instruction(Instruction* this)
 
 #endif
 
-/**
- * @brief 翻译前执行的初始化
- * @birth: Created by LGD on 2023-3-28
-*/
-void TranslateInit()
-{
-    //初始化用于整型的临时寄存器
-    Init_arm_tempReg();
-    //初始化浮点临时寄存器
-    Free_Vps_Register_Init();
-    //初始化链表
-    initDlist(); 
-}

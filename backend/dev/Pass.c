@@ -1676,7 +1676,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0,&VariableInfoMap);    
+    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0);    
   }
 
   // VarInfo testVarInfo;
