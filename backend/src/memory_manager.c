@@ -80,8 +80,6 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
 
     //堆栈LR寄存器和R7
     bash_push_pop_instruction("PUSH",&fp,&lr,END);
-    //使当前R7与SP保持一致
-    general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
 
     //设置栈帧和栈顶指针的相对位置
     currentPF.FPOffset -= local_var_num*4;
@@ -90,9 +88,6 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
     //设置当前用户使用的栈帧偏移
     currentPF.cur_use_variable_offset = local_var_num*4;
     currentPF.cur_use_parameter_offset = (param_num - 1)*4;
-    //执行期间使指针变动生效
-    update_fp_value();
-    update_st_value();
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED
     //初始化寄存器映射表
@@ -105,6 +100,7 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
 /**
  * @brief 恢复函数的栈帧和栈顶
  * @birth: Created by LGD on 2023-4-4
+ * @update:2023-5-13 不再需要恢复FP的值，因为它妥善保管在栈中
 */
 void reset_stack_frame_status()
 {
@@ -112,10 +108,8 @@ void reset_stack_frame_status()
     currentPF.SPOffset = - currentPF.SPOffset;
 
     //执行期间使指针变动生效
-    update_fp_value();
-    update_st_value();
-
-    bash_push_pop_instruction("POP",&fp,&pc,END);
+    // update_fp_value();
+    update_sp_value();
 }
 
 
@@ -142,24 +136,24 @@ void update_fp_value()
 }
 
 /**
- * @biref 使对栈顶指针的更改生效
+ * @brief 使对栈顶指针的更改生效
+ * @birth:???
+ * @update:2023-5-13 多数情况下，对SP的改动借助临时寄存器是不可取的
 */
-void update_st_value()
+void update_sp_value()
 {
     if(!abs(currentPF.SPOffset))
         return;
+    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
 
-    // AssembleOperand offset;
-    // offset.addrMode = IMMEDIATE;
-    // offset.oprendVal = abs(currentPF.SPOffset);
-    // if(currentPF.SPOffset > 0)
-    //     general_data_processing_instructions(ADD,sp,sp,offset," ",false);
-    // else
-    //     general_data_processing_instructions(SUB,sp,sp,offset," ",false);
-    struct _operand immd = operand_create_immediate_op(currentPF.SPOffset);
-    struct _operand reg_off = operand_load_immediate(immd,ARM);
-    general_data_processing_instructions(ADD,sp,sp,reg_off," ",false);
-    operand_recycle_temp_register(reg_off);
+    if(currentPF.SPOffset > 0)
+        general_data_processing_instructions(ADD,sp,sp,offset," ",false);
+    else
+        general_data_processing_instructions(SUB,sp,sp,offset," ",false);
+    //struct _operand immd = operand_create_immediate_op(currentPF.SPOffset);
+    //struct _operand reg_off = operand_load_immediate(immd,ARM);
+    //general_data_processing_instructions(ADD,sp,sp,reg_off," ",false);
+    //operand_recycle_temp_register(reg_off);
 }
 
 /**
@@ -186,10 +180,10 @@ void init_parameter_register_list()
 /**********************************************/
 
 //设置可供变量暂时存放的寄存器池的个数
-#define ALLOCABLE_REGISTER_NUM 7
+#define ALLOCABLE_REGISTER_NUM 8
 
 //设置可供变量暂时存放的寄存器池全集
-#define ALLOCABLE_REGISTER R4,R5,R6,R8,R9,R10,R11
+#define ALLOCABLE_REGISTER R4,R5,R6,R8,R9,R10,R11,R12
 RegisterOrder allocable_register_pool[ALLOCABLE_REGISTER_NUM] = {ALLOCABLE_REGISTER};
 
 /**

@@ -257,6 +257,23 @@ void bash_push_pop_instruction(char* opcode,...)
 
     linkNode(node);
 }
+/**
+ * @brief 变长的push尝试
+ * @birth: Created by LGD on 2023-4-9
+*/
+void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
+{
+    size_t cnt = 0;
+    do{++cnt;} while (!operand_is_NULL(regList[cnt]));
+    
+    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    strcpy(node->opCode,opcode);
+    node->op_len = cnt;
+    node->opList = (AssembleOperand*)malloc(sizeof(AssembleOperand)*cnt);
+    memcpy(node->opList,regList,cnt*sizeof(struct _operand));
+    node->assemType = ASSEM_PUSH_POP_INSTRUCTION;
+    linkNode(node);
+}
 
 
 void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label)

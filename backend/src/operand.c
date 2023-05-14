@@ -383,6 +383,15 @@ bool operand_is_in_register(AssembleOperand op)
 }
 
 /**
+ * @brief 判断一个寄存器属于R4-R12(不包括R7)
+ * @birth: Created by LGD on 2023-5-13
+*/
+bool operand_is_via_r4212(struct _operand reg)
+{
+    return (reg.oprendVal >= R4 && reg.oprendVal <= R12 && reg.oprendVal!=R7);
+}
+
+/**
  * @brief 创建一个相对FP/SP偏移的寻址方式操作数
  *        这个方法不负责回收多余的寄存器
  * @birth: Created by LGD on 2023-5-3

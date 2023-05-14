@@ -552,7 +552,7 @@ bool name_is_parameter(char* name)
 
 size_t get_parameter_order(char* name)
 {
-    return name[5] - '0' - 1;
+    return name[5] - '0';
 }
 
 /**
@@ -601,10 +601,7 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                 //打印分配结果
                 printf("%s分配了寄存器%d\n",name,reg_order);                    
             }    
-            movii(var_info->ori,r027[get_parameter_order(name)]);      
         }
-        
-        
     }
     Value* val;
     do
@@ -687,6 +684,45 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
     return totalSize;
      
+}
+
+/**
+ * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
+ * @birth: Created by LGD on 2023-5-13
+*/
+void move_parameter_to_recorded_place(HashMap* varMap)
+{
+    char* name;
+    VarInfo* varInfo;
+    HashMap_foreach(varMap,name,varInfo)
+    {
+        if(name_is_parameter(name))
+        {
+            movii(varInfo->ori,r027[get_parameter_order(name)]);  
+        }
+    }
+}
+
+/**
+ * @brief 统计当前函数使用的所有R4-R12间的所有寄存器
+ * @birth: Created by LGD on 2023-5-13
+*/
+struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_map,struct _operand* reg_list,size_t* list_size)
+{
+    char* name;
+    VarInfo* reg;
+    size_t idx = 0;
+    if (reg_list == NULL)
+        reg_list = malloc(9*sizeof(struct _operand)); 
+    HashMap_foreach(register_attribute_map,name,reg)
+    {
+        if(operand_is_via_r4212(reg->ori))
+        {
+            reg_list[idx] = reg->ori;
+            ++idx;
+        }
+    }
+    reg_list[idx] = nullop;
 }
 
 /**

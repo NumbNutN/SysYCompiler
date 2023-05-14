@@ -53,6 +53,18 @@ int main() {
       "int c = add(add(a,b), b);"
       "return c;}";
 
+    char *func_call_2 =
+      "int add(int a, int b,int c,int d,int e,int f) {"
+      "a = 10;"
+      "int g = a + b + c + d + e + f;"
+      "return g;"
+      "}"
+      "void main() {"
+      "int a = 10;"
+      "int b = 20;"
+      "int c = add(add(a,b,3,4,5,6), b,7,8,9,10);"
+      "return c;}";
+
   char *multi_add =
       "int multi_add() {"
       "int a = 1;"
@@ -93,6 +105,56 @@ int main() {
     "return b0 + _c;"
     "}";
 
+  char* sort_test4_58 = 
+  "int select_sort(int A[],int n)"
+  "{"
+  "    int i;"
+  "    int j;"
+  "    int min;"
+  "    i =0;"
+  "    while(i < n-1)"
+  "    {"
+  "        min=i;//"
+  "        j = i + 1;"
+  "        while(j < n)"
+  "        {"
+  "            if(A[min]>A[j])"
+  "            {"
+  "                min=j;"
+  "            }"
+  "            j=j+1;"
+  "        }"
+  "        if(min!=i)"
+  "        {"
+  "            int tmp;"
+  "            tmp = A[min];"
+  "            A[min] = A[i];"
+  "            A[i] = tmp;"
+  "        }"
+  "        i = i + 1;"
+  "    }"
+  "    return 0;"
+  "}"
+  "int main(){"
+  "    int n = 10;"
+  "    int a[10];"
+  "    a[0]=4;a[1]=3;a[2]=9;a[3]=2;a[4]=0;"
+  "    a[5]=1;a[6]=6;a[7]=5;a[8]=7;a[9]=8;"
+  "    int i;"
+  "    i = 0;"
+  "    i = select_sort(a, n);"
+  "    while (i < n) {"
+  "        int tmp;"
+  "        tmp = a[i];"
+  "        putint(tmp);"
+  "        tmp = 10;"
+  "        putch(tmp);"
+  "        i = i + 1;"
+  "    }"
+  "    return 0;"
+  "}";
+
+
   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件printf_ast失败！");
     exit(-1);
@@ -100,7 +162,7 @@ int main() {
 
   // yyin = fopen("../example/003_var_defn3.sy","r");
   // yyparse();
-  parser(func_call);
+  parser(func_call_2);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {

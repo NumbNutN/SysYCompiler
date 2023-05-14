@@ -317,6 +317,18 @@ VarInfo* set_in_memory(Value* var);
 */
 char* AddrMode_2_str(enum _AddrMode addrMode);
 
+/**
+ * @brief 统计当前函数使用的所有R4-R12间的所有寄存器
+ * @birth: Created by LGD on 2023-5-13
+*/
+struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_map,struct _operand* reg_list,size_t* list_size);
+
+/**
+ * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
+ * @birth: Created by LGD on 2023-5-13
+*/
+void move_parameter_to_recorded_place(HashMap* varMap);
+
 extern char *op_string[];
 /**记录当前函数的栈总容量*/
 extern size_t stackSize;

@@ -274,6 +274,11 @@ assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOp
 void bash_push_pop_instruction(char* opcode,...);
 void push_pop_instructions(char* opcode,AssembleOperand reg);
 /**
+ * @brief 变长的push尝试
+ * @birth: Created by LGD on 2023-4-9
+*/
+void bash_push_pop_instruction_list(char* opcode,struct _operand* regList);
+/**
  * @brief 翻译通用数据传输指令
  * @update: 2023-3-19 根据乘法寄存器的要求对rm和rs互换
  * @update: 2023-4-20 更改了指令助记符的类型   删去了label选项

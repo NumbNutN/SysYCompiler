@@ -78,7 +78,7 @@ void update_fp_value();
 /**
  * @biref 使对栈顶指针的更改生效
 */
-void update_st_value();
+void update_sp_value();
 
 /**********************************************/
 /*                 外部调用                    */

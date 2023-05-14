@@ -134,6 +134,9 @@ translate_call_instructions(Instruction* this)
     //执行跳转
     branch_instructions(label,"L",false,NONELABEL);
 
+    //第二步 确保栈顶恢复到栈帧的位置
+    general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
+
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
 
@@ -156,8 +159,11 @@ translate_call_with_return_value_instructions(Instruction* this)
     char* tarLabel = ins_get_tarLabel(this);
 
     branch_instructions(tarLabel,"L",false,NONELABEL);
+
+    //第二步 确保栈顶恢复到栈帧的位置
+    general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
     
-    //第二步 回程将R0赋给指定变量
+    //第三步 回程将R0赋给指定变量
     //根据 The Base Procedure Call Standard
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
     AssembleOperand op;

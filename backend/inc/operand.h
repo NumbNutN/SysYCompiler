@@ -54,6 +54,11 @@ bool opernad_is_same(struct _operand dst,struct _operand src);
 */
 bool operand_is_NULL(AssembleOperand op);
 /**
+ * @brief 判断一个寄存器属于R4-R12(不包括R7)
+ * @birth: Created by LGD on 2023-5-13
+*/
+bool operand_is_via_r4212(struct _operand reg);
+/**
  * @brief struct _operand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130
 */

@@ -1791,9 +1791,9 @@ void line_scan_register_allocation(ALGraph *self_cfg, Function *self_func,
   }
 }
 
-char *location_string[] = {"null", "R1", "R2", "R3","R4","R5","R6","R7" "M"};
+char *location_string[] = {"null", "R1", "R2", "R3","R4","R5","R6","R7", "R8","M"};
 
-int REGISTER_NUM = 7;
+int REGISTER_NUM = 8;
 
 void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {
@@ -1849,8 +1849,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
 
-  //将形式参数装载到对应的寄存器/内存分配位置
-
   //变量信息表转换
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
@@ -1858,6 +1856,22 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
   }
 
+  //统计当前函数使用的所有R4-R12的通用寄存器
+  struct _operand used_reg[8];
+  size_t used_reg_size = 0;
+  count_register_change_from_R42R12(VariableInfoMap,used_reg,&used_reg_size);
+  //保存现场
+  bash_push_pop_instruction_list("PUSH",used_reg);
+
+  //执行期间使指针变动生效
+  update_sp_value();
+  //使当前R7与SP保持一致
+  general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
+
+  //传递参数
+  move_parameter_to_recorded_place(VariableInfoMap);
+
+  //将形式参数装载到对应的寄存器/内存分配位置
 
   // VarInfo testVarInfo;
   // VarInfo* testVarInfoPtr;
@@ -1885,20 +1899,17 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   
 
   //第三次function遍历，翻译每一个list
-
-  //第一次翻译函数Label所在的块
-  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
-  traverse_list_and_translate_all_instruction((self_cfg->node_set)[0]->bblock_head->inst_list,0);
-
-  //第二次翻译其余的块
-  for (int i = 1; i < self_cfg->node_num; i++) {
+  for (int i = 0; i < self_cfg->node_num; i++) {
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
 
   //恢复当前函数栈帧
   reset_stack_frame_status();
-
+  //恢复现场
+  bash_push_pop_instruction_list("POP",used_reg);
+  //退出函数
+  bash_push_pop_instruction("POP",&fp,&pc,END);
   freopen("out.txt","w",stdout);
   print_model();
 
