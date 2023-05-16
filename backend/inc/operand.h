@@ -65,6 +65,11 @@ bool operand_is_via_r4212(struct _operand reg);
 struct _operand operand_load_from_memory(struct _operand op,enum _ARMorVFP type);
 
 /**
+ * @brief 将一个操作数加载到指定的寄存器，无论其在任何位置均确保生产合法的指令，且不破坏其他的寄存器
+ * @birth: Created by LGD on 2023-5-14
+*/
+void operand_load_to_specified_register(struct _operand oriOp,struct _operand tarOp);
+/**
  * @brief 
  * @param op 需要读取到寄存器的operand
  * @param type 读取到的寄存器类型

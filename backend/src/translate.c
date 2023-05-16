@@ -102,6 +102,7 @@ size_t flush_param_number()
 /**
  * @brief 翻译传递参数的指令
  * @author Created by LGD on 2023-3-16
+ * @update:2023-5-14 考虑参数在内存和为立即数的情况
 */
 void translate_param_instructions(Instruction* this)
 {
@@ -112,8 +113,8 @@ void translate_param_instructions(Instruction* this)
 
     int offset;
     if(passed_param_number <= 3)
-    //小于等于4个则直接丢内存
-        general_data_processing_instructions(MOV,r027[passed_param_number],nullop,param_op,NONESUFFIX,false);
+    //小于等于4个则直接丢R0-R3
+        operand_load_to_specified_register(param_op,r027[passed_param_number]);
     else
     //申请一个新的参数存放的内存单元
     {

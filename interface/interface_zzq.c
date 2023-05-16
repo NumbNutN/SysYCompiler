@@ -350,6 +350,7 @@ size_t traverse_list_and_count_the_number_of_function(List* this)
  * @biref:遍历所有三地址并翻译
  * @update:20220103 对链表进行初始化
  *         2023-5-12 order用于标注当前Instruction
+ *         2023-5-14 当遇到参数传递时，倒序遍历
 */
 size_t traverse_list_and_translate_all_instruction(List* this,int order)
 {

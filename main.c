@@ -162,7 +162,7 @@ int main() {
 
   // yyin = fopen("../example/003_var_defn3.sy","r");
   // yyparse();
-  parser(func_call_2);
+  parser(func_call);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {

@@ -141,7 +141,15 @@ AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op
     assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
 }
 
-
+/**
+ * @brief 将一个操作数加载到指定的寄存器，无论其在任何位置均确保生产合法的指令，且不破坏其他的寄存器
+ * @birth: Created by LGD on 2023-5-14
+*/
+void operand_load_to_specified_register(struct _operand oriOp,struct _operand tarOp)
+{
+    assert(tarOp.addrMode == REGISTER_DIRECT && "该方法要求目的操作数必须是寄存器！");
+    movii(tarOp,oriOp);
+}
 
 /**
  * @brief 比较两个操作数是否一致

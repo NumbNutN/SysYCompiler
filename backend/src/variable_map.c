@@ -642,7 +642,8 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                 }
                 else
                 {
-                    RegisterOrder reg_order = request_new_allocable_register();
+                    //RegisterOrder reg_order = request_new_allocable_register();
+                    RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)));
                     //为该变量(名)创建寄存器映射
                     set_variable_register_order_by_name(*myMap,val->name,reg_order);
                     //打印分配结果
@@ -687,6 +688,15 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
 }
 
 /**
+ * @brief 依据静态寄存器分配表进行寄存器分配
+ * @birth: Created by LGD on 2023-5-14
+*/
+void traverse_list_and_do_static_register_distribute(List* insList,HashMap* zzqMap)
+{
+
+}
+
+/**
  * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
  * @birth: Created by LGD on 2023-5-13
 */
@@ -706,6 +716,7 @@ void move_parameter_to_recorded_place(HashMap* varMap)
 /**
  * @brief 统计当前函数使用的所有R4-R12间的所有寄存器
  * @birth: Created by LGD on 2023-5-13
+ * @update:2023-5-14 添加了检查重复项
 */
 struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_map,struct _operand* reg_list,size_t* list_size)
 {
@@ -713,11 +724,23 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
     VarInfo* reg;
     size_t idx = 0;
     if (reg_list == NULL)
+    {
         reg_list = malloc(9*sizeof(struct _operand)); 
+        memset(reg_list,0,9*sizeof(struct _operand));
+    }
+
+
     HashMap_foreach(register_attribute_map,name,reg)
     {
         if(operand_is_via_r4212(reg->ori))
         {
+            bool already_included = 0;
+            for(int i =0;i<9;i++)
+            {
+                if(opernad_is_same(reg_list[i],reg->ori))
+                    already_included = 1;
+            }
+            if(already_included)continue;
             reg_list[idx] = reg->ori;
             ++idx;
         }

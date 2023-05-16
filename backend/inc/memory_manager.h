@@ -143,6 +143,13 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num);
 void reset_stack_frame_status();
 
 
+/**
+ * @brief 依据指定输入申请可分配的寄存器
+ * @birth: Created by LGD on 2023-5-14
+*/
+RegisterOrder request_new_allocatble_register_by_specified_ids(int ids);
+
+
 
 
 

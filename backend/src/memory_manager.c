@@ -204,6 +204,25 @@ RegisterOrder request_new_allocable_register()
 }
 
 /**
+ * @brief 依据指定输入申请可分配的寄存器
+ * @birth: Created by LGD on 2023-5-14
+*/
+RegisterOrder request_new_allocatble_register_by_specified_ids(int ids)
+{
+    switch(ids)
+    {
+        case 1:return R4;
+        case 2:return R5;
+        case 3:return R6;
+        case 4:return R8;
+        case 5:return R9;
+        case 6:return R10;
+        case 7:return R11;
+        case 8:return R12;
+    }
+}
+
+/**
  * @brief 回收新的可分配的寄存器
  * @birth: Created by LGD on 2023-3-12
 */
