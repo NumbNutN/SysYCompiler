@@ -36,10 +36,20 @@ int main() {
 
   printf("开始遍历\n");
 
-  // return_val = (Value *)malloc(sizeof(Value));
-  // value_init(return_val);
-  // return_val->name = strdup("return_val");
-  // return_val->VTy->TID = DefaultTyID;
+  char *arr_func_call =
+      "int add_arr(int arr[][20]) {"
+      "int a = arr[1][2];"
+      "arr[3][4] = 10;"
+      "int b = arr[3][4];"
+      "return a + b;"
+      "}"
+      "int main() {"
+      "int arr[10][20];"
+      "arr[1][2] = 10;"
+      "arr[3][4] = 20;"
+      "int res1 = add_arr(arr);"
+      "return res1;"
+      "}";
   
     char *func_call =
       "int add(int a, int b) {"
@@ -75,17 +85,15 @@ int main() {
       "int f = a + b + c + d + e;"
       "}";
 
-  // 多维度数组
   char *multidimensional_arrays =
-      "int main() {"
-      "  int b = 10;"
-      "  int m = b + 10;"
-      "  int c = 233,arr[10][20][30];"
-      "  arr[3][5][m] = 100;"
-      "  int d = arr[3][5][b];"
-      "  return d;"
-      "}";
-
+    "int main() {"
+    "  int b = 10;"
+    "  int c = 233,arr[10][20][30];"
+    "  arr[3][5][b] = 100;"
+    "  int d = arr[3][5][b];"
+    "  return d;"
+    "}";
+  
   // 多维度数组
   char *multidimensional_arrays_2 =
       "int main() {"
@@ -162,7 +170,7 @@ int main() {
 
   // yyin = fopen("../example/003_var_defn3.sy","r");
   // yyparse();
-  parser(func_call);
+  parser(multidimensional_arrays);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {
@@ -195,7 +203,7 @@ int main() {
   printf("All over!\n");
 
   if (freopen("out.txt", "w", stdout) == NULL) {
-    fprintf(stderr, "打开文件tty失败！");
+    fprintf(stderr, "打开文件out.txt失败！");
     exit(-1);
   }
   print_model();
