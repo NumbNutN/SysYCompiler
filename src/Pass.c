@@ -7,6 +7,7 @@
 #include "memory_manager.h"
 #include "variable_map.h"
 #include "dependency.h"
+#include "symbol_table.h"
 
 typedef struct _dom_tree {
   List *child;
@@ -1854,6 +1855,13 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
+  }
+
+  //符号表转换
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    traverse_list_and_load_symbol_table((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
 
   //统计当前函数使用的所有R4-R12的通用寄存器

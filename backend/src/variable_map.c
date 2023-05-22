@@ -13,6 +13,7 @@ size_t stackSize;
 //记录当前已经分配了多少容量
 size_t currentDistributeSize = 0;
 
+
 /**
  * @brief 重设了键的判等依据等
 */
@@ -63,7 +64,6 @@ traverse_variable_map_get_key(HashMap* map)
         return pair_ptr->key;
     else
         return NULL;
-
 }
 
 /**
@@ -127,7 +127,6 @@ void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder r
 }
 #endif
 
-
 /**
  * @brief 判断一个变量在当前指令中是否是活跃的
 */
@@ -136,7 +135,6 @@ bool variable_is_live(Instruction* this,Value* var)
 
     return variable_map_get_value(this->map,var)->isLive;
 }
-
 
 /**
  * @brief   遍历变量信息表一次并返回一个键
@@ -204,7 +202,6 @@ void ins_cpy_varinfo_space(Instruction* this,HashMap* map)
         dst_var_info->ori = src_var_info->ori;
     }
 }
-
 
 
 /**
@@ -489,6 +486,11 @@ int CompareKeyByName(void* dst,void* src){return !strcmp(dst,src);}
 void RecordMapCleanKey(void* key){}
 void RecordMapCleanValue(void* value){}
 
+bool name_is_parameter(char* name)
+{
+    return !memcmp(name,"param",5);
+}
+
 size_t traverse_list_and_count_total_size_of_var(List* this,int order)
 {
     Instruction* p;
@@ -535,6 +537,7 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order)
             case AllocateOP:
             {
                 val = ins_get_assign_left_value(p);
+                if(name_is_parameter(val->name))continue;
                 assert(!HashMapGet(recordRepeatMap,val->name) && "这个数组没有正确的分配空间");
                 totalSize += val->pdata->array_pdata.total_member*4 + 4;
             }
@@ -543,11 +546,6 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order)
         
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
     return totalSize;
-}
-
-bool name_is_parameter(char* name)
-{
-    return !memcmp(name,"param",5);
 }
 
 size_t get_parameter_order(char* name)
@@ -634,6 +632,7 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
 
 
                 //分配寄存器或内存单元
+                printf("%d\n",HashMapGet(zzqMap,val->name));
                 if(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)) == MEMORY)
                 {
                     int offset = request_new_local_variable_memory_unit(val->VTy->TID);
@@ -654,6 +653,14 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
             case AllocateOP:
                 //新建变量信息项
                 val = ins_get_assign_left_value(p);
+                /**
+                 * @notice: 2023-5-22
+                 * 当array作为参数时，一条allocate语句将会为该局部数组分配空间
+                 * 从后端来看，数组是传递指针而非深拷贝的对象，没有必要也不能为其分配空间
+                 * 遂遇到这种情况将其忽略
+                */
+                if(name_is_parameter(val->name))
+                    break;
                 isFound = variable_map_get_value(*myMap,val);
                 if(isFound)break;
                 arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
@@ -683,6 +690,7 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
 
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
+
     return totalSize;
      
 }
@@ -699,6 +707,7 @@ void traverse_list_and_do_static_register_distribute(List* insList,HashMap* zzqM
 /**
  * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
  * @birth: Created by LGD on 2023-5-13
+ * @update: 2023-5-16 添加对数组指针访问的重定向
 */
 void move_parameter_to_recorded_place(HashMap* varMap)
 {
@@ -708,6 +717,11 @@ void move_parameter_to_recorded_place(HashMap* varMap)
     {
         if(name_is_parameter(name))
         {
+            //该参数使用相对FP偏移的方式获取存储位置
+            if(varInfo->ori.addrMode == REGISTER_INDIRECT_WITH_OFFSET)
+            {
+
+            }
             movii(varInfo->ori,r027[get_parameter_order(name)]);  
         }
     }
@@ -728,7 +742,6 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
         reg_list = malloc(9*sizeof(struct _operand)); 
         memset(reg_list,0,9*sizeof(struct _operand));
     }
-
 
     HashMap_foreach(register_attribute_map,name,reg)
     {

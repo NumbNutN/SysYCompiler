@@ -34,6 +34,8 @@ struct _Produce_Frame{
     List* stack_frame_memory_unit_list;
     //@birth:2023-5-9 定义了当前形参计数器
     size_t param_counter;
+    //@birth:2023-5-16 维护一个变量名到Value* 的哈希表
+    HashMap* symbol_map;
 };
 
 extern struct _Produce_Frame  currentPF;

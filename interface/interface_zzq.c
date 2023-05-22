@@ -11,7 +11,11 @@
 
 #include "Pass.h"
 
+/* Extern Global Variable */
 extern bool Open_Register_Allocation;
+extern HashMap* func_hashMap;
+/* Extern Global Variable End*/
+
 
 int ins_get_opCode(Instruction* this)
 {
@@ -27,7 +31,6 @@ int ins_get_opCode(Instruction* this)
 */
 char* ins_get_label(Instruction* this)
 {
-
     assert((this->opcode == LabelOP || this->opcode == FuncLabelOP) && "非标签语句");
     return ins_get_assign_left_value(this)->name;
 }
@@ -36,6 +39,7 @@ char* ins_get_label(Instruction* this)
  * @brief 获取目标跳转指令，适用于GotoOP,GotoWithConditionOP,CallOP,CallWithReturnValueOP
  * @birth: Created by LGD on 20221229
  * @update: 2023-3-28 调用ins_get_left_value基本方法
+ * @update: 2023-5-16 functionLabel通过全局查表给出
 */
 char* ins_get_tarLabel(Instruction* this)
 {
@@ -45,7 +49,7 @@ char* ins_get_tarLabel(Instruction* this)
         case GotoOP:
         case CallOP:
         case CallWithReturnValueOP:
-            return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;
+            return ((Value*)HashMapGet(func_hashMap,ins_get_assign_left_value(this)->name))->name;
         case GotoWithConditionOP:
             return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;   //条件跳转时，只需要跳转至正确，错误顺序执行
     }

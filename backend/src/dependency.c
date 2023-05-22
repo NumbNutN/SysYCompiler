@@ -227,6 +227,8 @@ void TranslateInit()
 {
     //初始化链表
     initDlist(); 
+    //初始化符号表
+    back_endsymbol_table_init();
 }
 
 /**
@@ -241,4 +243,6 @@ void InitBeforeFunction()
     Free_Vps_Register_Init();
     //初始化栈帧状态字
     memset(&currentPF,0,sizeof(struct _Produce_Frame));
+    //重置当前Symbal_table
+
 }

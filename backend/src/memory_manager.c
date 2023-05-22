@@ -29,7 +29,10 @@
 
 #define BASE_VALUE 32
 
-struct _Produce_Frame  currentPF;
+struct _Produce_Frame  currentPF = 
+{
+    .symbol_map = NULL
+};
 
 
 //当前函数的寄存器映射表
@@ -276,7 +279,7 @@ void vitual_register_map_insert_pair(HashMap* map,size_t ViOrder,RegisterOrder R
 */
 RegisterOrder vitual_register_map_get_value(HashMap* map,size_t ViOrder)
 {
-    return HashMapGet(map,ViOrder) != NULL? HashMapGet(map,ViOrder) - BASE_VALUE : -1;
+    return HashMapGet(map,ViOrder) != NULL? (RegisterOrder)HashMapGet(map,ViOrder) - BASE_VALUE : -1;
 }
 
 /**
@@ -331,6 +334,8 @@ size_t opTye2size(enum _TypeID type)
         case FP128TyID:      ///< 128-bit floating point type (112-bit significand)
         case PPC_FP128TyID:  ///< 128-bit floating point type (two 64-bits, PowerPC)
             return 16;
+        case VoidTyID:
+            return 0;
         default:
             assert(false && type && "Unrecognized type");
     }

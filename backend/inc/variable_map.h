@@ -146,7 +146,7 @@ void print_single_info_map(List* this,int order,bool print_info);
 #define HashMap_foreach(map,k,v)  \
     HashMapFirst(map);                  \
     for(Pair* pair_ptr = HashMapNext(map);  \
-        (pair_ptr != NULL) && (k = pair_ptr->key) && (v = pair_ptr->value);    \
+        (pair_ptr != NULL) && (k = pair_ptr->key) && (v = (uint64_t)(pair_ptr->value));    \
         pair_ptr = HashMapNext(map))
 
 

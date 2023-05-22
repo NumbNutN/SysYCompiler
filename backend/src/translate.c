@@ -15,6 +15,10 @@ AssembleOperand nullop;
 Instruction* functionEntrance = NULL;
 /* Global Variable End */
 
+/* Extern Global Variable*/
+extern HashMap* func_hashMap;
+/* Extern Global Variable End*/
+
 /**
  * @brief 翻译一个函数入口三地址代码，进行的操作包括入栈LR,CPSR，开辟栈区
  * @birth: Created by LGD on 20221212
@@ -110,7 +114,7 @@ void translate_param_instructions(Instruction* this)
     //依据存储位置转换为operand类型
     AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
     size_t passed_param_number = func_get_param_number();
-
+    
     int offset;
     if(passed_param_number <= 3)
     //小于等于4个则直接丢R0-R3
