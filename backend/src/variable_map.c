@@ -488,7 +488,8 @@ void RecordMapCleanValue(void* value){}
 
 bool name_is_parameter(char* name)
 {
-    return !memcmp(name,"param",5);
+    bool result = !memcmp(name,"param",5);
+    return result;
 }
 
 size_t traverse_list_and_count_total_size_of_var(List* this,int order)
@@ -663,8 +664,7 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                     break;
                 isFound = variable_map_get_value(*myMap,val);
                 if(isFound)break;
-                arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
-                printf("数组%s分配了地址%d\n",val->name,arrayOffset);
+                
                 var_info = (VarInfo*)malloc(sizeof(VarInfo));
                 memset(var_info,0,sizeof(VarInfo));
                 printf("插入新的数组名：%s 地址%lx\n",val->name,val);
@@ -684,10 +684,6 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                     //打印分配结果
                     printf("%s分配了寄存器%d\n",val->name,reg_order);                    
                 }
-                //使用一个指令将数组偏移值填充至对应的变量存储位置
-                struct _operand arrOff = operand_create_immediate_op(arrayOffset);
-                movii(var_info->ori,arrOff);
-
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
 
@@ -759,6 +755,7 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
         }
     }
     reg_list[idx] = nullop;
+    *list_size = idx*4;
 }
 
 /**

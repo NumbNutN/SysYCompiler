@@ -1836,25 +1836,55 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   size_t totalLocalVariableSize = 0;
   HashMap* VariableInfoMap = NULL;
 
+  //翻译前初始化
+  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
+  InitBeforeFunction();
+
   //计算栈帧大小
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
   }
-  //翻译前初始化
-  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
-  InitBeforeFunction();
+  //2023-5-22 这决定了局部变量区间的累计偏移值
+  currentPF.fp_offset -= totalLocalVariableSize;
+
   //初始化函数栈帧
   new_stack_frame_init(totalLocalVariableSize);
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
 
-  //变量信息表转换
+  //变量信息表转换  
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
+  }
+  
+  //统计当前函数使用的所有R4-R12的通用寄存器
+  //前提 已经完成寄存器分配
+  struct _operand used_reg[8];
+  size_t used_reg_size = 0;
+  count_register_change_from_R42R12(VariableInfoMap,used_reg,&used_reg_size);
+  //保存现场
+  bash_push_pop_instruction_list("PUSH",used_reg);
+
+
+  Instruction* element = NULL;
+  //第二次function遍历，为每一句Instruction安插一个map
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
+    ins_deepSet_varMap(element,VariableInfoMap);
+  }
+
+  //为数组分配空间并装载到基址存储位置
+  //前提 所有的指令都分配了变量信息表
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+    traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
 
   //符号表转换
@@ -1864,12 +1894,11 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     traverse_list_and_load_symbol_table((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
 
-  //统计当前函数使用的所有R4-R12的通用寄存器
-  struct _operand used_reg[8];
-  size_t used_reg_size = 0;
-  count_register_change_from_R42R12(VariableInfoMap,used_reg,&used_reg_size);
-  //保存现场
-  bash_push_pop_instruction_list("PUSH",used_reg);
+  //2023-5-22 这决定了现场保护区域FP的偏移值
+  currentPF.fp_offset -= used_reg_size;
+
+  //得知参数个数
+  //在参数个数小于4的情况下，可以暂时不予考虑
 
   //执行期间使指针变动生效
   update_sp_value();
@@ -1891,15 +1920,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
 
 
-  Instruction* element = NULL;
-  //第二次function遍历，为每一句Instruction安插一个map
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
-    ins_deepSet_varMap(element,VariableInfoMap);
-
-  }
   //打印变量信息表
   // for (int i = 0; i < self_cfg->node_num; i++) {
   //   print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
@@ -1920,7 +1940,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   bash_push_pop_instruction("POP",&fp,&pc,END);
   freopen("out.txt","w",stdout);
   print_model();
-
 
 }
 

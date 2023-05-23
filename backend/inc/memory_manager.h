@@ -4,6 +4,8 @@
 #include "cds.h"
 #include "arm.h"
 
+#include "value.h"
+
 #define STACK_MAX_SIZE 0xFFFF
 
 /**
@@ -36,6 +38,8 @@ struct _Produce_Frame{
     size_t param_counter;
     //@birth:2023-5-16 维护一个变量名到Value* 的哈希表
     HashMap* symbol_map;
+    //@birth:2023-5-22 定义了当前函数引起的FP递减量的计数器，其用来矫正外部函数局部变量指针的寻址方式
+    int fp_offset;
 };
 
 extern struct _Produce_Frame  currentPF;
@@ -152,19 +156,27 @@ void reset_stack_frame_status();
 RegisterOrder request_new_allocatble_register_by_specified_ids(int ids);
 
 
+/**********************************************/
+/*             局部变量指针管理                */
+/**********************************************/
+/**
+ * @brief 根据变量类型记录FP从上一个活动记录到当前活动记录的累计偏移值
+ * @birth: Created by LGD on 2023-5-22
+*/
+void fp_offset_counter(Value* val);
+
+/**
+ * @brief 遍历链表将所有allocate的数组分配内存空间并将基地址装载到对应位置
+ * @birth: Created by LGD on 2023-5-23
+*/
+traverse_and_load_arrayBase_to_recorded_place(List* this);
 
 
-
-
-
-
-
-
-
-
-
-
-
+/**
+ * @brief 遍历链表并对所有allocate param语句完成指针的偏移映射
+ * @birth: Created by LGD on 2023-5-22
+*/
+void traverse_and_fix_pointer_offset(List* this);
 
 /**
  * @brief 初始化被管理的内存单元

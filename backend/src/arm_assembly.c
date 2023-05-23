@@ -985,9 +985,6 @@ void variable_storage_back_new(Instruction* this,int i,RegisterOrder order)
 
 }
 
-
-
-
 /**
  * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器
  *        若在寄存器和指令中，返回对应的寄存器或常数
@@ -1114,8 +1111,6 @@ size_t ins_variable_load_in_register(Instruction* this,int i,ARMorVFP regType,As
                 //将寄存器编号赋给operandVal
                 op->oprendVal = get_variable_register_order_or_memory_offset_test(this,ins_get_operand(this,i));
             }
-            
-
             use_temp_reg = true;
         break;
     }

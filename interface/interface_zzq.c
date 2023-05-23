@@ -43,13 +43,15 @@ char* ins_get_label(Instruction* this)
 */
 char* ins_get_tarLabel(Instruction* this)
 {
+    Value* functionValue;
     assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP || this->opcode != CallOP || this->opcode != CallWithReturnValueOP);
     switch(ins_get_opCode(this))
     {
         case GotoOP:
         case CallOP:
         case CallWithReturnValueOP:
-            return ((Value*)HashMapGet(func_hashMap,ins_get_assign_left_value(this)->name))->name;
+            functionValue = (Value*)HashMapGet(func_hashMap,ins_get_assign_left_value(this)->name);
+            return functionValue->name;
         case GotoWithConditionOP:
             return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;   //条件跳转时，只需要跳转至正确，错误顺序执行
     }
@@ -198,6 +200,9 @@ void translate_IR_test(struct _Instruction* this)
         break;
         case LoadOP:
             translate_load_instruction(this);
+        break;
+        case AllocateOP:
+            translate_allocate_instruction(this);
         break;
         case LabelOP:
             translate_label(this);

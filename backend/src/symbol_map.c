@@ -71,38 +71,6 @@ void traverse_list_and_load_symbol_table(List* this)
                 printf("插入新的变量名：%s\n",val->name);
                 HashMapPut(currentPF.symbol_map,val->name,val);
             break;
-            //为数组也分配空间
-            // case AllocateOP:
-            //     //新建变量信息项
-            //     val = ins_get_assign_left_value(p);
-            //     isFound = variable_map_get_value(*myMap,val);
-            //     if(isFound)break;
-            //     arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
-            //     printf("数组%s分配了地址%d\n",val->name,arrayOffset);
-            //     var_info = (VarInfo*)malloc(sizeof(VarInfo));
-            //     memset(var_info,0,sizeof(VarInfo));
-            //     printf("插入新的数组名：%s 地址%lx\n",val->name,val);
-            //     variable_map_insert_pair(*myMap,val,var_info);
-            //     //分配寄存器或内存单元
-            //     if(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)) == MEMORY)
-            //     {
-            //         int offset = request_new_local_variable_memory_unit(val->VTy->TID);
-            //         set_variable_stack_offset_by_name(*myMap,val->name,offset);
-            //         printf("%s分配了地址%d\n",val->name,offset);
-            //     }
-            //     else
-            //     {
-            //         RegisterOrder reg_order = request_new_allocable_register();
-            //         //为该变量(名)创建寄存器映射
-            //         set_variable_register_order_by_name(*myMap,val->name,reg_order);
-            //         //打印分配结果
-            //         printf("%s分配了寄存器%d\n",val->name,reg_order);                    
-            //     }
-            //     //使用一个指令将数组偏移值填充至对应的变量存储位置
-            //     struct _operand arrOff = operand_create_immediate_op(arrayOffset);
-            //     movii(var_info->ori,arrOff);
-
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
-     
 }

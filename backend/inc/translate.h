@@ -45,6 +45,12 @@ void translate_store_instruction(Instruction* this);
  * @birth: Created by LGD on 2023-5-4
 */
 void translate_load_instruction(Instruction* this);
+/**
+ * @brief 翻译为局部数组分配地址空间的指令
+ * @birth:Created by LGD on 2023-5-2
+ * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
+*/
+void translate_allocate_instruction(Instruction* this);
 
 
 /**************************************************************/

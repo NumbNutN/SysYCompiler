@@ -14,6 +14,9 @@
 #include "config.h"
 #include "operand.h"
 
+#include "interface_zzq.h"
+#include "variable_map.h"
+
 
 //栈帧指针
 #define FP R7
@@ -91,6 +94,9 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
     //设置当前用户使用的栈帧偏移
     currentPF.cur_use_variable_offset = local_var_num*4;
     currentPF.cur_use_parameter_offset = (param_num - 1)*4;
+
+    //2023-5-22 对R7和LR的保存也要计算在偏移值内
+    currentPF.fp_offset -= 2*4;
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED
     //初始化寄存器映射表
@@ -533,8 +539,6 @@ int request_new_parameter_stack_memory_unit()
 /*                  使用参数映射表              */
 /**********************************************/
 
-
-
 /**
  * @brief 根据参数的序号，返回函数相对FP的偏移
 */
@@ -544,20 +548,92 @@ int return_param_offset(size_t i)
 }
 
 
+/**********************************************/
+/*            局部变量地址参数管理              */
+/**********************************************/
+/**
+ * @brief 根据变量类型记录FP从上一个活动记录到当前活动记录的累计偏移值
+ * @birth: Created by LGD on 2023-5-22
+*/
+void fp_offset_counter(Value* val)
+{
+    currentPF.fp_offset -= opTye2size(val->VTy->TID);
+}
 
+/**
+ * @brief 将数组类型的基地址装载到指针
+ * @birth: Created by LGD on 2023-5-23
+*/
+void arrayBase_load_to_recorded_place(HashMap* variable_map)
+{
+    char* name;
+    Value* value;
+    VarInfo* info;
+    HashMap_foreach(currentPF.symbol_map,name,value)
+    {
+        if(value_get_type(value) != ArrayTyID)
+            continue;
+        info = HashMapGet(variable_map,name);
+        assert(!info && ("数组类型变量存在在符号表却未创建基地址信息"));
+        //将基地址加载到对应的位置
+    }
+}
 
+/**
+ * @brief 遍历链表将所有allocate的数组分配内存空间并将基地址装载到对应位置
+ * @birth: Created by LGD on 2023-5-23
+*/
+traverse_and_load_arrayBase_to_recorded_place(List* this)
+{
+    Instruction* p;
+    Value* val;
+    VarInfo* info;
+    int arrayOffset;
+    ListFirst(this,false);
+    ListNext(this,&p);
+    do
+    {
+        val = ins_get_assign_left_value(p);
+        if((ins_get_opCode(p) == AllocateOP) && (!name_is_parameter(val->name)))
+        {
+            info = HashMapGet(p->map,val->name);
+            //为数组也分配空间
+            arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
+            //使用一个指令将数组偏移值填充至对应的变量存储位置
+            struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+            movii(info->ori,arrOff);
+        }
+    }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
+    
+    printf("数组%s分配了地址%d\n",val->name,arrayOffset);
+}
 
+/**
+ * @brief 遍历链表并对所有allocate param语句完成指针的偏移映射
+ * @birth: Created by LGD on 2023-5-22
+*/
+// void traverse_and_fix_pointer_offset(List* this)
+// {
+//     Instruction* p;
+//     ListFirst(this,false);
+//     ListNext(this,&p);
 
+//     do
+//     {
+//         //如果当前allocate不是针对参数的，不进行偏移值矫正
+//         if(!name_is_parameter(val->name) && ins_get_opCode(p) == AllocateOP)
+//             break;
+//         //获取原来的偏移值
+//         ins_get_operand(p,FIRST_OPERAND)->pdata->array_pdata.
 
+//     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
 
-
+// }
 
 
 /**********************************************/
 /*                  throw                     */
 /**********************************************/
-
-
 
 /**
  * @brief 设置栈帧指针的相对位移

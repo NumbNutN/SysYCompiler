@@ -485,12 +485,18 @@ void translate_load_instruction(Instruction* this)
 /**
  * @brief 翻译为局部数组分配地址空间的指令
  * @birth:Created by LGD on 2023-5-2
+ * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
 */
 void translate_allocate_instruction(Instruction* this)
 {
     //数组变量是一个指针变量，其变量信息记录了一个栈帧中的偏移值作为基地址
     struct _operand arrayBase = toOperand(this,TARGET_OPERAND);
-    //
+    //数组的矫正基地址在执行期完成运算
+    if(name_is_parameter(ins_get_assign_left_value(this)->name))
+    {
+        struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
+        general_data_processing_instructions_extend(SUB,NONESUFFIX,false,arrayBase,arrayBase,offset,nullop);
+    }
 }
 
 /**
