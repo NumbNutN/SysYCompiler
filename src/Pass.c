@@ -1938,8 +1938,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   bash_push_pop_instruction_list("POP",used_reg);
   //退出函数
   bash_push_pop_instruction("POP",&fp,&pc,END);
-  freopen("out.txt","w",stdout);
-  print_model();
 
 }
 

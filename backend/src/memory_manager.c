@@ -357,7 +357,7 @@ void new_stack_frame_init(int totalsize)
     currentPF.stack_frame_memory_unit_list = ListInit();
     struct _MemUnitInfo* firstMemUnit = malloc(sizeof(struct _MemUnitInfo));
     memset(firstMemUnit,0,sizeof(struct _MemUnitInfo));
-    firstMemUnit->baseAddr = -totalsize;
+    firstMemUnit->baseAddr = 0;
     firstMemUnit->isUsed = false;
     firstMemUnit->size = totalsize;
     ListPushBack(currentPF.stack_frame_memory_unit_list,firstMemUnit);
@@ -384,7 +384,7 @@ int request_new_local_variable_memory_units(size_t req_bytes)
     //     return currentPF.cur_use_variable_offset;
     // assert(false && "Request for new local variable stack units more than expected");
     
-    struct _MemUnitInfo* memUnit; 
+    struct _MemUnitInfo* memUnit;
     ListFirst(currentPF.stack_frame_memory_unit_list,false);
     size_t idx=0;
     bool next_result;
@@ -401,16 +401,16 @@ int request_new_local_variable_memory_units(size_t req_bytes)
         memUnit->isUsed = true;
         return memUnit->baseAddr;
     }
-    //分拆当前的内存单元
-    memUnit->size -= req_bytes;
     struct _MemUnitInfo* new_allocated_memUnit=malloc(sizeof(struct _MemUnitInfo));
-#ifdef SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
+#ifdef SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
     //由于我们现在无法得知栈的总大小，新的分配单元总是从当前可拆分内存单元的最高相对偏移量处划出内存块
-    new_allocated_memUnit->baseAddr = memUnit->baseAddr + memUnit->size ;
-#elif defined SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
     new_allocated_memUnit->baseAddr = memUnit->baseAddr;
     memUnit->baseAddr += req_bytes;
+#elif defined SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
+    new_allocated_memUnit->baseAddr = memUnit->baseAddr + memUnit->size - req_bytes;
 #endif
+    //分拆当前的内存单元
+    memUnit->size -= req_bytes;
     new_allocated_memUnit->size = req_bytes;
     new_allocated_memUnit->isUsed = true;
     //由于是从高地址进行拆分的，新的分配单元总是插入原属内存单元的前一个位置
@@ -424,11 +424,6 @@ int request_new_local_variable_memory_units(size_t req_bytes)
 */
 int request_new_local_variable_memory_unit(enum _TypeID type)
 {
-    // currentPF.cur_use_variable_offset -= 4;
-    // if(currentPF.cur_use_variable_offset >= 0)
-    //     return currentPF.cur_use_variable_offset;
-    // assert(false && "Request for new local variable stack unit more than expected");
-
     return request_new_local_variable_memory_units(opTye2size(type));
 }
 

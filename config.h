@@ -39,10 +39,10 @@
 /*基于类型判断立即数Value*/
 #define JUDGE_IMMEDIATE_BY_TYPE
 
-/* 从低地址拆分内存单元 */
-#define SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
 /* 从高地址拆分内存单元 */
-//#define SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
+#define SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
+/* 从高地址拆分内存单元 */
+//#define SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
 
 
 /*zzq的寄存器分配与load and store 指令已经安插*/

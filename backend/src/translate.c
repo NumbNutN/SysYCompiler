@@ -495,7 +495,7 @@ void translate_allocate_instruction(Instruction* this)
     if(name_is_parameter(ins_get_assign_left_value(this)->name))
     {
         struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
-        general_data_processing_instructions_extend(SUB,NONESUFFIX,false,arrayBase,arrayBase,offset,nullop);
+        general_data_processing_instructions_extend(ADD,NONESUFFIX,false,arrayBase,arrayBase,offset,nullop);
     }
 }
 
