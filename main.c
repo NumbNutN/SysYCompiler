@@ -14,6 +14,7 @@
 
 extern List *ins_list;
 extern List *func_list;
+extern List *global_var_list;
 
 SymbolTable *cur_symboltable = NULL;
 
@@ -36,19 +37,26 @@ int main() {
 
   printf("开始遍历\n");
 
-  char *arr_func_call =
-      "int add_arr(int arr[][20]) {"
-      "int a = arr[1][2];"
-      "arr[3][4] = 10;"
-      "int b = arr[3][4];"
-      "return a + b;"
+  char *mix_feature =
+      "int global_a = 10;"
+      "int global_b = 20;"
+      "int use_global(int a, int b, int arr[]) {"
+      "return 2 * global_a + a * global_b + b * arr[3];"
       "}"
       "int main() {"
+      "int a = 111;"
+      "int b = 222;"
       "int arr[10][20];"
-      "arr[1][2] = 10;"
-      "arr[3][4] = 20;"
-      "int res1 = add_arr(arr);"
-      "return res1;"
+      "if (a == 111) {"
+      "arr[3][3] = 333;"
+      "b = 444;"
+      "global_a = 555;"
+      "} else {"
+      "arr[3][3] = 666;"
+      "global_a = 777;"
+      "a = 999;"
+      "}"
+      "return a + global_a + 2 * use_global(b, global_b, arr[3]);"
       "}";
   
     char *func_call =
@@ -168,9 +176,7 @@ int main() {
     exit(-1);
   }
 
-  // yyin = fopen("../example/003_var_defn3.sy","r");
-  // yyparse();
-  parser(arr_func_call);
+  parser(mix_feature);
 
   // 重定向输出回终端
   if (freopen(tty_path, "w", stdout) == NULL) {
