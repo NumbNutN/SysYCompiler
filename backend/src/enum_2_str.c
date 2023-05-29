@@ -113,3 +113,21 @@ char* from_tac_op_2_str(TAC_OP op)
             return "";
     }
 }
+
+char* enum_section_2_str(enum Section sec)
+{
+    switch(sec)
+    {
+        case NONESECTION:
+            assert(sec != NONESECTION && "You should select a specified current section");
+        break;
+        case CODE:
+            return ".code";
+        case DATA:
+            return ".data";
+        case BSS:
+            return ".bss";
+        default:
+            assert(false && "Unknown section");
+    }
+}

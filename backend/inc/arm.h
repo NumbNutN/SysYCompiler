@@ -71,7 +71,8 @@ typedef enum _AddrMode
 
     //不是寻址方式 作为操作数的标记
     TARGET_LABEL, //B/BL/BX 语句的标号           //20221202     
-    PP            //PUSH/POP 语句的标号 
+    PP,            //PUSH/POP 语句的标号 
+    LABEL_MARKED_LOCATION
 
 } AddrMode;
 
@@ -144,6 +145,37 @@ typedef struct _operand
 } AssembleOperand;
 //ADD [SP,#4]
 
+
+/**************************************************************/
+/*                          Section                           */
+/***************************************************************/
+
+/**
+@brief:定义了Section
+@birth:Created by LGD on 2023-5-29
+*/
+enum Section{
+    NONESECTION,
+    CODE,
+    DATA,
+    BSS
+};
+
+extern enum Section currentSection;
+
+void change_currentSection(enum Section c);
+
+/**************************************************************/
+/*                      Data Section                          */
+/***************************************************************/
+
+void dot_long_expression(char* name,struct _operand expr);
+void dot_zero_expression(char* name);
+
+/**************************************************************/
+/*                      Code Section                          */
+/***************************************************************/
+
 typedef struct _assemNode
 {
     //操作码
@@ -184,8 +216,9 @@ typedef enum _RegorMem
 {
     IN_REGISTER     = 1,
     IN_MEMORY       = 2,
-    IN_INSTRUCTION  = 4,
-    UNALLOCATED     = 8
+    IN_DATA_SEC     = 4,
+    IN_INSTRUCTION  = 8,
+    UNALLOCATED     = 16
 } RegorMem;
 
 /**
@@ -358,9 +391,6 @@ void pseudo_fld(char* opCode,AssembleOperand reg,AssembleOperand immedi,TypeID t
 void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi);
 
 void linkNode(assmNode* now);
-
-
-
 
 
 

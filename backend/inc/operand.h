@@ -46,7 +46,7 @@ struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
 /**
  * @brief 比较两个操作数是否一致
 */
-bool opernad_is_same(struct _operand dst,struct _operand src);
+bool operand_is_same(struct _operand dst,struct _operand src);
 
 /**
  * @brief 判断一个操作数是否是空指针

@@ -105,6 +105,12 @@ Instruction* traverse_to_specified_function(List* this,int order);
 size_t traverse_list_and_translate_all_instruction(List* this,int order);
 
 /**
+@brief:翻译全局变量定义链表
+@birth:Created by LGD on 2023-5-29
+*/
+void translate_global_variable_list(List* this);
+
+/**
  * @brief 将当前zzq寄存器分配表转换为变量信息表
  * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
  * @birth: Created by LGD on 2023-3-26

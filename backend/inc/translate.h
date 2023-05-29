@@ -1,6 +1,8 @@
 #include "instruction.h"
 #include "config.h"
 
+
+
 void translate_add(Instruction* ins);
 
 void translate_IR(Instruction* this);
@@ -119,5 +121,13 @@ void translate_load_instruction(Instruction* this);
 void translate_store_instruction(Instruction* this);
 
 
-
 #endif
+
+/**************************************************************/
+/*                          子程序调用                          */
+/***************************************************************/
+/**
+@brief:翻译全局变量存储
+@update:2023-5-29
+*/
+void translate_global_store_instruction(Instruction* this);

@@ -176,4 +176,10 @@ void cmpii(struct _operand tar,struct _operand op1);
 */
 BinaryOperand binaryOpff(struct _operand op1,struct _operand op2);
 
+/**
+@brief:完成一次整数的相加
+@birth:Created by LGD on 2023-5-29
+*/
+void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2);
+
 #endif

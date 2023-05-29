@@ -211,12 +211,20 @@ void ins_cpy_varinfo_space(Instruction* this,HashMap* map)
 */
 RegorMem get_variable_place(Instruction* this,Value* var)
 {
-    if(var_is_return_val(var))
-        return IN_REGISTER;
-    if(op_is_in_instruction(var))
-        return IN_INSTRUCTION;
-    VarInfo* vs = variable_map_get_value(this->map,var);
-    return judge_operand_in_RegOrMem(vs->ori);
+    if(name_is_global(var->name))
+    {
+        return IN_DATA_SEC;
+    }
+    else
+    {
+        if(var_is_return_val(var))
+            return IN_REGISTER;
+        if(op_is_in_instruction(var))
+            return IN_INSTRUCTION;
+        VarInfo* vs = variable_map_get_value(this->map,var);
+        return judge_operand_in_RegOrMem(vs->ori);
+    }
+
 }
 
 /**
@@ -492,6 +500,16 @@ bool name_is_parameter(char* name)
     return result;
 }
 
+/**
+ * @brief 通过名字判断一个变量是否是全局变量
+ * @update: Created by LGD on 2023-5-29
+*/
+bool name_is_global(char* name)
+{
+    bool result = !memcmp(name,"global",6);
+    return result;
+}
+
 size_t traverse_list_and_count_total_size_of_var(List* this,int order)
 {
     Instruction* p;
@@ -748,7 +766,7 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
             bool already_included = 0;
             for(int i =0;i<9;i++)
             {
-                if(opernad_is_same(reg_list[i],reg->ori))
+                if(operand_is_same(reg_list[i],reg->ori))
                     already_included = 1;
             }
             if(already_included)continue;

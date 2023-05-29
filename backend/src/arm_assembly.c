@@ -332,7 +332,7 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
 
     //2023-5-3 增加两个寄存器不一致也要归还的逻辑
     if(variable_is_in_register(this,ins_get_operand(this,specificOperand)))
-        if(!opernad_is_same(toOperand(this,specificOperand),recycleRegister))
+        if(!operand_is_same(toOperand(this,specificOperand),recycleRegister))
             recycle_status |= REGISTER_ATTRIBUTED_DIFFER_FROM_VARIABLE_REGISTER;
 
     if((recycle_status | NO_NEED_TO_RECYCLE) != NO_NEED_TO_RECYCLE)
@@ -466,7 +466,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
-        if(!opernad_is_same(tar,op1))
+        if(!operand_is_same(tar,op1))
             general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
     else
@@ -623,7 +623,34 @@ BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2)
     return binaryOp;
 }
 
+/**
+@brief:完成一次整数的相加
+@birth:Created by LGD on 2023-5-29
+*/
+void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
+{
+    AssembleOperand middleOp;
+    BinaryOperand binaryOp;
+        
+    middleOp = operand_pick_temp_register(VFP);
 
+    binaryOp = binaryOpii(op1,op2);
+    
+    middleOp = operand_pick_temp_register(ARM);
+    general_data_processing_instructions(ADD,
+        middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+    
+    movii(tarOp,middleOp);
+
+    if(!operand_is_same(op1,binaryOp.op1))
+        operand_recycle_temp_register(binaryOp.op1);
+    
+    if(!operand_is_same(op2,binaryOp.op2))
+        operand_recycle_temp_register(binaryOp.op2);
+
+    //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
 
 
 

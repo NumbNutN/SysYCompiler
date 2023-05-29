@@ -335,4 +335,12 @@ extern size_t stackSize;
 /**记录当前已经分配了多少容量*/
 extern size_t currentDistributeSize;
 
+/**
+ * @brief 通过名字判断一个变量是否是全局变量
+ * @update: Created by LGD on 2023-5-29
+*/
+bool name_is_global(char* name);
+bool name_is_parameter(char* name);
+
+
 #endif

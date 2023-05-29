@@ -170,7 +170,10 @@ void print_single_assembleNode(assmNode* p)
             printf("%s\t",p->opCode);
             print_operand(p->op[0],0);
             printf(", ");
-            printf("=%d\n",p->op[1].oprendVal);
+            if(p->op[1].addrMode == IMMEDIATE)
+                printf("=%d\n",(int)p->op[1].oprendVal);
+            if(p->op[1].addrMode == LABEL_MARKED_LOCATION)
+                printf("=%s\n",(char*)p->op[1].oprendVal);
         break;
     }
 }

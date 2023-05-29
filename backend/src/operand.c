@@ -45,6 +45,10 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
             op.oprendVal = FP;
             op.addtion = get_variable_register_order_or_memory_offset_test(this,var);
         break;
+        case IN_DATA_SEC:
+            op.addrMode = LABEL_MARKED_LOCATION;
+            op.oprendVal = var->name;
+        break;
         case IN_REGISTER:
             op.addrMode = REGISTER_DIRECT;
             op.oprendVal = get_variable_register_order_or_memory_offset_test(this,var);
@@ -154,7 +158,7 @@ void operand_load_to_specified_register(struct _operand oriOp,struct _operand ta
 /**
  * @brief 比较两个操作数是否一致
 */
-bool opernad_is_same(struct _operand dst,struct _operand src)
+bool operand_is_same(struct _operand dst,struct _operand src)
 {
     if(memcmp(&dst,&src,sizeof(struct _operand)))
         return false;

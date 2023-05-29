@@ -196,6 +196,7 @@ int main() {
   ins_toBBlock_pass(ins_list);
 
   //LGD backend 2023-5-9
+  print_ins_pass(global_var_list);
   TranslateInit();
 
   ListFirst(func_list, false);

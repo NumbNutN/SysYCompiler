@@ -1805,6 +1805,7 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
 
   self_func->var_location = var_location;
 
+
   // printf("打印所有指令的名字\n");
   // struct _Instruction* get_name;
   // //名字
@@ -1831,6 +1832,9 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //翻译前初始化
   //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
   InitBeforeFunction();
+
+  translate_global_variable_list(global_var_list);
+
 
   //计算栈帧大小
   for (int i = 0; i < self_cfg->node_num; i++) {

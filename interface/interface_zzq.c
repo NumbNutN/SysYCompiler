@@ -378,6 +378,27 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
 
 }
 
+/**
+@brief:翻译全局变量定义链表
+@birth:Created by LGD on 2023-5-29
+*/
+void translate_global_variable_list(List* this)
+{
+    Instruction* p;
+    ListFirst(this,false);
+    ListNext(this,(void**)&p);
+    do
+    {
+        switch(p->opcode)
+        {
+            case StoreOP:
+                translate_global_store_instruction(p);
+            break;
+            default:
+            break;
+        }
+    }while(ListNext(this,&p));
+}
 
 void set_function_stackSize(size_t num)
 {

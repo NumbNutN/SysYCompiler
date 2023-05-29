@@ -254,8 +254,6 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
             break;
             
         }
-        
-
     }
     else
     {   
@@ -422,7 +420,7 @@ void translate_getelementptr_instruction(Instruction* this)
     general_data_processing_instructions_extend(MLA,NONESUFFIX,false,middleOp,step_long,idx,arrBase,nullop);
     
     //送入变量位置
-    if(!opernad_is_same(tarOp,middleOp))
+    if(!operand_is_same(tarOp,middleOp))
     {
         movii(tarOp,middleOp);
         general_recycle_temp_register_conditional(this,TARGET_OPERAND,middleOp);
@@ -442,6 +440,10 @@ void translate_store_instruction(Instruction* this)
 {
     struct _operand addr = toOperand(this,FIRST_OPERAND);
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
+    if(name_is_global(ins_get_operand(this, TARGET_OPERAND)->name))
+    {
+        
+    }
 
     //将需要存储的数据加载到寄存器中
     stored_elem = operand_load_to_register(stored_elem,nullop);
@@ -464,6 +466,10 @@ void translate_load_instruction(Instruction* this)
 {
     struct _operand loaded_target= toOperand(this,TARGET_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
+    if(name_is_global(ins_get_operand(this, TARGET_OPERAND)->name))
+    {
+
+    }
 
     //确保加载位置是寄存器
     struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
@@ -472,7 +478,7 @@ void translate_load_instruction(Instruction* this)
     memory_access_instructions("LDR",middle_loaded_target,memOffset,NONESUFFIX,false,NONELABEL);
 
     //如果原加载位置与当前loaded_target不符，需要再次传输
-    if(!opernad_is_same(middle_loaded_target,loaded_target))
+    if(!operand_is_same(middle_loaded_target,loaded_target))
         movii(loaded_target,middle_loaded_target);
     
     //归还加载数据的临时寄存器
@@ -486,6 +492,7 @@ void translate_load_instruction(Instruction* this)
  * @brief 翻译为局部数组分配地址空间的指令
  * @birth:Created by LGD on 2023-5-2
  * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
+ * @update: 2023-5-29 考虑了指针在内存的情况
 */
 void translate_allocate_instruction(Instruction* this)
 {
@@ -495,7 +502,7 @@ void translate_allocate_instruction(Instruction* this)
     if(name_is_parameter(ins_get_assign_left_value(this)->name))
     {
         struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
-        general_data_processing_instructions_extend(ADD,NONESUFFIX,false,arrayBase,arrayBase,offset,nullop);
+        addiii(arrayBase,arrayBase,offset);
     }
 }
 
