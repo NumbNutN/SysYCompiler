@@ -9,6 +9,7 @@
 #include "instruction.h"
 
 #define TEMP_REG_NUM 4
+#define ADDITION_REG_NUM 8
 
 #define IEEE_754_32BIT_EXPONENT 8
 #define UINT_32 32

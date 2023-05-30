@@ -1,7 +1,7 @@
 #include "instruction.h"
 #include "config.h"
 
-
+extern Instruction* currentInstruction;
 
 void translate_add(Instruction* ins);
 

@@ -141,9 +141,7 @@ typedef struct _operand
     //定义了移位的数量  2023-4-20
     size_t shiftNum;
 
-
 } AssembleOperand;
-//ADD [SP,#4]
 
 
 /**************************************************************/
@@ -168,6 +166,27 @@ void change_currentSection(enum Section c);
 /**************************************************************/
 /*                      Data Section                          */
 /***************************************************************/
+
+extern struct _dataNode* dataList;
+extern struct _dataNode* bssList;
+extern struct _dataNode* dataPrev;
+extern struct _dataNode* bssPrev;
+
+enum _Data_Expression{
+    DOT_LONG,
+    DOT_ZERO
+};
+
+typedef struct _dataNode{
+    //标签
+    char* label;
+    //声明词
+    enum _Data_Expression dExp;
+    //内容
+    uint32_t content;
+    //下一个数据段节点
+    struct _dataNode* next;
+} DataNode;
 
 void dot_long_expression(char* name,struct _operand expr);
 void dot_zero_expression(char* name);

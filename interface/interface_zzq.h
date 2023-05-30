@@ -29,6 +29,13 @@ extern Value *return_val;
 int ins_get_opCode(Instruction* this);
 char* ins_get_label(Instruction* this);
 char* ins_get_tarLabel(Instruction* this);
+
+/**
+ * @brief 获取条件调整语句的标号
+ * @birth: Created by LGD on 2023-5-29
+*/
+char* ins_get_tarLabel_Conditional(Instruction* this,bool cond);
+
 Value* ins_get_assign_left_value(Instruction* this);
 struct _Value *ins_get_operand(Instruction* this,int i);
 /**

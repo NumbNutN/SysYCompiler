@@ -7,10 +7,12 @@
 #include <assert.h>
 #include "arm.h"
 
+#include "dependency.h"
 void initDlist();
 //assmNode* Add(Instruction* ins);
 
-
+extern TempReg TempARMRegList[TEMP_REG_NUM];
+extern TempReg TempVFPRegList[TEMP_REG_NUM];
 /**
  * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器
  *        若在寄存器和指令中，返回对应的寄存器或常数

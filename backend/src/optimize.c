@@ -29,7 +29,8 @@ bool ins_mul_2_lsl_trigger(Instruction* ins)
 
 /**
  * @brief 乘法移位优化
- * @update: Created by LGD on 2023-4-19
+ * @birth: Created by LGD on 2023-4-19
+ * @update: 2023-5-29 添加寄存器回收
 */
 void ins_mul_2_lsl(Instruction* ins)
 {
@@ -51,6 +52,10 @@ void ins_mul_2_lsl(Instruction* ins)
         
         //第二操作数需要放置在合适的位置
         general_data_processing_instructions(MOV,tarOp,nullop,cvtOp2,NONESUFFIX,false);
+
+        //回收寄存器
+        if(!operand_is_same(cvtOp2, op2))
+            operand_recycle_temp_register(cvtOp2);
     }
     else
     {
@@ -66,6 +71,9 @@ void ins_mul_2_lsl(Instruction* ins)
         operand_set_shift(&cvtOp1,LSL,log(op2.oprendVal)/log(2));
 
         general_data_processing_instructions(MOV,tarOp,nullop,cvtOp1,NONESUFFIX,false);
+
+        if(!operand_is_same(cvtOp1, op1))
+            operand_recycle_temp_register(cvtOp1);
     }
 }
 

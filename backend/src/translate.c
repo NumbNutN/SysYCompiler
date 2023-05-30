@@ -20,6 +20,12 @@ extern HashMap* func_hashMap;
 /* Extern Global Variable End*/
 
 /**
+ * @brief 当前翻译指令
+ * @birth:Created by LGD on 2023-5-29
+*/
+Instruction* currentInstruction = NULL;
+
+/**
  * @brief 翻译一个函数入口三地址代码，进行的操作包括入栈LR,CPSR，开辟栈区
  * @birth: Created by LGD on 20221212
  * @update: 202230316 简化了代码，按照aapcs规范调用子程序
@@ -107,6 +113,7 @@ size_t flush_param_number()
  * @brief 翻译传递参数的指令
  * @author Created by LGD on 2023-3-16
  * @update:2023-5-14 考虑参数在内存和为立即数的情况
+ * @update:2023-5-30 添加寄存器限制
 */
 void translate_param_instructions(Instruction* this)
 {
@@ -125,11 +132,14 @@ void translate_param_instructions(Instruction* this)
         sp_indicate_offset.addtion = request_new_parameter_stack_memory_unit();
         memory_access_instructions("STR",param_op,sp_indicate_offset,NONESUFFIX,false,NONELABEL);
     }
+    //寄存器限制
+    add_register_limited(1 << passed_param_number);
 }
 
 /**
  * @brief 无返回值调用
  * @birth: Created by LGD on 2023-3-16
+ * @update:2023-5-30 取消寄存器限制
 */
 translate_call_instructions(Instruction* this)
 {
@@ -139,6 +149,11 @@ translate_call_instructions(Instruction* this)
     //执行跳转
     branch_instructions(label,"L",false,NONELABEL);
 
+    //取消寄存器限制
+    remove_register_limited(PARAMETER1_LIMITED | 
+                    PARAMETER2_LIMITED |
+                    PARAMETER3_LIMITED |
+                    PARAMETER4_LIMITED);
     //第二步 确保栈顶恢复到栈帧的位置
     general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
 
@@ -156,6 +171,7 @@ translate_call_instructions(Instruction* this)
  *          20221225 添加了将变量重新放回内存的支持
  *          20221224 翻译时接收返回值的变量调整为赋值号左侧的变量
  *          20221224 设计有误，不需要存储当前的函数入口
+ *          2023-5-30 取消寄存器限制
 */
 translate_call_with_return_value_instructions(Instruction* this)
 {
@@ -165,9 +181,18 @@ translate_call_with_return_value_instructions(Instruction* this)
 
     branch_instructions(tarLabel,"L",false,NONELABEL);
 
+    //取消寄存器限制
+    remove_register_limited(PARAMETER1_LIMITED | 
+                    PARAMETER2_LIMITED |
+                    PARAMETER3_LIMITED |
+                    PARAMETER4_LIMITED);
+    add_register_limited(RETURN_VALUE_LIMITED);
+
     //第二步 确保栈顶恢复到栈帧的位置
     general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
     
+    remove_register_limited(
+                    RETURN_VALUE_LIMITED);
     //第三步 回程将R0赋给指定变量
     //根据 The Base Procedure Call Standard
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
@@ -435,27 +460,41 @@ void translate_getelementptr_instruction(Instruction* this)
 /**
  * @brief 翻译将数据回存到一个指针指向的位置的指令
  * @birth: Created by LGD on 2023-5-3
+ * @update: 2023-5-29 添加对全局变量的存值操作
 */
 void translate_store_instruction(Instruction* this)
 {
-    struct _operand addr = toOperand(this,FIRST_OPERAND);
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
-    if(name_is_global(ins_get_operand(this, TARGET_OPERAND)->name))
+    struct _operand addr = toOperand(this,FIRST_OPERAND);
+    if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
-        
+        //将需要存储的数据加载到寄存器中
+        stored_elem = operand_load_to_register(stored_elem,nullop);
+        //申请存放地址的临时寄存器
+        struct _operand tempAddrOp = operand_pick_temp_register(ARM);
+        //取全局变量标号指示的内存单元
+        pseudo_ldr("LDR",tempAddrOp,addr);
+        //修改临时寄存器的寻址模式
+        operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
+        //将数据送入内存单元
+        memory_access_instructions("STR", stored_elem, tempAddrOp, NONESUFFIX, false, NONELABEL);
+        //归还可能的存储数据的临时寄存器
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
+        //归还临时地址寄存器
+        operand_recycle_temp_register(tempAddrOp);
     }
-
-    //将需要存储的数据加载到寄存器中
-    stored_elem = operand_load_to_register(stored_elem,nullop);
-    //将偏移装载到前变址寻址中
-    struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-    memory_access_instructions("STR",stored_elem,memOffset,NONESUFFIX,false,NONELABEL);
-
-    //归还可能的存储数据的临时寄存器
-    general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
-    //归还可能的存储偏移量的临时寄存器
-    if(memOffset.offsetType == OFFSET_IN_REGISTER)
-        recycle_temp_arm_register(memOffset.addtion);
+    else {
+        //将需要存储的数据加载到寄存器中
+        stored_elem = operand_load_to_register(stored_elem,nullop);
+        //将偏移装载到前变址寻址中
+        struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
+        memory_access_instructions("STR",stored_elem,memOffset,NONESUFFIX,false,NONELABEL);
+        //归还可能的存储数据的临时寄存器
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
+        //归还可能的存储偏移量的临时寄存器
+        if(memOffset.offsetType == OFFSET_IN_REGISTER)
+            recycle_temp_arm_register(memOffset.addtion);
+    }
 }
 
 /**
@@ -466,26 +505,37 @@ void translate_load_instruction(Instruction* this)
 {
     struct _operand loaded_target= toOperand(this,TARGET_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
-    if(name_is_global(ins_get_operand(this, TARGET_OPERAND)->name))
+    if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
-
+        //申请存放地址的临时寄存器
+        struct _operand tempAddrOp = operand_pick_temp_register(ARM);
+        //取全局变量标号指示的内存单元
+        pseudo_ldr("LDR",tempAddrOp,addr);
+        //修改临时寄存器的寻址方式
+        operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
+        //将数据取出至目标
+        movii(loaded_target,tempAddrOp);
+        //归还临时地址寄存器
+        operand_recycle_temp_register(tempAddrOp);
     }
+    else{
+        //确保加载位置是寄存器
+        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
+        //将偏移装载到前变址寻址中
+        struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
+        memory_access_instructions("LDR",middle_loaded_target,memOffset,NONESUFFIX,false,NONELABEL);
 
-    //确保加载位置是寄存器
-    struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
-    //将偏移装载到前变址寻址中
-    struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-    memory_access_instructions("LDR",middle_loaded_target,memOffset,NONESUFFIX,false,NONELABEL);
-
-    //如果原加载位置与当前loaded_target不符，需要再次传输
-    if(!operand_is_same(middle_loaded_target,loaded_target))
-        movii(loaded_target,middle_loaded_target);
+        //如果原加载位置与当前loaded_target不符，需要再次传输
+        if(!operand_is_same(middle_loaded_target,loaded_target))
+            movii(loaded_target,middle_loaded_target);
+        
+        //归还加载数据的临时寄存器
+        general_recycle_temp_register_conditional(this,TARGET_OPERAND,middle_loaded_target);
+        //归还可能的存储偏移量的临时寄存器
+        if(memOffset.offsetType == OFFSET_IN_REGISTER)
+            recycle_temp_arm_register(memOffset.addtion);
+    }
     
-    //归还加载数据的临时寄存器
-    general_recycle_temp_register_conditional(this,TARGET_OPERAND,middle_loaded_target);
-    //归还可能的存储偏移量的临时寄存器
-    if(memOffset.offsetType == OFFSET_IN_REGISTER)
-        recycle_temp_arm_register(memOffset.addtion);
 }
 
 /**
@@ -561,39 +611,30 @@ void translate_logical_binary_instruction_new(Instruction* this)
     {
         cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
     }
-
     movCondition(opList[TARGET_OPERAND],falseOp,opCode);
     movCondition(opList[TARGET_OPERAND],trueOp,DefaultOP);
-
 }
 
 /**
  * @brief 翻译只包含一个bool变量作为条件的跳转指令
  * @author Created by LGD on 20221225
+ * @update: 2023-5-29 重写goto_instruction
 */
 void translate_goto_instruction_test_bool(Instruction* this)
 {
 
-    AssembleOperand op;
-    AssembleOperand accessOpInMem[2];
+    AssembleOperand op = toOperand(this,FIRST_OPERAND);
     int tempReg;
 
     if(goto_is_conditional(ins_get_opCode(this)))
     {
         //有条件时   CMP 不需要cond  不需要S(本身会影响)
-        ins_variable_load_in_register(this,1,ARM,&op);
-        AssembleOperand trueOp;
-        trueOp.addrMode = IMMEDIATE;
-        trueOp.oprendVal = 1;
         //比较指令
-        general_data_processing_instructions(CMP,op,trueOp,nullop,NONESUFFIX,false);
+        cmpii(op,trueOp);
 
-        branch_instructions_test(ins_get_tarLabel(this),"NE",false,NONELABEL);
+        branch_instructions_test(ins_get_tarLabel_Conditional(this,false),"NE",false,NONELABEL);
+        branch_instructions_test(ins_get_tarLabel_Conditional(this,true),NONESUFFIX,false,NONELABEL);
     }
-
-    //暂存寄存器回收
-    general_recycle_temp_register_conditional(this,1,op);
-
 
 }
 
@@ -611,9 +652,7 @@ void translate_return_instructions(Instruction* this)
     struct _operand returnOperand = toOperand(this,FIRST_OPERAND);
     movii(r0,returnOperand);
     //当翻译返回语句时，此后R0应当是禁用状态
-    add_register_limited(RETURN_VALUE_LIMITED);
-    
-//    variable_load_in_register(this,get_op_from_return_instruction(this),&op);
+    //add_register_limited(RETURN_VALUE_LIMITED);
 }
 #endif
 

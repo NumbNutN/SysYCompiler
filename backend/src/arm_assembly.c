@@ -133,6 +133,7 @@ void remove_register_limited(enum _Pick_Arm_Register_Limited limited)
 /**
  * @brief 挑选一个闲置的临时寄存器 这个方法作为底层调用被相当多的方法依赖
  * @update: 2023-5-4 一个全局指示变量将提示现在不应当选择哪些寄存器作为临时寄存器
+ * @update: 2023-5-30 如果临时寄存器不够用，借用其他寄存器
 */
 unsigned pick_one_free_temp_arm_register()
 {
@@ -146,13 +147,19 @@ unsigned pick_one_free_temp_arm_register()
 }
 
 
-
+/**
+ * @brief 如果是额外借用的寄存器，以出栈的方式回收
+*/
 void recycle_temp_arm_register(int reg)
 {
     for(int i=0;i<TEMP_REG_NUM;i++)
     {
         if(reg == TempARMRegList[i].reg)
+        {
             TempARMRegList[i].isAviliable = true;
+            return;
+        }
+            
     }
     assert("Missing the temp regitser");
 }
@@ -492,6 +499,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
  * @brief cmpii
  * @birth: Created by LGD on 2023-4-4
  * @todo 更改回收寄存器的方式
+ * @update: 2023-5-29 考虑了目标操作数是立即数的情况
 */
 void cmpii(AssembleOperand tar,AssembleOperand op1)
 {
@@ -502,30 +510,39 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
 
     if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
         tar = operand_load_from_memory(tar,ARM);
+    if(judge_operand_in_RegOrMem(tar) == IN_INSTRUCTION)
+        tar = operand_load_immediate(tar, ARM);
     
-    general_data_processing_instructions(CMP,tar,op1,nullop,NONESUFFIX,false);
+    general_data_processing_instructions(CMP,tar,nullop,op1,NONESUFFIX,false);
 
-    if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
-    (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
+    if(!operand_is_same(op1, original_op1))
         operand_recycle_temp_register(op1);
+
+    if(!operand_is_same(tar,original_tar))
+        operand_recycle_temp_register(tar);
+    
 }
 
 /**
  * @brief movCondition
- * @birth: Created by LGD on 20230201
+ * @birth: Created by LGD on 2023-2-1
+ * @update: 2023-5-29 考虑了布尔变量在内存中的情况
 */
 void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
 {
-    AssembleOperand original_op1 = op1;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        op1 = operand_load_from_memory(op1,ARM);
-
-    general_data_processing_instructions(MOV,tar,nullop,op1,from_tac_op_2_str(opCode),false);
-
-    if(judge_operand_in_RegOrMem(original_op1) == IN_MEMORY ||
-    (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
-        operand_recycle_temp_register(op1);
-
+    //如果tar为寄存器
+    struct _operand original_op1 = op1;
+    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    {
+        general_data_processing_instructions(MOV,tar,nullop,op1,from_tac_op_2_str(opCode),false);
+    }
+    else
+    {   
+        op1 = operand_load_to_register(original_op1, nullop);
+        memory_access_instructions("STR",op1,tar,from_tac_op_2_str(opCode),false,NONELABEL);
+        if(!operand_is_same(op1,original_op1))
+            operand_recycle_temp_register(op1);
+    }
 }
 
 /**

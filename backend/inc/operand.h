@@ -162,4 +162,13 @@ void operand_set_shift(struct _operand* rm,enum SHIFT_WAY shiftWay,size_t shiftN
 */
 size_t operand_get_immediate(struct _operand op);
 
+/**
+ *@brief 这个方法可以更改操作数的寻址方式
+ *@birth: Created by LGD on 2023-5-29
+*/
+void operand_change_addressing_mode(struct _operand* op,AddrMode addrMode);
+
+
+
+
 #endif

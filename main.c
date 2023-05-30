@@ -12,6 +12,7 @@
 #include "symbol_table.h"
 #include "print_format.h"
 
+#include "interface_zzq.h"
 extern List *ins_list;
 extern List *func_list;
 extern List *global_var_list;
@@ -178,18 +179,18 @@ int main() {
 
   parser(mix_feature);
 
-  // 重定向输出回终端
-  if (freopen(tty_path, "w", stdout) == NULL) {
+  // // 重定向输出回终端
+  // if (freopen(tty_path, "w", stdout) == NULL) {
+  //   fprintf(stderr, "打开文件tty失败！");
+  //   exit(-1);
+  // }
+  // 重定向至中间代码文件
+  if (freopen("middle_output.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件tty失败！");
     exit(-1);
   }
 
   print_ins_pass(ins_list);
-
-  // if (freopen("out.txt", "w", stdout) == NULL) {
-  //   fprintf(stderr, "打开文件失败！");
-  //   exit(-1);
-  // }
 
   // delete_return_deadcode_pass(ins_list);
 
@@ -201,6 +202,15 @@ int main() {
 
   ListFirst(func_list, false);
   void *element;
+
+  // 重定向输出回终端
+  if (freopen(tty_path, "w", stdout) == NULL) {
+    fprintf(stderr, "打开文件tty失败！");
+    exit(-1);
+  }
+
+  translate_global_variable_list(global_var_list);
+
   while (ListNext(func_list, &element)) {
     puts(((Function *)element)->label->name);
     bblock_to_dom_graph_pass((Function *)element);

@@ -12,7 +12,7 @@
 */
 void translate_global_store_instruction(Instruction* this)
 {
-    char* name = ins_get_assign_left_value(this)->name;
+    char* name = ins_get_operand(this,FIRST_OPERAND)->name;
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
     
     dot_long_expression(name,stored_elem);

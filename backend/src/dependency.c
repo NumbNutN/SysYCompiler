@@ -246,3 +246,4 @@ void InitBeforeFunction()
     //重置当前Symbal_table
 
 }
+

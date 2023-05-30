@@ -536,3 +536,13 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
     }
     return cvtOp;
 }
+
+/**
+ *@brief 这个方法可以更改操作数的寻址方式
+ *@birth: Created by LGD on 2023-5-29
+*/
+void operand_change_addressing_mode(struct _operand* op,AddrMode addrMode)
+{
+    op->addrMode = addrMode;
+}
+

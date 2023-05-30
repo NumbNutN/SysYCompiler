@@ -10,6 +10,7 @@
 #include "memory_manager.h"
 
 #include "Pass.h"
+#include "debug.h"
 
 /* Extern Global Variable */
 extern bool Open_Register_Allocation;
@@ -40,6 +41,7 @@ char* ins_get_label(Instruction* this)
  * @birth: Created by LGD on 20221229
  * @update: 2023-3-28 调用ins_get_left_value基本方法
  * @update: 2023-5-16 functionLabel通过全局查表给出
+ * @update: 2023-5-29 Goto 和 GotoCondition修改了获取目标标号的位置
 */
 char* ins_get_tarLabel(Instruction* this)
 {
@@ -47,13 +49,37 @@ char* ins_get_tarLabel(Instruction* this)
     assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP || this->opcode != CallOP || this->opcode != CallWithReturnValueOP);
     switch(ins_get_opCode(this))
     {
-        case GotoOP:
+        
         case CallOP:
         case CallWithReturnValueOP:
+        
             functionValue = (Value*)HashMapGet(func_hashMap,ins_get_assign_left_value(this)->name);
             return functionValue->name;
+
+        case GotoOP:
         case GotoWithConditionOP:
             return ins_get_assign_left_value(this)->pdata->func_call_pdata.name;   //条件跳转时，只需要跳转至正确，错误顺序执行
+    }
+}
+
+/**
+ * @brief 获取条件调整语句的标号
+ * @birth: Created by LGD on 2023-5-29
+*/
+char* ins_get_tarLabel_Conditional(Instruction* this,bool cond)
+{
+    assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP);
+    switch(ins_get_opCode(this))
+    {
+        case GotoOP:
+            return ins_get_assign_left_value(this)->name;
+        case GotoWithConditionOP:
+        {
+            if(cond)
+                return ins_get_assign_left_value(this)->pdata->condition_goto.true_goto_location->name;
+            else
+                return ins_get_assign_left_value(this)->pdata->condition_goto.false_goto_location->name;
+        }
     }
 }
 
@@ -360,6 +386,7 @@ size_t traverse_list_and_count_the_number_of_function(List* this)
  * @update:20220103 对链表进行初始化
  *         2023-5-12 order用于标注当前Instruction
  *         2023-5-14 当遇到参数传递时，倒序遍历
+ *         2023-5-29 添加临时寄存器归还检测
 */
 size_t traverse_list_and_translate_all_instruction(List* this,int order)
 {
@@ -374,6 +401,8 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
     do
     {
         translate_IR_test(p);
+        currentInstruction = p;
+        detect_temp_register_status();
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
 
 }

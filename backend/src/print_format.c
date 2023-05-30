@@ -135,6 +135,9 @@ void print_single_assembleNode(assmNode* p)
                 /***********************MOV指令****************************/
                 if(!strcmp(p->opCode,"MOV") && i == Rn)
                     continue;
+                /***********************CMP指令****************************/    
+                if(!strcmp(p->opCode,"CMP") && i == Rn)
+                    continue;
                 /**********************************************************/
                 print_operand(p->op[i],i);
                 if(i!=p->op_len-1)
@@ -178,11 +181,39 @@ void print_single_assembleNode(assmNode* p)
     }
 }
 
+/**
+ *@brief 打印单个数据段节点
+ *@brith: Created by LGD on 2023-5-30
+*/
+void print_single_data(struct _dataNode* node)
+{
+    if(node->label != NULL)
+        printf("%s:\n",node->label);
+    else
+        printf("\t\t");
+    
+    printf("%s\t%d\n",enum_as_expression_2_str(node->dExp),node->content);
+}
+
 void print_model()
 {
+    //打印数据段节点
+    printf(".section .data\n");
+    for(struct _dataNode* node = dataList;node != NULL;node=node->next)
+    {
+        print_single_data(node);
+    }
+    //打印zeroInit段节点
+    printf(".section .bss\n");
+    for(struct _dataNode* node = bssList;node != NULL;node=node->next)
+    {
+        print_single_data(node);
+    }
     //顺序打印一整个链表的汇编指令
+    printf(".section .code\n");
     for(assmNode* p = head->next;p!=NULL;p=p->next)
     {
         print_single_assembleNode(p);
     }
 }
+
