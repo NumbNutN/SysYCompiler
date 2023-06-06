@@ -195,6 +195,23 @@ void print_single_data(struct _dataNode* node)
     printf("%s\t%d\n",enum_as_expression_2_str(node->dExp),node->content);
 }
 
+/**
+ * @brief 打印单个AS指令节点
+ * @birth: Created by LGD on 2023-6-6
+*/
+void print_as_node(struct _AsDirective* node)
+{
+    switch (node->type) {
+        case TYPE:
+        {
+            printf(".type %s ,%%function\n",node->label);
+        }
+        break;
+        default:
+        break;
+    }
+}
+
 void print_model()
 {
     //打印数据段节点
@@ -209,8 +226,15 @@ void print_model()
     {
         print_single_data(node);
     }
-    //顺序打印一整个链表的汇编指令
+    //
     printf(".section .text\n");
+    //打印函数声明
+    for(struct _AsDirective* node = asList;node != NULL;node=node->next)
+    {
+        print_as_node(node);
+    }
+    printf(".global main\n");
+    //顺序打印一整个链表的汇编指令
     for(assmNode* p = head->next;p!=NULL;p=p->next)
     {
         print_single_assembleNode(p);

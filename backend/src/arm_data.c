@@ -6,6 +6,9 @@ struct _dataNode* bssList = NULL;
 struct _dataNode* dataPrev = NULL;
 struct _dataNode* bssPrev = NULL;
 
+struct _AsDirective* asList = NULL;
+struct _AsDirective* asPrev = NULL;
+
 void data_link_node(struct _dataNode* node)
 {
     if(!dataList)
@@ -31,6 +34,20 @@ void bss_link_node(struct _dataNode* node)
     {
         bssPrev->next = node;
         bssPrev = node;
+    }
+}
+
+void asDirective_link_node(struct _AsDirective* node)
+{
+    if(!asList)
+    {
+        asList = node;
+        asPrev = asList;
+    }
+    else
+    {
+        asPrev->next = node;
+        asPrev = node;
     }
 }
 
@@ -63,6 +80,20 @@ void dot_zero_expression(char* name)
     node->content = 4;
     data_link_node(node);
 }
+
+/**
+ * @brief As伪指令-set function
+ * @birth: Created by LGD on 2023-6-6
+*/
+void as_set_function_type(char* name)
+{
+    struct _AsDirective* node= (struct _AsDirective*)malloc(sizeof(struct _AsDirective));
+    memset(node, 0, sizeof(struct _AsDirective));
+    node->label = name;
+    node->type = TYPE;
+    asDirective_link_node(node);
+}
+
 
 
 

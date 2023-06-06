@@ -159,9 +159,23 @@ enum Section{
     BSS
 };
 
+enum AsDirectiveType{
+    TYPE,
+    GLOBAL
+};
+
 extern enum Section currentSection;
 
 void change_currentSection(enum Section c);
+
+struct _AsDirective{
+    enum AsDirectiveType type;
+    char* label;
+    struct _AsDirective* next;
+};
+
+extern struct _AsDirective* asList;
+extern struct _AsDirective* asPrev;
 
 /**************************************************************/
 /*                      Data Section                          */
@@ -190,6 +204,15 @@ typedef struct _dataNode{
 
 void dot_long_expression(char* name,struct _operand expr);
 void dot_zero_expression(char* name);
+
+/****************************************************************/
+/*                           Other                             */
+/***************************************************************/
+/**
+ * @brief As伪指令-set function
+ * @birth: Created by LGD on 2023-6-6
+*/
+void as_set_function_type(char* name);
 
 /**************************************************************/
 /*                      Code Section                          */

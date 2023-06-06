@@ -231,8 +231,17 @@ int main() {
     exit(-1);
   }
 
+  //声明所有的函数
+  ListFirst(func_list, false);
+  while (ListNext(func_list, &element)) {
+    as_set_function_type(((Function*)element)->label->name);
+  }
+  
+
+  //翻译全局变量表
   translate_global_variable_list(global_var_list);
 
+  ListFirst(func_list, false);
   while (ListNext(func_list, &element)) {
     puts(((Function *)element)->label->name);
     bblock_to_dom_graph_pass((Function *)element);
