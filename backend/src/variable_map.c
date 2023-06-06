@@ -612,7 +612,8 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
             }
             else
             {
-                RegisterOrder reg_order = request_new_allocable_register();
+                int idx = *((enum _LOCATION*)HashMapGet(zzqMap,name));
+                RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
                 //为该变量(名)创建寄存器映射
                 set_variable_register_order_by_name(*myMap,name,reg_order);
                 //打印分配结果
@@ -646,7 +647,7 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                     if(isFound)break;
                     var_info = (VarInfo*)malloc(sizeof(VarInfo));
                     memset(var_info,0,sizeof(VarInfo));
-                    printf("插入新的变量名：%s 地址%lx\n",val->name,val);
+                    //printf("插入新的变量名：%s 地址%lx\n",val->name,val);
                     variable_map_insert_pair(*myMap,val,var_info);
 
 

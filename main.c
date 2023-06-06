@@ -38,6 +38,28 @@ int main() {
 
   printf("开始遍历\n");
 
+  char *mix_feature_fix =
+      "int global_a = 1;"
+      "int global_b = 2;"
+      "int use_global(int a, int b, int arr[]) {"
+      "return 2 * global_a + a * global_b + b * arr[3];"
+      "}"
+      "int main() {"
+      "int a = 3;"
+      "int b = 4;"
+      "int arr[10][20];"
+      "if (a == 3) {"
+      "arr[3][3] = 5;"
+      "b = 6;"
+      "global_a = 7;"
+      "} else {"
+      "arr[3][3] = 8;"
+      "global_a = 9;"
+      "a = 10;"
+      "}"
+      "return a + global_a + 2 * use_global(b, global_b, arr[3]);"
+      "}";
+
   char *mix_feature =
       "int global_a = 10;"
       "int global_b = 20;"
@@ -177,7 +199,7 @@ int main() {
     exit(-1);
   }
 
-  parser(mix_feature);
+  parser(mix_feature_fix);
 
   // // 重定向输出回终端
   // if (freopen(tty_path, "w", stdout) == NULL) {

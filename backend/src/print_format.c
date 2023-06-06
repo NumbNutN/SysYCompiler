@@ -210,7 +210,7 @@ void print_model()
         print_single_data(node);
     }
     //顺序打印一整个链表的汇编指令
-    printf(".section .code\n");
+    printf(".section .text\n");
     for(assmNode* p = head->next;p!=NULL;p=p->next)
     {
         print_single_assembleNode(p);

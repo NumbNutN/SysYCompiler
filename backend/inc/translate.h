@@ -87,7 +87,7 @@ void translate_return_instructions(Instruction* this);
  * @brief 无返回值调用
  * @birth: Created by LGD on 2023-3-16
 */
-translate_call_instructions(Instruction* this);
+void translate_call_instructions(Instruction* this);
 
 /**
  * @brief 翻译调用函数并接收返回值的指令
@@ -99,7 +99,7 @@ translate_call_instructions(Instruction* this);
  *          20221224 翻译时接收返回值的变量调整为赋值号左侧的变量
  *          20221224 设计有误，不需要存储当前的函数入口   
 */
-translate_call_with_return_value_instructions(Instruction* this);
+void translate_call_with_return_value_instructions(Instruction* this);
 
 /**
  * @brief 翻译前执行的初始化

@@ -140,8 +140,9 @@ void translate_param_instructions(Instruction* this)
  * @brief 无返回值调用
  * @birth: Created by LGD on 2023-3-16
  * @update:2023-5-30 取消寄存器限制
+ *          2023-6-6  添加函数返回
 */
-translate_call_instructions(Instruction* this)
+void translate_call_instructions(Instruction* this)
 {
     flush_param_number();
     //获取跳转标签
@@ -159,7 +160,6 @@ translate_call_instructions(Instruction* this)
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
-
 }
 
 /**
@@ -172,8 +172,9 @@ translate_call_instructions(Instruction* this)
  *          20221224 翻译时接收返回值的变量调整为赋值号左侧的变量
  *          20221224 设计有误，不需要存储当前的函数入口
  *          2023-5-30 取消寄存器限制
+ *          2023-6-6  添加函数返回
 */
-translate_call_with_return_value_instructions(Instruction* this)
+void translate_call_with_return_value_instructions(Instruction* this)
 {
     flush_param_number();
     //第一步 跳转至对应函数的标号
@@ -206,6 +207,7 @@ translate_call_with_return_value_instructions(Instruction* this)
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
+
 }
 
 
@@ -645,6 +647,7 @@ void translate_goto_instruction_test_bool(Instruction* this)
  * @birth: Created by LGD on 2022-12-11
  * @update:2022-12-25 封装后使函数更精简
  *         2023-5-4 重写
+ * @update:2023-6-6 添加返回函数恢复栈帧的语句
 */
 void translate_return_instructions(Instruction* this)
 {
@@ -653,6 +656,13 @@ void translate_return_instructions(Instruction* this)
     movii(r0,returnOperand);
     //当翻译返回语句时，此后R0应当是禁用状态
     //add_register_limited(RETURN_VALUE_LIMITED);
+    //为了确保函数正常返回，这里将添加跳出语句
+    //恢复当前函数栈帧
+    reset_stack_frame_status();
+    //恢复现场
+    bash_push_pop_instruction_list("POP",currentPF.used_reg);
+    //退出函数
+    bash_push_pop_instruction("POP",&fp,&pc,END);
 }
 #endif
 

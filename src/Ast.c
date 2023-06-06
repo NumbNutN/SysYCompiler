@@ -26,6 +26,7 @@ enum NameSeed {
   FUNC_LABEL,
   LABEL,
   PARAM,
+  PARAM_CONVERT,
   GLOBAL,
   ARRAY,
   POINT
@@ -62,6 +63,9 @@ char *name_generate(enum NameSeed cur_handle) {
       break;
     case PARAM:
       sprintf(temp_str, "param%d", param_seed++);
+      break;
+    case PARAM_CONVERT:
+      sprintf(temp_str, "param%d", --param_seed);
       break;
     case GLOBAL:
       sprintf(temp_str, "global%d", global_seed++);
@@ -378,7 +382,6 @@ void in_eval(ast *a, Value *left) {
     Value *func_param_ins = (Value *)ins_new_single_operator_v2(ParamOP, left);
 
     // 添加变量的名字 类型 和返回值
-    func_param_ins->name = name_generate(PARAM);
     func_param_ins->VTy->TID = ParamTyID;
     // func_param_ins->pdata->param_pdata.param_value = left;
 
@@ -671,10 +674,13 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         HashMapPut(func_hashMap, strdup(temp_str), func_label);
 
         void *func_param_ins;
+        param_seed = func_label->pdata->symtab_func_pdata.param_num;
+
         for (int i = 0; i < func_label->pdata->symtab_func_pdata.param_num;
              i++) {
           StackTop(stack_param, &func_param_ins);
           StackPop(stack_param);
+          ((Value *)func_param_ins)->name = name_generate(PARAM_CONVERT);
 
           // 插入
           ListPushBack(ins_list, (void *)func_param_ins);

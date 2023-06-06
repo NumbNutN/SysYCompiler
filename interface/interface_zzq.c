@@ -602,11 +602,11 @@ void translate_a_function(Function *self_func,ALGraph *self_cfg)
   //将形式参数装载到对应的寄存器/内存分配位置
 
   //变量信息表转换
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,self_func->var_location,&VariableInfoMap); 
-  }
+//   for (int i = 0; i < self_cfg->node_num; i++) {
+//     int iter_num = 0;
+//     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+//     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,self_func->var_location,&VariableInfoMap); 
+//   }
 
 
   // VarInfo testVarInfo;

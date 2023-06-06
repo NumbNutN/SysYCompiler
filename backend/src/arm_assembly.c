@@ -36,6 +36,7 @@ assmNode* prev;
 
 TempReg TempARMRegList[TEMP_REG_NUM];
 TempReg TempVFPRegList[TEMP_REG_NUM];
+TempReg AddtionalARMRegList[ADDITION_REG_NUM];
 
 
 
@@ -161,6 +162,7 @@ void recycle_temp_arm_register(int reg)
         }
             
     }
+
     assert("Missing the temp regitser");
 }
 
