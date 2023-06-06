@@ -341,6 +341,10 @@ extern size_t currentDistributeSize;
 */
 bool name_is_global(char* name);
 bool name_is_parameter(char* name);
-
+/**
+ * @brief 通过名字获取一个参数的序号
+ * @birth: Created by LGD on 2023-6-6
+*/
+size_t get_parameter_idx_by_name(char* name);
 
 #endif

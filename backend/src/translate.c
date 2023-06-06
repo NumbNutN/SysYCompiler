@@ -120,7 +120,7 @@ void translate_param_instructions(Instruction* this)
 
     //依据存储位置转换为operand类型
     AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
-    size_t passed_param_number = func_get_param_number();
+    size_t passed_param_number = get_parameter_idx_by_name(ins_get_assign_left_value(this)->name);
     
     int offset;
     if(passed_param_number <= 3)

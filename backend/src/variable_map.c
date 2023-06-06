@@ -510,6 +510,16 @@ bool name_is_global(char* name)
     return result;
 }
 
+/**
+ * @brief 通过名字获取一个参数的序号
+ * @birth: Created by LGD on 2023-6-6
+*/
+size_t get_parameter_idx_by_name(char* name)
+{
+    assert(name_is_parameter(name) && "is not a parameter");
+    return name[5]-'0';
+}
+
 size_t traverse_list_and_count_total_size_of_var(List* this,int order)
 {
     Instruction* p;
