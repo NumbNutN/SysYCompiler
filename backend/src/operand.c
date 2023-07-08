@@ -380,7 +380,7 @@ bool operand_is_in_memory(AssembleOperand op)
  * @brief 判断一个操作数是否是空指针
  * @birth: Created by LGD on 2023-5-2
 */
-bool operand_is_NULL(AssembleOperand op)
+bool operand_is_none(AssembleOperand op)
 {
     return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
 }
@@ -454,7 +454,7 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
 */
 AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp)
 {
-    if(operand_is_NULL(tarOp))
+    if(operand_is_none(tarOp))
     {
         if(operand_is_in_memory(srcOp))
         {

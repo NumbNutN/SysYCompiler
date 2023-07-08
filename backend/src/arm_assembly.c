@@ -236,8 +236,6 @@ bool goto_is_conditional(TAC_OP op)
 
 }
 
-
-
 /**
  * @brief 和ins_variable_load_in_register是替代关系
  *        当操作数为Add Sub Mov 等指令的目的操作数时，没必要将其从内存中取出，只需要pick一个临时寄存器即可

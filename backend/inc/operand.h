@@ -52,7 +52,7 @@ bool operand_is_same(struct _operand dst,struct _operand src);
  * @brief 判断一个操作数是否是空指针
  * @birth: Created by LGD on 2023-5-2
 */
-bool operand_is_NULL(AssembleOperand op);
+bool operand_is_none(AssembleOperand op);
 /**
  * @brief 判断一个寄存器属于R4-R12(不包括R7)
  * @birth: Created by LGD on 2023-5-13

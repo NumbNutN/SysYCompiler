@@ -3,6 +3,7 @@
 #include "arm_assembly.h"
 #include "value.h"
 #include <stdarg.h>
+#include "operand.h"
 
 #include "enum_2_str.h"
 #include "print_format.h"
@@ -40,7 +41,7 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     assert(rd.addrMode==REGISTER_DIRECT);
     node->op[Rd] = rd;
 
-    if(!operand_is_NULL(rn))
+    if(!operand_is_none(rn))
     {
         //对于rn 允许 寄存器寻址
         assert(rn.addrMode==REGISTER_DIRECT);
@@ -264,7 +265,7 @@ void bash_push_pop_instruction(char* opcode,...)
 void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
 {
     size_t cnt = 0;
-    do{++cnt;} while (!operand_is_NULL(regList[cnt]));
+    do{++cnt;} while (!operand_is_none(regList[cnt]));
     
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     strcpy(node->opCode,opcode);

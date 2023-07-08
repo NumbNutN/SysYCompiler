@@ -341,7 +341,7 @@ extern enum _Pick_Arm_Register_Limited global_arm_register_limited;
 //ARM指令
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label);
 
-#define END -1LL
+#define END (void*)-1LL
 /**
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9

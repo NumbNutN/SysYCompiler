@@ -81,6 +81,28 @@ int main() {
       "}"
       "return a + global_a + 2 * use_global(b, global_b, arr[3]);"
       "}";
+
+  char *test =
+      "int global_a = 10;"
+      "int global_b = 20;"
+      "int use_global(int a, int b, int arr[]) {"
+      "return a + b * arr[3];"
+      "}"
+      "int main() {"
+      "int a = 111;"
+      "int b = 222;"
+      "int arr[10][20];"
+      "if (a == 111) {"
+      "arr[3][3] = 333;"
+      "b = 444;"
+      "global_a = 555;"
+      "} else {"
+      "arr[3][3] = 666;"
+      "global_a = 777;"
+      "a = 999;"
+      "}"
+      "return a + global_a + 2 * use_global(b, global_b, arr[3]);"
+      "}";
   
     char *func_call =
       "int add(int a, int b) {"
@@ -193,6 +215,16 @@ int main() {
   "    return 0;"
   "}";
 
+char* test2 = \
+"int is_sorted(int a[], int n) {"
+"  int i = 0;"
+"  while (i < n) {"
+"    if (a[i] > a[i + 1])"
+"      return 0;"
+"    i = i + 1;"
+"  }"
+"  return 1;"
+"}";
 
   if (freopen("printf_ast.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件printf_ast失败！");
@@ -201,12 +233,6 @@ int main() {
 
   parser(mix_feature_fix);
 
-  // // 重定向输出回终端
-  // if (freopen(tty_path, "w", stdout) == NULL) {
-  //   fprintf(stderr, "打开文件tty失败！");
-  //   exit(-1);
-  // }
-  // 重定向至中间代码文件
   if (freopen("middle_output.txt", "w", stdout) == NULL) {
     fprintf(stderr, "打开文件tty失败！");
     exit(-1);
