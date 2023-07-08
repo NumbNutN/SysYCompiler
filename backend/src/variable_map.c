@@ -342,26 +342,6 @@ AddrMode judge_addrMode_by_place(RegorMem place)
 }
 
 /**
- * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
- * @birth: Created by LGD on 20230130
-*/
-RegorMem judge_operand_in_RegOrMem(AssembleOperand op)
-{
-    switch(op.addrMode)
-    {
-        case REGISTER_INDIRECT:
-        case REGISTER_INDIRECT_POST_INCREMENTING:
-        case REGISTER_INDIRECT_PRE_INCREMENTING:
-        case REGISTER_INDIRECT_WITH_OFFSET:
-            return IN_MEMORY;
-        case REGISTER_DIRECT:
-            return IN_REGISTER;
-        case IMMEDIATE:
-            return IN_INSTRUCTION;
-    }
-}
-
-/**
  * @brief 设置变量在当前指令的变量状态表中的位置
  * @author Created by LGD on 20230108
  * @update: 20230305 根据VarInfo新的设计修改

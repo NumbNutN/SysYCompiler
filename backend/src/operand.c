@@ -27,6 +27,29 @@ struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
 
+
+/**
+ * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
+ * @birth: Created by LGD on 20230130
+*/
+RegorMem judge_operand_in_RegOrMem(AssembleOperand op)
+{
+    switch(op.addrMode)
+    {
+        case REGISTER_INDIRECT:
+        case REGISTER_INDIRECT_POST_INCREMENTING:
+        case REGISTER_INDIRECT_PRE_INCREMENTING:
+        case REGISTER_INDIRECT_WITH_OFFSET:
+            return IN_MEMORY;
+        case REGISTER_DIRECT:
+            return IN_REGISTER;
+        case IMMEDIATE:
+            return IN_INSTRUCTION;
+        default:
+            assert(false && "Judge Location from an invalid operand addressing mode");
+    }
+}
+
 /**
  * @brief 依据Value* 返回 operand
  * @birth: Created by LGD on 2023-3-16

@@ -1803,25 +1803,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
            location_string[*((LOCATION *)ptr_pair->value)]);
   }
 
-  //self_func->var_location = var_location;
-
-
-  // printf("打印所有指令的名字\n");
-  // struct _Instruction* get_name;
-  // //名字
-  // for (int i = 0; i < self_cfg->node_num; i++) {
-  //   ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-  //   while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&get_name)!=0)
-  //   {
-  //     printf("%s\n",get_name->user.value.name);
-  //   }
-  // }
-
-  //打印函数标号
-  // struct _Instruction* function_name;
-  // ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
-  // ListNext((self_cfg->node_set)[0]->bblock_head->inst_list,&function_name);
-  // translate_label(function_name);
   Label(self_func->label->name);
 
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表

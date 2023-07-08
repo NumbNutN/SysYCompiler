@@ -579,7 +579,7 @@ void arrayBase_load_to_recorded_place(HashMap* variable_map)
  * @brief 遍历链表将所有allocate的数组分配内存空间并将基地址装载到对应位置
  * @birth: Created by LGD on 2023-5-23
 */
-traverse_and_load_arrayBase_to_recorded_place(List* this)
+void traverse_and_load_arrayBase_to_recorded_place(List* this)
 {
     Instruction* p;
     Value* val;

@@ -366,8 +366,6 @@ enum _DataFormat valueFindFormat(Value* var)
     }
 }
 
-
-
 /***
  * @brief tar:int = op:float
  * @birth: Created by LGD on 20230130

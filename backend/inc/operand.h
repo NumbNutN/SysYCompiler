@@ -49,6 +49,12 @@ struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
 bool operand_is_same(struct _operand dst,struct _operand src);
 
 /**
+ * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
+ * @birth: Created by LGD on 20230130
+*/
+RegorMem judge_operand_in_RegOrMem(AssembleOperand op);
+
+/**
  * @brief 判断一个操作数是否是空指针
  * @birth: Created by LGD on 2023-5-2
 */

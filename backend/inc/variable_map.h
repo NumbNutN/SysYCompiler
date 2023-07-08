@@ -300,12 +300,6 @@ void spilled_all_into_memory(HashMap* map);
 char* RegOrMem_2_str(RegorMem place);
 
 /**
- * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
- * @birth: Created by LGD on 20230130
-*/
-RegorMem judge_operand_in_RegOrMem(AssembleOperand op);
-
-/**
  * @brief   [只用于后端，临时使用]在无寄存器的情况下，遍历每一个变量，并为其分配空间
  * @author  Created by LGD on 20221218
  * @todo    根据Value的数据类型安排等量的栈空间,目前暂定统一为4个字节
