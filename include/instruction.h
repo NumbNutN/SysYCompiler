@@ -40,8 +40,7 @@ typedef enum _TAC_OP {
   FuncLabelOP,
   FuncEndOP,
   PhiFuncOp,
-  InitArgOP,
-  ModOP
+  InitArgOP
 } TAC_OP;
 
 #define RETURN_USED ReturnOP
