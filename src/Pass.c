@@ -7,12 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "interface_zzq.h"
-#include "memory_manager.h"
-#include "variable_map.h"
-#include "dependency.h"
-#include "symbol_table.h"
-
 typedef struct _dom_tree {
   List *child;
   HeadNode *bblock_node; // 分管的basicblock
@@ -39,6 +33,10 @@ typedef struct _node_pair {
   HeadNode *value;
 } node_pair;
 
+static const int REGISTER_NUM = 3;
+
+typedef enum _LOCATION { R1 = 1, R2, R3, MEMORY } LOCATION;
+
 char *op_string[] = {
     "DefaultOP",   "AddOP",       "SubOP",           "ModOP",
     "MulOP",       "DivOP",       "EqualOP",         "NotEqualOP",
@@ -53,6 +51,7 @@ char *op_string[] = {
     "GotoOP",      "CallOP",      "LabelOP",         "FuncLabelOP",
     "FuncEndOP",   "PhiFuncOp",   "InitArgO"};
 
+static char *location_string[] = {"null", "R1", "R2", "R3", "M"};
 
 extern List *func_list;
 
@@ -633,7 +632,7 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
 
   // 遍历邻接边集合 修改phi函数中的参数
   node_pair *neighbor_bblock = NULL;
-  HashMapNext(cur_bblock->bblock_node->edge_list);
+  HashMapFirst(cur_bblock->bblock_node->edge_list);
   while ((neighbor_bblock = (node_pair *)HashMapNext(
               cur_bblock->bblock_node->edge_list)) != NULL) {
     void *neighbor_bblock_ins = NULL;
@@ -868,10 +867,10 @@ void insert_copies_help(HashMap *insert_copies_stack_hashmap,
                         HashMap *num_of_var_def, dom_tree *cur_bblock) {
   // Pass One:Initialize the data structures
   HashSet *copy_set = NULL;
-  hashset_init(&(copy_set));
+  hashset_init(&copy_set);
 
   HashSet *worklist = NULL;
-  hashset_init(&(worklist));
+  hashset_init(&worklist);
 
   // 伪代码中的map
   HashMap *var_replace_hashmap = NULL;
@@ -885,7 +884,7 @@ void insert_copies_help(HashMap *insert_copies_stack_hashmap,
 
   // For all successors s of block
   node_pair *neighbor_bblock = NULL;
-  HashMapNext(cur_bblock->bblock_node->edge_list);
+  HashMapFirst(cur_bblock->bblock_node->edge_list);
   while ((neighbor_bblock = (node_pair *)HashMapNext(
               cur_bblock->bblock_node->edge_list)) != NULL) {
     void *neighbor_bblock_ins = NULL;
@@ -1627,28 +1626,30 @@ void delete_return_deadcode_pass(List *self) {
   while (i != ListSize(self)) {
     ListGetAt(self, i, &element);
     switch (((Instruction *)element)->opcode) {
-    case GotoOP:
-      HashSetAdd(reach_label,
-                 ((Value *)element)->pdata->no_condition_goto.goto_location);
-      i++;
-      while (ListGetAt(self, i, &element) &&
-             (((Instruction *)element)->opcode == GotoOP ||
-              ((Instruction *)element)->opcode == GotoWithConditionOP)) {
-        ListRemove(self, i);
-      }
-      break;
-    case GotoWithConditionOP:
-      HashSetAdd(reach_label,
-                 ((Value *)element)->pdata->condition_goto.true_goto_location);
-      HashSetAdd(reach_label,
-                 ((Value *)element)->pdata->condition_goto.false_goto_location);
-      i++;
-      while (ListGetAt(self, i, &element) &&
-             (((Instruction *)element)->opcode == GotoOP ||
-              ((Instruction *)element)->opcode == GotoWithConditionOP)) {
-        ListRemove(self, i);
-      }
-      break;
+    // case GotoOP:
+    //   HashSetAdd(reach_label,
+    //              ((Value *)element)->pdata->no_condition_goto.goto_location);
+    //   i++;
+    //   while (ListGetAt(self, i, &element) &&
+    //          (((Instruction *)element)->opcode == GotoOP ||
+    //           ((Instruction *)element)->opcode == GotoWithConditionOP)) {
+    //     ListRemove(self, i);
+    //   }
+    //   break;
+    // case GotoWithConditionOP:
+    //   HashSetAdd(reach_label,
+    //              ((Value
+    //              *)element)->pdata->condition_goto.true_goto_location);
+    //   HashSetAdd(reach_label,
+    //              ((Value
+    //              *)element)->pdata->condition_goto.false_goto_location);
+    //   i++;
+    //   while (ListGetAt(self, i, &element) &&
+    //          (((Instruction *)element)->opcode == GotoOP ||
+    //           ((Instruction *)element)->opcode == GotoWithConditionOP)) {
+    //     ListRemove(self, i);
+    //   }
+    //   break;
     case ReturnOP:
       i++;
       while (ListGetAt(self, i, &element) &&
@@ -1657,17 +1658,17 @@ void delete_return_deadcode_pass(List *self) {
         ListRemove(self, i);
       }
       break;
-    case LabelOP:
-      while (!HashSetFind(reach_label, (Value *)element) &&
-             strcmp(((Value *)element)->name, "entry")) {
-        ListRemove(self, i);
-        while (ListGetAt(self, i, &element) &&
-               (((Instruction *)element)->opcode != LabelOP)) {
-          ListRemove(self, i);
-        }
-      }
-      i++;
-      break;
+    // case LabelOP:
+    //   while (!HashSetFind(reach_label, (Value *)element) &&
+    //          strcmp(((Value *)element)->name, "entry")) {
+    //     ListRemove(self, i);
+    //     while (ListGetAt(self, i, &element) &&
+    //            (((Instruction *)element)->opcode != LabelOP)) {
+    //       ListRemove(self, i);
+    //     }
+    //   }
+    //   i++;
+    //   break;
     default:
       i++;
       break;
@@ -1798,128 +1799,54 @@ void line_scan_register_allocation(ALGraph *self_cfg, Function *self_func,
   printf("\n");
 }
 
-char *location_string[] = {"null", "R1", "R2", "R3","R4","R5","R6","R7", "R8","M"};
-
-int REGISTER_NUM = 8;
-
 void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {
-
   Pair *ptr_pair;
-  //变量存储位置映射表
-  //|  a   |   b  |   c   |
-  //|  M   |  R0  |  ALLOCATE_R1   |
-
-  //遍历变量的寄存器分配结果并打印
   HashMapFirst(var_location);
   while ((ptr_pair = HashMapNext(var_location)) != NULL) {
     printf("\tvar:%s\taddress:%s\n ", (char *)ptr_pair->key,
            location_string[*((LOCATION *)ptr_pair->value)]);
   }
 
-  Label(self_func->label->name);
-
-  //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
-  //遍历每一个block的list
-  size_t totalLocalVariableSize = 0;
-  HashMap* VariableInfoMap = NULL;
-
-  //翻译前初始化
-  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
-  InitBeforeFunction();
-
-
-  //计算栈帧大小
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
-  }
-  //2023-5-22 这决定了局部变量区间的累计偏移值
-  currentPF.fp_offset -= totalLocalVariableSize;
-
-  //初始化函数栈帧
-  new_stack_frame_init(totalLocalVariableSize);
-  //设置当前函数栈帧
-  set_stack_frame_status(0,totalLocalVariableSize/4);
-
-  //变量信息表转换  
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
-  }
-  
-  //统计当前函数使用的所有R4-R12的通用寄存器
-  //前提 已经完成寄存器分配
-  size_t used_reg_size = 0;
-  count_register_change_from_R42R12(VariableInfoMap,currentPF.used_reg,&used_reg_size);
-  //保存现场
-  bash_push_pop_instruction_list("PUSH",currentPF.used_reg);
-
-
-  Instruction* element = NULL;
-  //第二次function遍历，为每一句Instruction安插一个map
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
-    ins_deepSet_varMap(element,VariableInfoMap);
-  }
-
-  //为数组分配空间并装载到基址存储位置
-  //前提 所有的指令都分配了变量信息表
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
-  }
-
-  //2023-5-22 这决定了现场保护区域FP的偏移值
-  currentPF.fp_offset -= used_reg_size;
-
-  //得知参数个数
-  //在参数个数小于4的情况下，可以暂时不予考虑
-
-  //执行期间使指针变动生效
-  update_sp_value();
-  //使当前R7与SP保持一致
-  general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
-
-  //传递参数
-  move_parameter_to_recorded_place(VariableInfoMap);
-
-  //将形式参数装载到对应的寄存器/内存分配位置
-
-  // VarInfo testVarInfo;
-  // VarInfo* testVarInfoPtr;
-  // HashMapPut(VariableInfoMap,"name",&testVarInfo);
-  // testVarInfoPtr = HashMapGet(VariableInfoMap,"name");
-  
-  //由于变量的寄存器和内存地址都是静态的，为变量定义全局固定的寄存器和内存位置
-  //将zzq提供的变量定位表转换为变量信息表
-  //interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
-
-
-  //打印变量信息表
   // for (int i = 0; i < self_cfg->node_num; i++) {
-  //   print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
+  //   int iter_num = 0;
+  //   while (iter_num <
+  //          ListSize((self_cfg->node_set)[i]->bblock_head->inst_list)) {
+  //     Instruction *element = NULL;
+  //     ListGetAt((self_cfg->node_set)[i]->bblock_head->inst_list, iter_num,
+  //               &element);
+  //     if (element->opcode < 19) {
+  //       for (int j = 0; j < ((User *)element)->num_oprands; j++) {
+  //         Value *cur_handle = user_get_operand_use((User *)element, j)->Val;
+  //         // R replace name
+
+  //         // M store load
+  //       }
+
+  //       if (((Instruction *)element)->opcode < RETURN_USED) {
+  //         if (HashMapGet(var_location, ((Value *)element)->name)) {
+  //           LOCATION cur_var_location = *(
+  //               (LOCATION *)HashMapGet(var_location, ((Value
+  //               *)element)->name));
+  //           if (cur_var_location == MEMORY) {
+  //             // 将当前语句改成store语句
+  //           } else {
+  //             char *temp_str = strdup(location_string[*((LOCATION
+  //             *)HashMapGet(
+  //                 var_location, ((Value *)element)->name))]);
+  //             free(((Value *)element)->name);
+  //             ((Value *)element)->name = temp_str;
+  //           }
+  //         } else {
+  //           ListRemove((self_cfg->node_set)[i]->bblock_head->inst_list,
+  //                      iter_num);
+  //           continue;
+  //         }
+  //       }
+  //     }
+  //     iter_num++;
+  //   }
   // }
-  
-
-  //第三次function遍历，翻译每一个list
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
-  }
-
-  //恢复当前函数栈帧
-  reset_stack_frame_status();
-  //恢复现场
-  bash_push_pop_instruction_list("POP",currentPF.used_reg);
-  //退出函数
-  bash_push_pop_instruction("POP",&fp,&pc,END);
-
 }
 
 void bblock_to_dom_graph_pass(Function *self) {
@@ -2021,5 +1948,3 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   register_replace(graph_for_dom_tree, self, var_location);
 }
-
-

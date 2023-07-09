@@ -11,9 +11,6 @@
 #include "cds.h"
 #include "symbol_table.h"
 
-#include "print_format.h"
-#include "interface_zzq.h"
-
 extern List *ins_list;
 extern List *func_list;
 extern List *global_var_list;
@@ -138,6 +135,7 @@ int main(int argc, char **argv) {
 
   AllInit();
 
+
   printf("%%begin the pass\n");
   char *choose_case = NULL;
   if (argc == 2) {
@@ -155,21 +153,20 @@ int main(int argc, char **argv) {
 
 #ifdef PARSER
   freopen(tty_path, "w", stdout);
-  // freopen("./output/out.txt", "w", stdout);
+  freopen("./output/out.txt", "w", stdout);
 
   print_ins_pass(ins_list);
 
-  // delete_return_deadcode_pass(ins_list);
+  delete_return_deadcode_pass(ins_list);
 
   ins_toBBlock_pass(ins_list);
 
   print_ins_pass(global_var_list);
 
-
   TranslateInit();
   //翻译全局变量表
   translate_global_variable_list(global_var_list);
-
+  
   ListFirst(func_list, false);
   void *element;
   while (ListNext(func_list, &element)) {
