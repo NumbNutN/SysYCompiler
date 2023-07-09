@@ -11,10 +11,12 @@ include_directories(${CMAKE_SOURCE_DIR}/lib/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/backend/inc)
 include_directories(${CMAKE_SOURCE_DIR}/interface)
+include_directories(${local}/include/C-Container)
 
 file(GLOB_RECURSE DIR_SRC "src/*.c")
 file(GLOB_RECURSE DIR_BACKEND_SRC "backend/src/*.c")
 file(GLOB_RECURSE DIR_INTERFACE_SRC "interface/*.c")
+file(GLOB_RECURSE DIR_STRUCT_DEMO "data_struct_demo/*.c")
 #包含的头文件目录
 
 find_package(BISON)

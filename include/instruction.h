@@ -5,13 +5,11 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
 
-#define RETURN_USED 16
-#define NULL_USED 22
-
 typedef enum _TAC_OP {
   DefaultOP,
   AddOP,
   SubOP,
+  ModOP,
   MulOP,
   DivOP,
   EqualOP,
@@ -25,13 +23,17 @@ typedef enum _TAC_OP {
   GetelementptrOP,
   CallWithReturnValueOP,
   LoadOP,
-  // 16 该instruction的Value会被使用
+  NegativeOP,
+  PositiveOP,
+  LogicOrOP,
+  LogicAndOP,
+
   ReturnOP,
   AllocateOP,
   StoreOP,
   GotoWithConditionOP,
   ParamOP,
-  // 22
+
   GotoOP,
   CallOP,
   LabelOP,
@@ -42,10 +44,13 @@ typedef enum _TAC_OP {
   ModOP
 } TAC_OP;
 
+#define RETURN_USED ReturnOP
+#define NULL_USED GotoOP
+
 struct _BasicBlock;
 typedef struct _Instruction {
   User user;
-  TAC_OP opcode;  // 操作吗
+  TAC_OP opcode; // 操作吗
   struct _BasicBlock *Parent;
   unsigned ins_id;
 
@@ -141,7 +146,5 @@ void use_relation_test();
 Instruction *ins_new_one_operator(Value *S1);
 
 Value *ins_get_value(Instruction *this);
-
-
 
 #endif
