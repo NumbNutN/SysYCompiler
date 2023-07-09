@@ -1861,13 +1861,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
 
-  //符号表转换
-  // for (int i = 0; i < self_cfg->node_num; i++) {
-  //   int iter_num = 0;
-  //   ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-  //   traverse_list_and_load_symbol_table((self_cfg->node_set)[i]->bblock_head->inst_list); 
-  // }
-
   //2023-5-22 这决定了现场保护区域FP的偏移值
   currentPF.fp_offset -= used_reg_size;
 

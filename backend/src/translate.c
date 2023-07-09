@@ -556,6 +556,15 @@ void translate_allocate_instruction(Instruction* this)
         struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
         addiii(arrayBase,arrayBase,offset);
     }
+    //如果数组是局部数组
+    // else{
+    //         VarInfo* info = HashMapGet(this->map,ins_get_assign_left_value(this)->name);
+    //         //获取偏移值
+
+    //         //使用一个指令将数组偏移值填充至对应的变量存储位置
+    //         struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+    //         movii(info->ori,arrOff);
+    // }
 }
 
 /**
