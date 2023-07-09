@@ -102,7 +102,7 @@ bool variable_is_in_register(Instruction* this,Value* var)
 */
 ins_get_operand_num(Instruction* this)
 {
-    return ins_get_assign_left_value(this)->NumUserOperands;
+    return this->user.num_oprands;
 }
 
 /**

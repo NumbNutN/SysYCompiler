@@ -587,7 +587,7 @@ size_t get_parameter_order(char* name)
  * @brief 整合了开辟栈空间和寄存器分配
  * @birth: Created by LGD on 2023-5-3
 */
-HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap** myMap)
+void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap** myMap)
 {
     Instruction* p;
     size_t totalSize = 0;
@@ -604,36 +604,35 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
     ListNext(this,&p);
     HashMap_foreach(zzqMap,name,loc)
     {
-        if(name_is_parameter(name))
-        {
-            isFound = HashMapGet(*myMap,name);
-            if(isFound)break;
-            //新建变量信息项
-            var_info = (VarInfo*)malloc(sizeof(VarInfo));
-            memset(var_info,0,sizeof(VarInfo));
-            printf("插入新的实参名：%s \n",name);
-            HashMapPut(*myMap,name,var_info);
+        /* 已作寄存器分配的变量 实参 */
+        isFound = HashMapGet(*myMap,name);
+        if(isFound)break;
+        //新建变量信息项
+        var_info = (VarInfo*)malloc(sizeof(VarInfo));
+        memset(var_info,0,sizeof(VarInfo));
+        printf("插入新的实参名：%s \n",name);
+        HashMapPut(*myMap,name,var_info);
 
-            //分配寄存器或内存单元
-            if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
-            {
-                int offset = request_new_local_variable_memory_unit(IntegerTyID);
-                set_variable_stack_offset_by_name(*myMap,name,offset);
-                printf("%s分配了地址%d\n",name,offset);
-            }
-            else
-            {
-                int idx = *((enum _LOCATION*)HashMapGet(zzqMap,name));
-                RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
-                //为该变量(名)创建寄存器映射
-                set_variable_register_order_by_name(*myMap,name,reg_order);
-                //打印分配结果
-                printf("%s分配了寄存器%d\n",name,reg_order);                    
-            }    
+        //分配寄存器或内存单元
+        if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
+        {
+            int offset = request_new_local_variable_memory_unit(IntegerTyID);
+            set_variable_stack_offset_by_name(*myMap,name,offset);
+            printf("%s分配了地址%d\n",name,offset);
         }
+        else
+        {
+            int idx = *((enum _LOCATION*)HashMapGet(zzqMap,name));
+            RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
+            //为该变量(名)创建寄存器映射
+            set_variable_register_order_by_name(*myMap,name,reg_order);
+            //打印分配结果
+            printf("%s分配了寄存器%d\n",name,reg_order);                    
+        }    
     }
     
-    Value* val;
+
+    /* allocate 和 未作寄存器分配的变量 */
     do
     {
         switch(ins_get_opCode(p))
@@ -652,18 +651,10 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
             case LessThanOP:
             case GetelementptrOP:
             case LoadOP:
-
-            
-            //新建变量信息项
-                val = ins_get_assign_left_value(p);
-                isFound = variable_map_get_value(*myMap,val);
-                if(isFound)break;
-                var_info = (VarInfo*)malloc(sizeof(VarInfo));
-                memset(var_info,0,sizeof(VarInfo));
-                //printf("插入新的变量名：%s 地址%lx\n",val->name,val);
-                variable_map_insert_pair(*myMap,val,var_info);
-
-
+            case LogicOrOP:
+            case LogicAndOP:
+            {
+                Value* val = ins_get_assign_left_value(p);
                 //分配寄存器或内存单元
                 //从zzq 的 变量表 获取变量信息
                 enum _LOCATION* loc = (enum _LOCATION*)HashMapGet(zzqMap,val->name);
@@ -674,62 +665,11 @@ HashMap* traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,Hash
                     set_variable_unallocated_by_name(*myMap,val->name,false);
                     continue;
                 }
-                if(*loc == MEMORY)
-                {
-                    int offset = request_new_local_variable_memory_unit(val->VTy->TID);
-                    set_variable_stack_offset_by_name(*myMap,val->name,offset);
-                    printf("%s分配了地址%d\n",val->name,offset);
-                }
-                else
-                {
-                    //RegisterOrder reg_order = request_new_allocable_register();
-                    int idx = *((enum _LOCATION*)HashMapGet(zzqMap,val->name));
-                    RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
-                    //为该变量(名)创建寄存器映射
-                    set_variable_register_order_by_name(*myMap,val->name,reg_order);
-                    //打印分配结果
-                    printf("%s分配了寄存器%d\n",val->name,reg_order);                    
-                }
+            }
             break;
             //为数组也分配空间
-            case AllocateOP:
-                //新建变量信息项
-                val = ins_get_assign_left_value(p);
-                /**
-                * @notice: 2023-5-22
-                * 当array作为参数时，一条allocate语句将会为该局部数组分配空间
-                * 从后端来看，数组是传递指针而非深拷贝的对象，没有必要也不能为其分配空间
-                * 遂遇到这种情况将其忽略
-                */
-                if(name_is_parameter(val->name))
-                    break;
-                isFound = variable_map_get_value(*myMap,val);
-                if(isFound)break;
-                
-                var_info = (VarInfo*)malloc(sizeof(VarInfo));
-                memset(var_info,0,sizeof(VarInfo));
-                printf("插入新的数组名：%s 地址%lx\n",val->name,val);
-                variable_map_insert_pair(*myMap,val,var_info);
-                //分配寄存器或内存单元
-                if(*((enum _LOCATION*)HashMapGet(zzqMap,val->name)) == MEMORY)
-                {
-                    int offset = request_new_local_variable_memory_unit(val->VTy->TID);
-                    set_variable_stack_offset_by_name(*myMap,val->name,offset);
-                    printf("%s分配了地址%d\n",val->name,offset);
-                }
-                else
-                {
-                    int idx = *((enum _LOCATION*)HashMapGet(zzqMap,val->name));
-                    RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
-                    //为该变量(名)创建寄存器映射
-                    set_variable_register_order_by_name(*myMap,val->name,reg_order);
-                    //打印分配结果
-                    printf("%s分配了寄存器%d\n",val->name,reg_order);                    
-                }
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
-
-    return totalSize;
      
 }
 

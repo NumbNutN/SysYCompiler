@@ -45,8 +45,8 @@ RegorMem judge_operand_in_RegOrMem(AssembleOperand op)
             return IN_REGISTER;
         case IMMEDIATE:
             return IN_INSTRUCTION;
-        default:
-            assert(false && "Judge Location from an invalid operand addressing mode");
+        case NONE_ADDRMODE:
+            return UNALLOCATED;
     }
 }
 
@@ -80,6 +80,9 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
             op.addrMode = IMMEDIATE;
             op.oprendVal = value_getConstant(var);
         break;
+        case UNALLOCATED:
+            op.addrMode = NONE_ADDRMODE;
+            op.oprendVal = 0;
     }
     op.format = valueFindFormat(var);
     return op;

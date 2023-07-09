@@ -40,12 +40,16 @@ bool check_before_translate(Instruction* this)
         if(operand_is_unallocated(toOperand(this, SECOND_OPERAND)))
             ins_type = INVALID_INSTRUCTION;
     }
-    if(ins_get_operand_num(this)==2)
+    if(ins_get_operand_num(this)>= 1)
     {
-        if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
-            ins_type = INVALID_INSTRUCTION;
         if(operand_is_unallocated(toOperand(this, FIRST_OPERAND)))
             ins_type = INVALID_INSTRUCTION;
+
+        if((ins_get_opCode(this) != GotoWithConditionOP) && 
+            (ins_get_opCode(this) != ReturnOP))
+            if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
+                ins_type = INVALID_INSTRUCTION;
+
     }
     if(ins_type == INVALID_INSTRUCTION)
     {
