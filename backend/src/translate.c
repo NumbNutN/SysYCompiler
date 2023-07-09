@@ -25,6 +25,37 @@ extern HashMap* func_hashMap;
 */
 Instruction* currentInstruction = NULL;
 
+
+/**
+* @brief 翻译前的钩子，false表面当前指令的翻译应当终止
+* @birth: Created by LGD on 2023-7-9
+
+*/
+bool check_before_translate(Instruction* this)
+{
+    enum _Instruction_Type ins_type = VALID_INSTRUCTION;
+    //检查该指令的操作数是否均分配
+    if(ins_get_operand_num(this) >= 2)
+    {
+        if(operand_is_unallocated(toOperand(this, SECOND_OPERAND)))
+            ins_type = INVALID_INSTRUCTION;
+    }
+    if(ins_get_operand_num(this)==2)
+    {
+        if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
+            ins_type = INVALID_INSTRUCTION;
+        if(operand_is_unallocated(toOperand(this, FIRST_OPERAND)))
+            ins_type = INVALID_INSTRUCTION;
+    }
+    if(ins_type == INVALID_INSTRUCTION)
+    {
+        //生成一条未定义指令
+        undefined();
+        return false;
+    }
+    return true;
+}
+
 /**
  * @brief 翻译一个函数入口三地址代码，进行的操作包括入栈LR,CPSR，开辟栈区
  * @birth: Created by LGD on 20221212
@@ -64,8 +95,6 @@ void translate_function_entrance(Instruction* this)
 
     //第四步 设定当前函数的各项参数
     //set_stack_frame_status(2,20);
-    
-
 }
 
 /**

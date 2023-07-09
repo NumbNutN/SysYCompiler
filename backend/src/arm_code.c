@@ -508,6 +508,17 @@ void Label(char* label)
 }
 
 /**
+* @brief 生成一个未定义指令
+* @birth:Created by LGD on 2023-7-9
+*/
+void undefined()
+{
+    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    node->assemType = UNDEF;
+    linkNode(node);
+}
+
+/**
  * @brief LDR伪指令
  * @param opCode LDR
  * @birth: Created by LGD on 20230202

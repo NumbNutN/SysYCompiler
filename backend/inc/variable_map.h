@@ -109,6 +109,11 @@ void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset);
  * @birth: Created by LGD on 20230305
 */
 void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder reg_order);
+/**
+ * @brief 在map中标定当前变量为未分配
+ * @birth: Created by LGD on 2023-7-9
+*/
+void set_variable_unallocated_by_name(HashMap* map,char* name,bool is_existed);
 #endif
 
 /**

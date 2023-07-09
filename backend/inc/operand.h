@@ -145,6 +145,11 @@ bool operand_is_in_memory(struct _operand op);
 bool operand_is_in_register(struct _operand op);
 
 /**
+* @brief 判断当前操作数是否未分配
+* @brith: Created by LGD on 2023-7-9
+*/
+bool operand_is_unallocated(AssembleOperand op);
+/**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求
  * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载
  * @param mask 为1时表示第四个参数为屏蔽选项，及当前操作数处于这些位置时不加载到寄存器

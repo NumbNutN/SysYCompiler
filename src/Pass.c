@@ -34,6 +34,10 @@ typedef struct _var_live_interval {
   live_interval *this_var_total_live_interval;
 } var_live_interval;
 
+typedef struct _node_pair {
+  char *key;
+  HeadNode *value;
+} node_pair;
 
 char *op_string[] = {
     "DefaultOP",   "AddOP",       "SubOP",           "ModOP",

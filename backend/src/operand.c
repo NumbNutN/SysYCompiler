@@ -409,6 +409,15 @@ bool operand_is_none(AssembleOperand op)
 }
 
 /**
+* @brief 判断当前操作数是否未分配
+* @brith: Created by LGD on 2023-7-9
+*/
+bool operand_is_unallocated(AssembleOperand op)
+{
+    return (op.addrMode == NONE_ADDRMODE);
+}
+
+/**
  * @brief 判断一个operand是否在寄存器中
  * @birth: Created by LGD on 2023-4-24
 */

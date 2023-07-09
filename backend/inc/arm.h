@@ -46,6 +46,7 @@ typedef enum
     ASSEM_PSEUDO_INSTRUCTION,
     LABEL,
     BI,      //Branch Instructions
+    UNDEF,  /*Undefined Instruction 2023-7-9*/
     LDR_PSEUDO_INSTRUCTION,
     
 } ASSEMBLE_TYPE;
@@ -417,6 +418,11 @@ void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOper
 
 //伪指令
 void Label(char* label);
+/**
+* @brief 生成一个未定义指令
+* @birth:Created by LGD on 2023-7-9
+*/
+void undefined();
 
 /**
  * @brief FLD伪指令

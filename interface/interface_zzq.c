@@ -400,6 +400,7 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
     }
     do
     {
+        if(check_before_translate(p) == false)continue;
         translate_IR_test(p);
         currentInstruction = p;
         detect_temp_register_status();

@@ -168,6 +168,9 @@ void print_single_assembleNode(assmNode* p)
         case LABEL:
             printf("%s:\n",p->label);
         break;
+        case UNDEF:
+            printf("UNDEF\n");
+        break;
         case LDR_PSEUDO_INSTRUCTION:
             printf("\t");
             printf("%s\t",p->opCode);

@@ -3,6 +3,18 @@
 
 extern Instruction* currentInstruction;
 
+enum _Instruction_Type{
+    VALID_INSTRUCTION,
+    INVALID_INSTRUCTION
+};
+
+
+/**
+* @brief 翻译前的钩子，false表面当前指令的翻译应当终止
+* @birth: Created by LGD on 2023-7-9
+*/
+bool check_before_translate(Instruction* this);
+
 void translate_add(Instruction* ins);
 
 void translate_IR(Instruction* this);

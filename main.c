@@ -11,6 +11,9 @@
 #include "cds.h"
 #include "symbol_table.h"
 
+#include "print_format.h"
+#include "interface_zzq.h"
+
 extern List *ins_list;
 extern List *func_list;
 extern List *global_var_list;
@@ -161,6 +164,11 @@ int main(int argc, char **argv) {
   ins_toBBlock_pass(ins_list);
 
   print_ins_pass(global_var_list);
+
+
+  TranslateInit();
+  //翻译全局变量表
+  translate_global_variable_list(global_var_list);
 
   ListFirst(func_list, false);
   void *element;
