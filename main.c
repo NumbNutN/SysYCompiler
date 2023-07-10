@@ -11,6 +11,9 @@
 #include "cds.h"
 #include "symbol_table.h"
 
+#include "config.h"
+#include <sys/stat.h>
+
 extern List *ins_list;
 extern List *func_list;
 extern List *global_var_list;
@@ -138,24 +141,33 @@ int main(int argc, char **argv) {
 
   printf("%%begin the pass\n");
   char *choose_case = NULL;
-  if (argc == 2) {
-    choose_case = read_code_from_file(argv[1]);
+  if (argc == 5) {
+    choose_case = read_code_from_file(argv[4]);
   } else {
-    choose_case = read_code_from_file(test_cases[21]);
+    assert("invalid parameters");
   }
   if (choose_case == NULL)
     return 1;
 
+  int saveSTDOUT =dup(STDOUT_FILENO);
+
+#ifdef DEBUG_MODE
   freopen("./output/printf_ast.txt", "w", stdout);
+#endif
 
 #define PARSER
   parser(choose_case);
 
 #ifdef PARSER
+
+#ifdef DEBUG_MODE
   freopen(tty_path, "w", stdout);
   freopen("./output/out.txt", "w", stdout);
+#endif
 
+#ifdef DEBUG_MODE
   print_ins_pass(ins_list);
+#endif
 
   delete_return_deadcode_pass(ins_list);
 
@@ -175,8 +187,15 @@ int main(int argc, char **argv) {
   }
 #endif
 
+  /* 生成文件 */
+  freopen(argv[3], "w", stdout);
+  print_model();
+
   free(tty_path);
-  printf("All over!\n");
+#ifdef DEBUG_MODE
+  // dup2(saveSTDOUT,STDOUT_FILENO);
+  // printf("All over!\n");
+#endif
   return 0;
 }
 
