@@ -261,12 +261,17 @@ void bash_push_pop_instruction(char* opcode,...)
 /**
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9
+ * @update: 2023-7-11 当列表为空时不生成指令
 */
 void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
 {
     size_t cnt = 0;
-    do{++cnt;} while (!operand_is_none(regList[cnt]));
-    
+    while (!operand_is_none(regList[cnt])){
+        ++cnt;
+    }
+    /* 为0则不需要生成 */
+    if(cnt == 0)return;
+
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     strcpy(node->opCode,opcode);
     node->op_len = cnt;
