@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.12)
 project(compiler)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_COMPILER /usr/bin/gcc)
-set(CMAKE_CPP_COMPILER /usr/bin/g++)
+set(CMAKE_C_COMPILER /usr/bin/clang)
+set(CMAKE_CPP_COMPILER /usr/bin/clang++)
 
 include_directories(.)
 
