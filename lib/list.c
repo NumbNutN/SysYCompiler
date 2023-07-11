@@ -408,7 +408,7 @@ bool ListNext(List* self, void** p_element)
 {
     ListData* data = self->data;
     unsigned iter_round = data->iter_round_;
-    if (unlikely(iter_round == data->size_))
+    if (unlikely(iter_round == data->size_) || !data->size_)
         return false;
 
     ListNode* iter_node = data->iter_node_;

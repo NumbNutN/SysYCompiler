@@ -1,5 +1,5 @@
-CC = clang
-CFLAGS = -Wall -Wextra -std=c99 -g
+CC = gcc
+CFLAGS = -Wall -Wextra -g
 SRCDIR = .
 
 
@@ -10,6 +10,8 @@ TESTDIR = test_cases
 SRC := $(shell find $(SRCDIR) -name "*.c" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*")
 OBJ := $(SRC:%.c=$(BUILDDIR)/%.o)
 
+HEAD := $(shell find $(SRCDIR) -name "*.h" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*")
+
 C_INCLUDES := \
 -Iinclude \
 -Ibackend/inc \
@@ -19,7 +21,7 @@ C_INCLUDES := \
 
 C_LIB := -lm
 
-CFLAGS += $(C_INCLUDES) 
+CFLAGS += $(C_INCLUDES) $(C_DEFINE)
 
 EXECUTABLE = compiler
 
