@@ -1,5 +1,8 @@
 #include "c_container_auxiliary.h"
 #include "instruction.h"
+#include "cds.h"
+
+#include <string.h>
 
 Stack *stack_ast_pre = NULL;
 
@@ -134,7 +137,8 @@ void system_func_init() {
     func_label_ins->pdata->symtab_func_pdata.param_num = sysy[i].param_num;
 
     // 将函数的<name,label>插入函数表
-    HashMapPut(func_hashMap, strdup(sysy[i].func_name), func_label_ins);
+    char* key = strdup(sysy[i].func_name);
+    HashMapPut(func_hashMap, key, func_label_ins);
   }
 }
 

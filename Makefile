@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -Wall -Wextra -std=c99 -g
 SRCDIR = .
 BUILDDIR = build
 
@@ -14,20 +14,25 @@ C_INCLUDES := \
 -Ilib/include \
 -I.
 
-CFLAGS += $(C_INCLUDES)
+C_LIB := -lm
 
-EXECUTABLE = myprogram
+CFLAGS += $(C_INCLUDES) 
+
+EXECUTABLE = compiler
 
 .PHONY: all clean
 
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(C_LIB)
 
 $(BUILDDIR)/%.o: %.c | $(BUILDDIR)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 $(BUILDDIR):
 	@mkdir -p $@
+
+clean:
+	rm -rf $(BUILDDIR) $(EXECUTABLE)
