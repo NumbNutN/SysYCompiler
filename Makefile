@@ -32,7 +32,7 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJ) 
 	$(CC) $(CFLAGS) $^ -o $@ $(C_LIB)
 
-$(BUILDDIR)/%.o: %.c Makefile | $(BUILDDIR)
+$(BUILDDIR)/%.o: %.c Makefile $(HEAD) | $(BUILDDIR)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
