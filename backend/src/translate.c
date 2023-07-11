@@ -638,6 +638,7 @@ void translate_assign_instructions(Instruction* this)
 /**
  * @brief 翻译双目逻辑运算表达式重构版
  * @birth: Created by LGD on 2023-4-18
+ * @update: 2023-7-11 条件语句应该在无条件之下
 */
 void translate_logical_binary_instruction_new(Instruction* this)
 {
@@ -655,31 +656,32 @@ void translate_logical_binary_instruction_new(Instruction* this)
     {
         cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
     }
-    movCondition(opList[TARGET_OPERAND],falseOp,opCode);
-    movCondition(opList[TARGET_OPERAND],trueOp,DefaultOP);
+    movCondition(opList[TARGET_OPERAND],falseOp,DefaultOP);
+    movCondition(opList[TARGET_OPERAND],trueOp,opCode);
 }
 
 /**
  * @brief 翻译只包含一个bool变量作为条件的跳转指令
  * @author Created by LGD on 20221225
  * @update: 2023-5-29 重写goto_instruction
+ *          2023-7-11 区分GotoOp和GotoOp_WithCond
 */
 void translate_goto_instruction_test_bool(Instruction* this)
 {
 
-    AssembleOperand op = toOperand(this,FIRST_OPERAND);
-    int tempReg;
-
     if(goto_is_conditional(ins_get_opCode(this)))
     {
+        AssembleOperand op = toOperand(this,FIRST_OPERAND);
+        int tempReg;
         //有条件时   CMP 不需要cond  不需要S(本身会影响)
         //比较指令
         cmpii(op,trueOp);
-
         branch_instructions_test(ins_get_tarLabel_Conditional(this,false),"NE",false,NONELABEL);
         branch_instructions_test(ins_get_tarLabel_Conditional(this,true),NONESUFFIX,false,NONELABEL);
     }
-
+    else{
+        branch_instructions_test(ins_get_tarLabel_Conditional(this,true),NONESUFFIX,false,NONELABEL);
+    }
 }
 
 

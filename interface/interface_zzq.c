@@ -65,22 +65,15 @@ char* ins_get_tarLabel(Instruction* this)
 /**
  * @brief 获取条件调整语句的标号
  * @birth: Created by LGD on 2023-5-29
+ * @update: 2023-7-11 不负责识别Opcode来判断true or false
 */
 char* ins_get_tarLabel_Conditional(Instruction* this,bool cond)
 {
     assert(this->opcode != GotoOP || this->opcode != GotoWithConditionOP);
-    switch(ins_get_opCode(this))
-    {
-        case GotoOP:
-            return ins_get_assign_left_value(this)->name;
-        case GotoWithConditionOP:
-        {
-            if(cond)
-                return ins_get_assign_left_value(this)->pdata->condition_goto.true_goto_location->name;
-            else
-                return ins_get_assign_left_value(this)->pdata->condition_goto.false_goto_location->name;
-        }
-    }
+    if(cond)
+        return ins_get_assign_left_value(this)->pdata->condition_goto.true_goto_location->name;
+    else
+        return ins_get_assign_left_value(this)->pdata->condition_goto.false_goto_location->name;
 }
 
 /**
@@ -193,6 +186,9 @@ void translate_IR_test(struct _Instruction* this)
         //     translate_goto_instruction_conditions_in_one(this);
             // break;
         case GotoWithConditionOP:
+            translate_goto_instruction_test_bool(this);
+        break;
+        case GotoOP:
             translate_goto_instruction_test_bool(this);
         break;
         case FuncLabelOP:
