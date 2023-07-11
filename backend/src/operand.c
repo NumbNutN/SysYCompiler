@@ -541,6 +541,7 @@ void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftN
  *             选项包括 IN_MEMORY IN_REGISTER IN_INSTRUCTION 这些选项可以或在一起
  * @param rom 见第三个参数的描述
  * @birth: Created by LGD on 2023-4-24
+ * @update: 2023-7-11 修复了优先级导致判断错误的BUG
 */
 struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,enum _RegorMem rom)
 {
@@ -549,10 +550,10 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
 
     if(!mask)
     {
-        if( ((rom & IN_MEMORY == IN_MEMORY) || !rom) &&  
+        if( (((rom & IN_MEMORY) == IN_MEMORY) || !rom) &&  
             judge_operand_in_RegOrMem(op) == IN_MEMORY)
             cvtOp = operand_load_from_memory(op,aov);
-        if(((rom & IN_INSTRUCTION == IN_INSTRUCTION) || !rom ) && 
+        if((((rom & IN_INSTRUCTION) == IN_INSTRUCTION) || !rom ) && 
             judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
             cvtOp = operand_load_immediate(op,aov);
     }

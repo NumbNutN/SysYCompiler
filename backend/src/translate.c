@@ -381,6 +381,7 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 /**
  * @brief 采用add + mov 的减法翻译
  * @birth: Created by LGD on 2023-4-24
+ * @update: 2023-7-11 提供对两个立即数减法运算的支持
 */
 void translate_sub(Instruction* this)
 {   
@@ -414,19 +415,23 @@ void translate_sub(Instruction* this)
     else
     {   
         middleOp = operand_pick_temp_register(ARM);
+
+#ifndef ALLOW_TWO_IMMEDIATE
         assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
-        //如果第2个操作数为立即数，使用SUB指令
-        if(opernad_is_immediate(op2))
-        {
-            op1 = operandConvert(op1,ARM,false,IN_MEMORY);
-            general_data_processing_instructions(SUB,
-                middleOp,op1,op2,NONESUFFIX,false);
-        }
-        if(opernad_is_immediate(op1))
+#endif
+        
+        //如果第1个操作数为立即数，第2个不是，使用RSB指令
+        if(opernad_is_immediate(op1) && !opernad_is_immediate(op2))
         {
             op2 = operandConvert(op2,ARM,false,IN_MEMORY);
             general_data_processing_instructions(RSB,
                 middleOp,op2,op1,NONESUFFIX,false);
+        }
+        //如果第2个操作数为立即数，使用SUB指令
+        else{
+                op1 = operandConvert(op1,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+                general_data_processing_instructions(SUB,
+                middleOp,op1,op2,NONESUFFIX,false);
         }
 
         //释放第一、二操作数

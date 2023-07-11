@@ -26,7 +26,7 @@ find_package(FLEX)
 FLEX_TARGET(MyScanner gramtree.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c)
 
 #设置可执行文件的输出目录
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
 #设置动态链接库的库文件的目录
 link_directories(${PROJECT_SOURCE_DIR}/lib)

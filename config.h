@@ -19,6 +19,9 @@
     /*使用最开始的Load Store通用方法处理binary运算*/
     //#define OPEN_LOAD_AND_STORE_BINARY_OPERATE
 
+    /* 是否允许二元的两个操作数均为立即数 */
+    #define ALLOW_TWO_IMMEDIATE
+
 #endif
 
 /* 赋值号左侧变量存储位置 */
@@ -46,5 +49,5 @@
 //#define OPEN_REGISTER_ALLOCATION
 
 /* 测试模式 */
-#define DEBUG_MODE
+//#define DEBUG_MODE
 #endif
