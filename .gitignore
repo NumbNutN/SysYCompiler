@@ -5,3 +5,5 @@ bin
 output
 llvm_demo
 compiler
+test_cases
+compile_commands.json

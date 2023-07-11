@@ -1,10 +1,13 @@
-CC = gcc
+CC = clang
 CFLAGS = -Wall -Wextra -std=c99 -g
 SRCDIR = .
+
+
 BUILDDIR = build
+TESTDIR = test_cases
 
 # 递归查找当前目录及子目录中的所有以.c后缀结尾的文件
-SRC := $(shell find $(SRCDIR) -name "*.c" -not -path "$(SRCDIR)/$(BUILDDIR)*")
+SRC := $(shell find $(SRCDIR) -name "*.c" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*")
 OBJ := $(SRC:%.c=$(BUILDDIR)/%.o)
 
 C_INCLUDES := \
@@ -24,10 +27,10 @@ EXECUTABLE = compiler
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJ)
+$(EXECUTABLE): $(OBJ) 
 	$(CC) $(CFLAGS) $^ -o $@ $(C_LIB)
 
-$(BUILDDIR)/%.o: %.c | $(BUILDDIR)
+$(BUILDDIR)/%.o: %.c Makefile | $(BUILDDIR)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
