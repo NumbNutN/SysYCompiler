@@ -157,7 +157,6 @@ int main(int argc, char **argv) {
 #define PARSER
   parser(choose_case);
 
-#ifdef PARSER
 
 #ifdef DEBUG_MODE
   freopen(tty_path, "w", stdout);
