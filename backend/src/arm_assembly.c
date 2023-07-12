@@ -490,7 +490,41 @@ void movii(AssembleOperand tar,AssembleOperand op1)
         (judge_operand_in_RegOrMem(oriOp1) == IN_INSTRUCTION))
             operand_recycle_temp_register(op1);
     }
+}
 
+/**
+ * @brief movini
+ * @birth: Created by LGD on 2023-7-11
+*/
+void movini(AssembleOperand tar,AssembleOperand op1)
+{
+    AssembleOperand oriOp1 = op1;
+    //如果tar为寄存器
+    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    {
+        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+            op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
+        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+            op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
+        if(!operand_is_same(tar,op1))
+            general_data_processing_instructions(MVN,tar,nullop,op1,NONESUFFIX,false);
+    }
+    else
+    {
+        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+            op1 = operand_load_from_memory(op1,ARM);
+        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+            op1 = operand_load_immediate(op1,ARM);
+
+        if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+            memory_access_instructions("STR",op1,tar,NONESUFFIX,false,NONELABEL);
+        else
+            general_data_processing_instructions(MVN,tar,nullop,op1,NONESUFFIX,false);
+
+        if(judge_operand_in_RegOrMem(oriOp1) == IN_MEMORY ||
+        (judge_operand_in_RegOrMem(oriOp1) == IN_INSTRUCTION))
+            operand_recycle_temp_register(op1);
+    }
 }
 
 /**

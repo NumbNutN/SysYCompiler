@@ -138,7 +138,6 @@ int main(int argc, char **argv) {
 
   AllInit();
 
-
   printf("%%begin the pass\n");
   char *choose_case = NULL;
   if (argc == 5) {
@@ -158,7 +157,6 @@ int main(int argc, char **argv) {
 #define PARSER
   parser(choose_case);
 
-#ifdef PARSER
 
 #ifdef DEBUG_MODE
   freopen(tty_path, "w", stdout);
@@ -171,6 +169,9 @@ int main(int argc, char **argv) {
 
   delete_return_deadcode_pass(ins_list);
 
+  print_ins_pass(ins_list);
+
+#ifdef PARSER
   ins_toBBlock_pass(ins_list);
 
   print_ins_pass(global_var_list);

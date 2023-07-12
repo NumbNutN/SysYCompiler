@@ -19,6 +19,9 @@
     /*使用最开始的Load Store通用方法处理binary运算*/
     //#define OPEN_LOAD_AND_STORE_BINARY_OPERATE
 
+    /* 是否允许二元的两个操作数均为立即数 */
+    #define ALLOW_TWO_IMMEDIATE
+
 #endif
 
 /* 赋值号左侧变量存储位置 */

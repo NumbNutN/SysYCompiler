@@ -21,7 +21,11 @@ void translate_IR(Instruction* this);
 //三地址指令翻译
 void translate_binary_expression(Instruction* ins);
 void translate_goto_instruction(Instruction* this);
-
+/**
+ * @brief 翻译单目运算
+ * @birth: Created by LGD on 2023-7-11
+*/
+void translate_unary_instructions(Instruction* this);
 
 //标号
 void Label(char* label);

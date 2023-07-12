@@ -185,6 +185,8 @@ void translate_IR_test(struct _Instruction* this)
         // case Goto_NotEqual:
         //     translate_goto_instruction_conditions_in_one(this);
             // break;
+        case NegativeOP:
+            translate_unary_instructions(this);
         case GotoWithConditionOP:
             translate_goto_instruction_test_bool(this);
         break;

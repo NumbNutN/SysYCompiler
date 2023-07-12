@@ -148,6 +148,11 @@ void movff(struct _operand tar,struct _operand op1);
  * @birth: Created by LGD on 20230201
 */
 void movii(struct _operand tar,struct _operand op1);
+/**
+ * @brief movini
+ * @birth: Created by LGD on 2023-7-11
+*/
+void movini(AssembleOperand tar,AssembleOperand op1);
 
 /**
  * @brief movCondition
