@@ -49,5 +49,5 @@
 //#define OPEN_REGISTER_ALLOCATION
 
 /* 测试模式 */
-//#define DEBUG_MODE
+#define DEBUG_MODE
 #endif

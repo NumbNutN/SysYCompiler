@@ -616,10 +616,8 @@ void translate_allocate_instruction(Instruction* this)
 void translate_assign_instructions(Instruction* this)
 {
 
-    /* 这个列表记录生成的双目表达式里三个操作数的 寻址方式*/
+    /* 这个列表记录生成的单目表达式里两个个操作数的 寻址方式*/
     AssembleOperand opList[2];
-    int targetOpMode;
-    size_t cnt_tmp_reg = 0;
 
     opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
     opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
@@ -636,6 +634,20 @@ void translate_assign_instructions(Instruction* this)
             movfi(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
         else
             movii(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+    }
+}
+
+/**
+ * @brief 翻译单目运算
+ * @birth: Created by LGD on 2023-7-11
+*/
+void translate_unary_instructions(Instruction* this){
+    if(ins_get_opCode(this) == NegativeOP)
+    {   
+        AssembleOperand opList[2];
+        opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
+        opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
+        movini(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
     }
 }
 

@@ -17,6 +17,7 @@ typedef enum _ARM_Instruction_Mnemonic
     MLA,     //32位乘加指令
 
     MOV,
+    MVN,
     CMP,
 
     FADD,
