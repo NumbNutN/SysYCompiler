@@ -19,10 +19,13 @@
     /*使用最开始的Load Store通用方法处理binary运算*/
     //#define OPEN_LOAD_AND_STORE_BINARY_OPERATE
 
-    /* 是否允许二元的两个操作数均为立即数 */
+    /* 是否允许二元的两个操作数均为立即数 2023-7-11*/
     #define ALLOW_TWO_IMMEDIATE
 
 #endif
+
+/* 类型不明确时缺省大小为4字节 2023-7-12 */
+#define ENABLE_GIVING_DEFAULT_TYPE
 
 /* 赋值号左侧变量存储位置 */
 #define LEFT_VALUE_IS_IN_INSTRUCTION

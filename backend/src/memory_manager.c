@@ -344,7 +344,11 @@ size_t opTye2size(enum _TypeID type)
         case VoidTyID:
             return 0;
         default:
+#ifdef ENABLE_GIVING_DEFAULT_TYPE
+            return 4;
+#else
             assert(false && type && "Unrecognized type");
+#endif
     }
 }
 
