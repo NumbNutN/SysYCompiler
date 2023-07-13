@@ -250,7 +250,7 @@ void bash_push_pop_instruction(char* opcode,...)
     cnt = 0;
     while((ops = va_arg(ap,AssembleOperand*)) != END)
     {
-        node->opList[cnt] = *ops;
+        memcpy(&(node->opList[cnt]) ,ops,sizeof(AssembleOperand));
         node->opList[cnt].addrMode = PP;
         ++cnt;
     }
@@ -577,6 +577,7 @@ void linkNode(assmNode* now)
     prev->next = now;
     prev = now;
 
+    setvbuf(stdout,NULL,_IONBF,0);
     print_single_assembleNode(now);
     ++CntAssemble;
 }

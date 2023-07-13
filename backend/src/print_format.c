@@ -105,7 +105,9 @@ void print_operand(AssembleOperand op,size_t opernadIdx)
         break;
         //PUSH {R0}
         case PP:
-            printf("R%d",op.oprendVal);
+        {
+            printf("R%lld",op.oprendVal);
+        }      
         break;
         default:
             printf("EOF");
