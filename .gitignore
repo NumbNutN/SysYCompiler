@@ -7,3 +7,4 @@ llvm_demo
 compiler
 compile_commands.json
 test_cases
+lib
