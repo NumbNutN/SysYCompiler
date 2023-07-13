@@ -7,7 +7,6 @@ set(CMAKE_CPP_COMPILER /usr/bin/clang++)
 
 include_directories(.)
 
-include_directories(${CMAKE_SOURCE_DIR}/lib/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/backend/inc)
 include_directories(${CMAKE_SOURCE_DIR}/interface)
