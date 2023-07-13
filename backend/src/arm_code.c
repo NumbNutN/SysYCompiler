@@ -228,6 +228,7 @@ void push_pop_instructions(char* opcode,AssembleOperand reg)
 /**
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9
+ * @update: 2023-7-13 有序的寄存器列表
 */
 void bash_push_pop_instruction(char* opcode,...)
 {
@@ -239,6 +240,7 @@ void bash_push_pop_instruction(char* opcode,...)
     AssembleOperand* ops;
     while((ops = va_arg(ap,AssembleOperand*)) != END)
         ++cnt;
+
 
     assmNode* node = (assmNode*)malloc(sizeof(assmNode));
     strcpy(node->opCode,opcode);
@@ -256,12 +258,25 @@ void bash_push_pop_instruction(char* opcode,...)
     }
     va_end(ap);
 
+    /*   开始排序  */
+    for(int i=0;i<cnt-1;i++)
+        for(int j=0;j<cnt-i-1;j++)
+        {
+            if(node->opList[j].oprendVal > node->opList[j+1].oprendVal)
+            {
+                int temp = (int)node->opList[j].oprendVal;
+                node->opList[j].oprendVal = node->opList[j+1].oprendVal;
+                node->opList[j+1].oprendVal = temp;
+            }
+        }
+
     linkNode(node);
 }
 /**
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9
  * @update: 2023-7-11 当列表为空时不生成指令
+ * @update: 2023-7-13 有序的寄存器列表
 */
 void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
 {
@@ -277,6 +292,19 @@ void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
     node->op_len = cnt;
     node->opList = (AssembleOperand*)malloc(sizeof(AssembleOperand)*cnt);
     memcpy(node->opList,regList,cnt*sizeof(struct _operand));
+
+    /*   开始排序  */
+    for(int i=0;i<cnt-1;i++)
+        for(int j=0;j<cnt-i-1;j++)
+        {
+            if(node->opList[j].oprendVal > node->opList[j+1].oprendVal)
+            {
+                int temp = (int)node->opList[j].oprendVal;
+                node->opList[j].oprendVal = node->opList[j+1].oprendVal;
+                node->opList[j+1].oprendVal = temp;
+            }
+        }
+
     node->assemType = ASSEM_PUSH_POP_INSTRUCTION;
     linkNode(node);
 }
