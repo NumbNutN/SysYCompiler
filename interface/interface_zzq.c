@@ -412,10 +412,9 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
 */
 void translate_global_variable_list(List* this)
 {
-    Instruction* p;
+    Instruction* p = NULL;
     ListFirst(this,false);
-    ListNext(this,(void**)&p);
-    do
+    while(ListNext(this,&p))
     {
         switch(p->opcode)
         {
@@ -425,7 +424,7 @@ void translate_global_variable_list(List* this)
             default:
             break;
         }
-    }while(ListNext(this,&p));
+    };
 }
 
 void set_function_stackSize(size_t num)
