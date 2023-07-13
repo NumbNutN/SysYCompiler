@@ -24,77 +24,79 @@ void print_operand(AssembleOperand op,size_t opernadIdx)
     {
         //MOV R0,#15
         case IMMEDIATE:
-            printf("%c%d",'#',op.oprendVal);
+            printf("#%d",(int)op.oprendVal);
         break;
         case DIRECT:
             //LDR R0,MEM
-            printf("%c%d%c",'[',op.oprendVal,']');
+            printf("[%d]",(int)op.oprendVal);
         break;
         case REGISTER_DIRECT:
             //MOV R0,R1
             if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                printf("%c%d",'R',op.oprendVal);
+                printf("R%d",(int)op.oprendVal);
             else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                printf("%c%d",'S',op.oprendVal - FLOATING_POINT_REG_BASE);
+                printf("S%d",(int)op.oprendVal - FLOATING_POINT_REG_BASE);
             else
-                printf("?%d",op.oprendVal);
+                printf("?%d",(int)op.oprendVal);
             /***********************第二操作数****************************/
             {
                 //2023-4-20 第二操作数
                 if(opernadIdx == SECOND_OPERAND && op.addrMode == REGISTER_DIRECT)
+                {
                     if(op.shiftWay == NONE_SHIFT)
                         break;
                     else
-                        printf(",%s #%d",enum_shift_2_str(op.shiftWay),op.shiftNum);
+                        printf(",%s #%d",enum_shift_2_str(op.shiftWay),(int)op.shiftNum);
+                }
             }
             /*****************************************************************/
         break;
         case REGISTER_INDIRECT:
             //LDR R0,[R1]
             if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                printf("[%c%d]",'R',op.oprendVal);
+                printf("[R%d]",(int)op.oprendVal);
             else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                printf("[%c%d]",'S',op.oprendVal - FLOATING_POINT_REG_BASE);
+                printf("[S%d]",(int)op.oprendVal - FLOATING_POINT_REG_BASE);
             else
-                printf("[?%d]",op.oprendVal);
+                printf("[?%d]",(int)op.oprendVal);
         break;
         case REGISTER_INDIRECT_POST_INCREMENTING:
             //LDR R0,[R1],#4
             if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                printf("[%c%d], #%d",'R',op.oprendVal,op.addtion);
+                printf("[R%d], #%d",(int)op.oprendVal,op.addtion);
             else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                printf("[%c%d], #%d",'S',op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                printf("[S%d], #%d",(int)op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
             else
-                printf("[?%d], #%d",op.oprendVal,op.addtion);
+                printf("[?%d], #%d",(int)op.oprendVal,op.addtion);
         break;
         case REGISTER_INDIRECT_PRE_INCREMENTING:
             //LDR R0, [R1, #4]
             if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                printf("[%c%d, #%d]!",'R',op.oprendVal,op.addtion);
+                printf("[R%d, #%d]!",(int)op.oprendVal,op.addtion);
             else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                printf("[%c%d, #%d]!",'S',op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                printf("[S%d, #%d]!",(int)op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
             else
-                printf("[?%d, #%d]!",op.oprendVal,op.addtion);
+                printf("[?%d, #%d]!",(int)op.oprendVal,op.addtion);
         break;
         case REGISTER_INDIRECT_WITH_OFFSET:
         {
             if(op.offsetType ==  OFFSET_IMMED|| op.offsetType ==NONE_OFFSET)
             {
                 if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                    printf("[R%d, #%d]",op.oprendVal,op.addtion);
+                    printf("[R%d, #%d]",(int)op.oprendVal,op.addtion);
                 else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                    printf("[S%d, #%d]",op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                    printf("[S%d, #%d]",(int)op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
                 else
-                    printf("[?%d, #%d]",op.oprendVal,op.addtion);
+                    printf("[?%d, #%d]",(int)op.oprendVal,op.addtion);
             }
             else if(op.offsetType == OFFSET_IN_REGISTER)
             {
-                 if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
-                    printf("[R%d, R%d]",op.oprendVal,op.addtion);
+                if(op.oprendVal >= FIRST_ARM_REGISTER && op.oprendVal <= LAST_ARM_REGISTER)
+                    printf("[R%d, R%d]",(int)op.oprendVal,op.addtion);
                 else if(op.oprendVal >= FIRST_VFP_REGISTER && op.oprendVal <= LAST_VFP_REGISTER)
-                    printf("[S%d, R%d]",op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
+                    printf("[S%d, R%d]",(int)op.oprendVal,op.addtion - FLOATING_POINT_REG_BASE);
                 else
-                    printf("[?%d, R%d]",op.oprendVal,op.addtion);               
+                    printf("[?%d, R%d]",(int)op.oprendVal,op.addtion);               
             }
         }
 
@@ -106,7 +108,7 @@ void print_operand(AssembleOperand op,size_t opernadIdx)
         //PUSH {R0}
         case PP:
         {
-            printf("R%lld",op.oprendVal);
+            printf("R%d",(int)op.oprendVal);
         }      
         break;
         default:
