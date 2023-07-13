@@ -42,6 +42,10 @@ bool check_before_translate(Instruction* this)
     }
     if(ins_get_operand_num(this)>= 1)
     {
+        //当前例程没有义务为参数分配空间，因此分配查询是无效的
+        if(name_is_parameter(ins_get_assign_left_value(this)->name))
+            return true;
+
         if(operand_is_unallocated(toOperand(this, FIRST_OPERAND)))
             ins_type = INVALID_INSTRUCTION;
 
@@ -53,8 +57,10 @@ bool check_before_translate(Instruction* this)
     }
     if(ins_type == INVALID_INSTRUCTION)
     {
+#ifdef GEN_UNDEF
         //生成一条未定义指令
         undefined();
+#endif
         return false;
     }
     return true;

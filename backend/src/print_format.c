@@ -173,7 +173,7 @@ void print_single_assembleNode(assmNode* p)
             printf("%s:\n",p->label);
         break;
         case UNDEF:
-            printf("UNDEF\n");
+            printf("\tUNDEF\n");
         break;
         case LDR_PSEUDO_INSTRUCTION:
             printf("\t");
@@ -241,6 +241,10 @@ void print_model()
         print_as_node(node);
     }
     printf(".global main\n");
+    printf(".extern putint\n");
+    printf(".extern getint\n");
+    printf(".extern getch\n");
+    printf(".extern putch\n");
     //顺序打印一整个链表的汇编指令
     for(assmNode* p = head->next;p!=NULL;p=p->next)
     {
