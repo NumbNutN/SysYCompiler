@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g --std=c11 -O2 -lm
 SRCDIR = .
 
 
@@ -21,7 +21,7 @@ C_INCLUDES := \
 
 C_LIB := -lm
 
-CFLAGS += $(C_INCLUDES) $(C_DEFINE)
+CFLAGS += $(C_INCLUDES) $(C_DEFINE) 
 
 EXECUTABLE = compiler
 

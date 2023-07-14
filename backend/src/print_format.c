@@ -245,6 +245,10 @@ void print_model()
     printf(".extern getint\n");
     printf(".extern getch\n");
     printf(".extern putch\n");
+
+    //汇编符号
+    printf(".arch armv7-a\n");
+    printf(".arm\n");
     //顺序打印一整个链表的汇编指令
     for(assmNode* p = head->next;p!=NULL;p=p->next)
     {
