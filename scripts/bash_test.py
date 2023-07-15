@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-test_dir = "./test_cases"
-output_dir = "./output"
-exec_path = "./compiler"
+test_dir = "../test_cases"
+output_dir = "../output"
+exec_path = "../compiler"
 
 files = os.listdir(test_dir)
 for fileName in files:

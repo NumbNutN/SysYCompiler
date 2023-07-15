@@ -6,6 +6,5 @@ output
 llvm_demo
 compiler
 lib
-sysy
 compile_commands.json
 test_cases
