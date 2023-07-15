@@ -1827,10 +1827,12 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
                       HashMap *var_location) {
   Pair *ptr_pair;
   HashMapFirst(var_location);
+#ifdef DEBUG_MODE
   while ((ptr_pair = HashMapNext(var_location)) != NULL) {
     printf("\tvar:%s\taddress:%s\n ", (char *)ptr_pair->key,
            location_string[*((LOCATION *)ptr_pair->value)]);
   }
+#endif
   Label(self_func->label->name);
 
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表

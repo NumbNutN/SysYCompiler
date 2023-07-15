@@ -32,6 +32,8 @@ char *tty_path;
 char *read_code_from_file(const char *);
 
 int main(int argc, char **argv) {
+
+  freopen("/dev/null", "w", stdout);
   tty_path = ttyname(STDIN_FILENO);
 
   AllInit();
