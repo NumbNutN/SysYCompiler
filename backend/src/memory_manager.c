@@ -602,10 +602,9 @@ void traverse_and_load_arrayBase_to_recorded_place(List* this)
             //使用一个指令将数组偏移值填充至对应的变量存储位置
             struct _operand arrOff = operand_create_immediate_op(arrayOffset);
             movii(info->ori,arrOff);
+            printf("数组%s分配了地址%d\n",val->name,arrayOffset);
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
-    
-    printf("数组%s分配了地址%d\n",val->name,arrayOffset);
 }
 
 /**
