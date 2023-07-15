@@ -223,7 +223,7 @@ void as_set_function_type(char* name);
 typedef struct _assemNode
 {
     //操作码
-    char opCode[4];
+    char opCode[8];
     //操作数
     AssembleOperand op[4];
     //定义了操作数的数量
