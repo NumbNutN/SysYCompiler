@@ -31,8 +31,7 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     */
 
     //创建新的节点
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
-    memset(node,0,sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
 
 
     strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
@@ -79,8 +78,7 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
 {
 
     //创建新的节点
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
-    memset(node,0,sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
 
     strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
 
@@ -181,7 +179,7 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label)
 {
 
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     
@@ -214,7 +212,7 @@ void push_pop_instructions(char* opcode,AssembleOperand reg)
 {
     // @brief:生成出入栈的汇编指令
     // @birth:Created by LGD on 20221212
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     node->op[0] = reg;
     node->op_len = 1;
     node->op[0].addrMode = PP;
@@ -242,7 +240,7 @@ void bash_push_pop_instruction(char* opcode,...)
         ++cnt;
 
 
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opcode);
     node->op_len = cnt;
     node->opList = (AssembleOperand*)malloc(sizeof(AssembleOperand)*cnt);
@@ -287,7 +285,7 @@ void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
     /* 为0则不需要生成 */
     if(cnt == 0)return;
 
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opcode);
     node->op_len = cnt;
     node->opList = (AssembleOperand*)malloc(sizeof(AssembleOperand)*cnt);
@@ -315,7 +313,7 @@ void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label)
     /*
         ARM branch instructions
     */
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,"B");
     char* addr = (char*)malloc(sizeof(char)*10);
     node->op[0].oprendVal = addr;
@@ -338,12 +336,13 @@ void branch_instructions(char* tarLabel,char* suffix,bool symbol,char* label)
     linkNode(node);
 }
 
+//TODO
 void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* label)
 {
     /*
         ARM branch instructions
     */
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,"B");
     char* addr = (char*)malloc(sizeof(char)*10);
     node->op[0].oprendVal = addr;
@@ -373,7 +372,7 @@ void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* labe
 */
 void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     strcpy(node->suffix,vfp_suffix_from_type(type));
@@ -401,7 +400,7 @@ void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOpe
 */
 void ftost_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand fm,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     strcpy(node->suffix,vfp_suffix_from_type(type));
@@ -426,7 +425,7 @@ void ftost_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand
 */
 void fsito_and_fuito_instruction(char* opCode,AssembleOperand fd,AssembleOperand sm,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     strcpy(node->suffix,vfp_suffix_from_type(type));
@@ -447,7 +446,7 @@ void fsito_and_fuito_instruction(char* opCode,AssembleOperand fd,AssembleOperand
 */
 void fadd_and_fsub_instruction(char* opCode,AssembleOperand fd,AssembleOperand fn,AssembleOperand fm,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 3;
     strcpy(node->suffix,vfp_suffix_from_type(type));
@@ -473,7 +472,7 @@ void fadd_and_fsub_instruction(char* opCode,AssembleOperand fd,AssembleOperand f
 */
 void fmrs_and_fmsr_instruction(char* opCode,AssembleOperand rd,AssembleOperand sn,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     if(!strcmp(opCode,"FMRS"))
@@ -497,7 +496,7 @@ void fmrs_and_fmsr_instruction(char* opCode,AssembleOperand rd,AssembleOperand s
 */
 void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,"FCMP");
     node->op_len = 2;
     node->op[0] = fd;
@@ -517,7 +516,7 @@ void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type)
 */
 void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOperand fm,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
     node->op[0] = fd;
@@ -534,7 +533,7 @@ void Label(char* label)
     */
     if(!label)
         return;
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     node->assemType = LABEL;
     strcpy(node->label,label);
     linkNode(node);
@@ -546,7 +545,7 @@ void Label(char* label)
 */
 void undefined()
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     node->assemType = UNDEF;
     linkNode(node);
 }
@@ -561,7 +560,7 @@ void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi)
 {
     assert(immedi.addrMode == IMMEDIATE || immedi.addrMode == LABEL_MARKED_LOCATION &&
         "LDR Pseudo require Immediate or label");
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     node->assemType = LDR_PSEUDO_INSTRUCTION;
     strcpy(node->opCode,opCode);
     node->op[0] = reg;
@@ -577,7 +576,7 @@ void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi)
 */
 void pseudo_fld(char* opCode,AssembleOperand reg,AssembleOperand immedi,TypeID type)
 {
-    assmNode* node = (assmNode*)malloc(sizeof(assmNode));
+    assmNode* node = arm_instruction_node_init();
     node->assemType = LDR_PSEUDO_INSTRUCTION;
     strcpy(node->opCode,opCode);
     node->op[0] = reg;

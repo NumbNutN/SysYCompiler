@@ -229,8 +229,8 @@ typedef struct _assemNode
     //定义了操作数的数量
     unsigned op_len;
 
-    //定义了助记符   2022-12-02
-    char suffix[3];
+    //定义了条件码   2022-12-02
+    char suffix[4];
     //是否要影响标记位
     bool symbol;
 
@@ -448,5 +448,11 @@ void linkNode(assmNode* now);
  * @birth: Created by LGD on 2023-4-18
 */
 struct _operand AssemblyNode_get_opernad(struct _assemNode* assemNode,size_t idx);
+
+/**
+ * @brief 为arm指令节点进行初始化
+ * @birth: Created by LGD on 2023-7-15
+ */
+assmNode* arm_instruction_node_init();
 
 #endif
