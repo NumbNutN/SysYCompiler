@@ -610,7 +610,9 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
         //新建变量信息项
         var_info = (VarInfo*)malloc(sizeof(VarInfo));
         memset(var_info,0,sizeof(VarInfo));
+#ifdef DEBUG_MODE
         printf("插入新的实参名：%s \n",name);
+#endif
         HashMapPut(*myMap,name,var_info);
 
         //分配寄存器或内存单元
@@ -618,7 +620,9 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
         {
             int offset = request_new_local_variable_memory_unit(IntegerTyID);
             set_variable_stack_offset_by_name(*myMap,name,offset);
+#ifdef DEBUG_MODE
             printf("%s分配了地址%d\n",name,offset);
+#endif
         }
         else
         {
@@ -627,7 +631,9 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
             //为该变量(名)创建寄存器映射
             set_variable_register_order_by_name(*myMap,name,reg_order);
             //打印分配结果
-            printf("%s分配了寄存器%d\n",name,reg_order);                    
+#ifdef DEBUG
+            printf("%s分配了寄存器%d\n",name,reg_order);    
+#endif                
         }    
     }
     
