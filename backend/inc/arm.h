@@ -230,7 +230,7 @@ typedef struct _assemNode
     unsigned op_len;
 
     //定义了条件码   2022-12-02
-    char suffix[4];
+    char suffix[8];
     //是否要影响标记位
     bool symbol;
 
