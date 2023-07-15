@@ -46,8 +46,6 @@ int main(int argc, char **argv) {
   if (choose_case == NULL)
     return 1;
 
-  int saveSTDOUT =dup(STDOUT_FILENO);
-
 #ifdef DEBUG_MODE
   freopen("./output/printf_ast.txt", "w", stdout);
 #endif
@@ -67,12 +65,16 @@ int main(int argc, char **argv) {
 
   delete_return_deadcode_pass(ins_list);
 
+#ifdef DEBUG_MODE
   print_ins_pass(ins_list);
+#endif
 
 #ifdef PARSER
   ins_toBBlock_pass(ins_list);
 
+#ifdef DEBUG_MODE
   print_ins_pass(global_var_list);
+#endif
 
   TranslateInit();
   //翻译全局变量表
