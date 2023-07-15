@@ -111,6 +111,7 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
  * @brief 恢复函数的栈帧和栈顶
  * @birth: Created by LGD on 2023-4-4
  * @update:2023-5-13 不再需要恢复FP的值，因为它妥善保管在栈中
+ *         2023-7-15 reset_stack_frame可能会被调用多次，因此不能改变sp的真实值
 */
 void reset_stack_frame_status()
 {
@@ -120,6 +121,9 @@ void reset_stack_frame_status()
     //执行期间使指针变动生效
     // update_fp_value();
     update_sp_value();
+
+    currentPF.FPOffset = - currentPF.FPOffset;
+    currentPF.SPOffset = - currentPF.SPOffset;
 }
 
 
