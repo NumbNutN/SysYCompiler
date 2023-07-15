@@ -29,7 +29,7 @@ Instruction* currentInstruction = NULL;
 /**
 * @brief 翻译前的钩子，false表面当前指令的翻译应当终止
 * @birth: Created by LGD on 2023-7-9
-
+* @update: 2023-7-16 修正了store语句检查目标操作数失败的BUG
 */
 bool check_before_translate(Instruction* this)
 {
@@ -41,19 +41,23 @@ bool check_before_translate(Instruction* this)
             ins_type = INVALID_INSTRUCTION;
     }
     if(ins_get_operand_num(this)>= 1)
-    {
+    {        
+        //
+        if(operand_is_unallocated(toOperand(this, FIRST_OPERAND)))
+            ins_type = INVALID_INSTRUCTION;
+
+        //当前指令是storeop，则目的操作数是不存在的
+        if(ins_get_opCode(this) == StoreOP)
+            return true;
         //当前例程没有义务为参数分配空间，因此分配查询是无效的
         if(name_is_parameter(ins_get_assign_left_value(this)->name))
             return true;
 
-        if(operand_is_unallocated(toOperand(this, FIRST_OPERAND)))
-            ins_type = INVALID_INSTRUCTION;
-
+        //检查目标操作数是否有分配内存或寄存器
         if((ins_get_opCode(this) != GotoWithConditionOP) && 
             (ins_get_opCode(this) != ReturnOP))
             if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
                 ins_type = INVALID_INSTRUCTION;
-
     }
     if(ins_type == INVALID_INSTRUCTION)
     {
