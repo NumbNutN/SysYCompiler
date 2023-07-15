@@ -161,9 +161,9 @@ void update_sp_value()
     struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
 
     if(currentPF.SPOffset > 0)
-        general_data_processing_instructions(ADD,sp,sp,offset," ",false);
+        general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
     else
-        general_data_processing_instructions(SUB,sp,sp,offset," ",false);
+        general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
     //struct _operand immd = operand_create_immediate_op(currentPF.SPOffset);
     //struct _operand reg_off = operand_load_immediate(immd,ARM);
     //general_data_processing_instructions(ADD,sp,sp,reg_off," ",false);
