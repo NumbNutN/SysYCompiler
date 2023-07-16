@@ -355,10 +355,11 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
                 branch_instructions_test("__aeabi_idiv","L",false,NONELABEL);
             break;
             case ModOP:
-                middleOp = r0;
+                middleOp = r1;
                 movii(r0,binaryOp.op1);
                 movii(r1,binaryOp.op2);
                 branch_instructions_test("__aeabi_idivmod","L",false,NONELABEL);
+            break;
 #else
             assert("未实现不调用库的除法");
 #endif  

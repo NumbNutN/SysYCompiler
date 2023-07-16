@@ -159,6 +159,7 @@ void translate_IR_test(struct _Instruction* this)
         case SubOP:
         case MulOP:
         case DivOP:
+        case ModOP:
     #ifdef OPEN_LOAD_AND_STORE_BINARY_OPERATE
             translate_binary_expression_test(this);
     #else   
