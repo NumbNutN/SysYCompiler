@@ -61,15 +61,7 @@ int main(int argc, char **argv) {
   freopen("./output/out.txt", "w", stdout);
 #endif
 
-#ifdef DEBUG_MODE
-  print_ins_pass(ins_list);
-#endif
-
   delete_return_deadcode_pass(ins_list);
-
-#ifdef DEBUG_MODE
-  print_ins_pass(ins_list);
-#endif
 
 #ifdef PARSER
   ins_toBBlock_pass(ins_list);

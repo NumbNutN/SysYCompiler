@@ -129,4 +129,10 @@ void translate_global_variable_list(List* this);
  * @birth: Created by LGD on 2023-5-1
 */
 int ins_getelementptr_get_step_long(Instruction* this);
+
+/**
+ * @brief 打印一句中端代码信息
+ * @birth: Created by LGD on 2023-7-16
+*/
+void print_ins(Instruction *element);
 #endif
