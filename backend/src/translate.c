@@ -33,6 +33,10 @@ Instruction* currentInstruction = NULL;
 */
 bool check_before_translate(Instruction* this)
 {
+#ifdef DEBUG_MODE
+    //打印当前中端代码信息
+    print_ins(this);
+#endif
     enum _Instruction_Type ins_type = VALID_INSTRUCTION;
     //检查该指令的操作数是否均分配
     if(ins_get_operand_num(this) >= 2)

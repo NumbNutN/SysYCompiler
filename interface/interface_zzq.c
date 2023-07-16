@@ -397,7 +397,7 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
         if(check_before_translate(p) == false)continue;
         translate_IR_test(p);
         currentInstruction = p;
-        detect_temp_register_status();
+        //detect_temp_register_status();
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
 
 }
@@ -648,4 +648,38 @@ void translate_a_function(Function *self_func,ALGraph *self_cfg)
 
   freopen("out.txt","w",stdout);
   print_model();
+}
+
+/**
+ * @brief 打印一句中端代码信息
+ * @birth: Created by LGD on 2023-7-16
+*/
+void print_ins(Instruction *element)
+{
+        // 打印出每条instruction的res的名字信息
+    printf("%9s\t     %d: %20s ", "", ((Instruction *)element)->ins_id,
+           op_string[((Instruction *)element)->opcode]);
+    printf("\t%25s ", ((Value *)element)->name);
+
+    if (((Instruction *)element)->opcode == PhiFuncOp) {
+      printf("\tsize: %d ",
+             HashMapSize(((Value *)element)->pdata->phi_func_pdata.phi_value));
+      Pair *ptr_pair;
+      HashMapFirst(((Value *)element)->pdata->phi_func_pdata.phi_value);
+      while ((ptr_pair = HashMapNext(
+                  ((Value *)element)->pdata->phi_func_pdata.phi_value)) !=
+             NULL) {
+        printf("\tbblock: %s value: %s, ", (char *)(ptr_pair->key),
+               ((Value *)ptr_pair->value)->name);
+      }
+    } else if (((Instruction *)element)->user.num_oprands == 2) {
+      printf("\t%10s, %10s",
+             user_get_operand_use(((User *)element), 0)->Val->name,
+             user_get_operand_use(((User *)element), 1)->Val->name);
+    } else if (((Instruction *)element)->user.num_oprands == 1) {
+      printf("\t%10s", user_get_operand_use(((User *)element), 0)->Val->name);
+    } else if (((Instruction *)element)->user.num_oprands == 0) {
+      printf("\t%10s", "null");
+    }
+    printf("\n");
 }
