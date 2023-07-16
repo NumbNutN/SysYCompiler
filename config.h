@@ -55,5 +55,5 @@
 //#define GEN_UNDEF
 
 /* 测试模式 */
-#define DEBUG_MODE
+//#define DEBUG_MODE
 #endif
