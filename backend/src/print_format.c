@@ -214,40 +214,33 @@ void print_as_node(struct _AsDirective *node) {
   }
 }
 
-void print_model()
-{
-    //打印数据段节点
-    printf(".section .data\n");
-    for(struct _dataNode* node = dataList;node != NULL;node=node->next)
-    {
-        print_single_data(node);
-    }
-    //打印zeroInit段节点
-    printf(".section .bss\n");
-    for(struct _dataNode* node = bssList;node != NULL;node=node->next)
-    {
-        print_single_data(node);
-    }
-    //
-    printf(".section .text\n");
-    //打印函数声明
-    for(struct _AsDirective* node = asList;node != NULL;node=node->next)
-    {
-        print_as_node(node);
-    }
-    printf(".global main\n");
-    printf(".extern putint\n");
-    printf(".extern getint\n");
-    printf(".extern getch\n");
-    printf(".extern putch\n");
-
-    //汇编符号
-    printf(".arch armv7-a\n");
-    printf(".arm\n");
-    printf(".syntax unified\n");
-    //顺序打印一整个链表的汇编指令
-    for(assmNode* p = head->next;p!=NULL;p=p->next)
-    {
-        print_single_assembleNode(p);
-    }
+void print_model() {
+  // 打印数据段节点
+  struct _dataNode *node;
+  printf(".section .data\n");
+  ListFirst(dataList, false);
+  while(ListNext(dataList, &node)) 
+  {
+    print_single_data(node);
+  }
+  // 打印zeroInit段节点
+  printf(".section .bss\n");
+  for (struct _dataNode *node = bssList; node != NULL; node = node->next) {
+    print_single_data(node);
+  }
+  //
+  printf(".section .text\n");
+  // 打印函数声明
+  for (struct _AsDirective *node = asList; node != NULL; node = node->next) {
+    print_as_node(node);
+  }
+  printf(".global main\n");
+  printf(".extern putint\n");
+  printf(".extern getint\n");
+  printf(".extern getch\n");
+  printf(".extern putch\n");
+  // 顺序打印一整个链表的汇编指令
+  for (assmNode *p = head->next; p != NULL; p = p->next) {
+    print_single_assembleNode(p);
+  }
 }

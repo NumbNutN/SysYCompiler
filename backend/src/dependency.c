@@ -227,6 +227,8 @@ void TranslateInit()
 {
     //初始化链表
     initDlist(); 
+    //初始化数据链表
+    data_list_init();
     //初始化符号表
     back_endsymbol_table_init();
 }

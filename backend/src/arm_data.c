@@ -1,26 +1,52 @@
 #include <stdio.h>
 #include "operand.h"
 
-struct _dataNode* dataList = NULL;
+List* dataList = NULL;
+
 struct _dataNode* bssList = NULL;
-struct _dataNode* dataPrev = NULL;
 struct _dataNode* bssPrev = NULL;
 
 struct _AsDirective* asList = NULL;
 struct _AsDirective* asPrev = NULL;
 
+/**
+ * @brief 初始化数据链表
+ * @birth: Created by LGD on 2023-7-16
+**/
+void data_list_init()
+{
+    dataList = ListInit();
+}
+
+/**
+ * @brief:链接下一个数据节点
+ * @update: 2023-7-16 use List Lib
+*/
 void data_link_node(struct _dataNode* node)
 {
+
     if(!dataList)
-    {
-        dataList = node;
-        dataPrev = dataList;
+        assert("data list has not been inited");
+    ListPushBack(dataList, node);
+    
+}
+
+void data_remove_node(struct _dataNode* node)
+{
+    if(!dataList)
+        assert("data list has not been inited");
+    ListFirst(dataList, false);
+    size_t cnt = 0;
+    struct _dataNode* p;
+    do {
+        if(!ListNext(dataList, &p))break;
+        cnt++;
     }
-    else
-    {
-        dataPrev->next = node;
-        dataPrev = node;
-    }
+    while(node != p);
+        
+    if(node != p)
+        assert("Could not find the node!");
+    ListRemove(dataList, cnt-1);
 }
 
 void bss_link_node(struct _dataNode* node)
@@ -52,12 +78,34 @@ void asDirective_link_node(struct _AsDirective* node)
 }
 
 /**
-@brief: .long表达式
-@birth:Created by LGD on 2023-5-29
+ * @brief: .long表达式
+ * @birth:Created by LGD on 2023-5-29
+ * @update: long指令被设计为可替换的
 */
-void dot_long_expression(char* name,struct _operand expr)
+void dot_long_expression(char* name,struct _operand expr,bool replacale)
 {
-        
+    //检索已经存在的long或zero
+    if(replacale)
+    {
+        struct _dataNode* p;
+        ListFirst(dataList, false);
+        do{
+            if(!ListNext(dataList, &p))break;
+            //判断重复项
+            if((p->dExp == DOT_LONG) || (p->dExp == DOT_ZERO))
+            {
+                //找到重复项
+                if(!strcmp(p->label,name))
+                {
+                    data_remove_node(p);
+                    //找到重复项后务必退出，因为链表的遍历指针会改变
+                    break;
+                }
+            }
+        }while(1);
+    }
+
+    //创建新的节点
     assert(expr.addrMode == IMMEDIATE && ".long expression could only be integer literal");
     struct _dataNode* node = (struct _dataNode*)malloc(sizeof(struct _dataNode));
     memset(node, 0, sizeof(struct _dataNode));
