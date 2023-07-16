@@ -174,17 +174,12 @@ void translate_IR_test(struct _Instruction* this)
         case LessEqualOP:
         case LessThanOP:
             translate_logical_binary_instruction_new(this);
-            break;
+        break;
+        case LogicAndOP:
+        case LogicOrOP:
+            translate_and_or_instructions(this);
+        break;
 #endif
-        // case Goto:
-        // case Goto_Equal:
-        // case Goto_GreatEqual:
-        // case Goto_GreatThan:
-        // case Goto_LessEqual:
-        // case Goto_LessThan:
-        // case Goto_NotEqual:
-        //     translate_goto_instruction_conditions_in_one(this);
-            // break;
         case NegativeOP:
             translate_unary_instructions(this);
         case GotoWithConditionOP:

@@ -20,6 +20,15 @@ void translate_add(Instruction* ins);
 void translate_IR(Instruction* this);
 //三地址指令翻译
 void translate_binary_expression(Instruction* ins);
+
+/**
+ * @brief 翻译所有的双目赋值运算,但是采用add + mov 的新方法
+ * @birth: Created by LGD on 20230226
+ * @update: 20230306 新的变量位置切换
+ *          2023-4-10 添加除法运算
+*/
+void translate_binary_expression_binary_and_assign(Instruction* this);
+
 void translate_goto_instruction(Instruction* this);
 /**
  * @brief 翻译单目运算
@@ -43,8 +52,17 @@ void translate_binary_expression_test(Instruction* ins);
 
 /**
  * @brief 翻译双目逻辑运算表达式重构版
+ * @birth: Created by LGD on 2023-4-18
+ * @update: 2023-7-11 条件语句应该在无条件之下
+ *          2023-7-16 重构 条件码的判断位置改变
 */
 void translate_logical_binary_instruction_new(Instruction* this);
+
+/**
+ * @brief 翻译And Or运算
+ * @birth: Created by LGD on 2023-7-16
+**/
+void translate_and_or_instructions(Instruction* this);
 
 void translate_assign_instructions(Instruction* this);
 
