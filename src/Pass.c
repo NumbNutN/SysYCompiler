@@ -737,6 +737,7 @@ void rename_pass(Function *self) {
   rename_pass_help_new(var_stack_hashmap, dom_tree_root);
 
   Pair *ptr_pair;
+  HashMapFirst(var_stack_hashmap);
   while ((ptr_pair = HashMapNext(var_stack_hashmap)) != NULL) {
     StackDeinit(ptr_pair->value);
   }

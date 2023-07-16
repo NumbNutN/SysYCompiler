@@ -274,6 +274,7 @@ void variable_place_shift(Instruction* this,Value* var,AssembleOperand cur)
 */
 void translate_binary_expression_binary_and_assign(Instruction* this)
 {   
+    TAC_OP opCode = ins_get_opCode(this);
     //乘法左移优化
     if(ins_mul_2_lsl_trigger(this))
     {
@@ -292,6 +293,10 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     AssembleOperand middleOp;
 
     BinaryOperand binaryOp;
+
+    //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
+    if((opCode == DivOP) || (opCode == ModOP))
+        add_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
 
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
@@ -369,6 +374,11 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 #endif  
         }
     }
+
+    //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
+    if((opCode == DivOP) || (opCode == ModOP))
+        remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
+    
     //释放第一、二操作数
     general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
     general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
