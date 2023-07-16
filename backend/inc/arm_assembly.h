@@ -158,7 +158,7 @@ void movini(AssembleOperand tar,AssembleOperand op1);
  * @brief movCondition
  * @birth: Created by LGD on 20230201
 */
-void movCondition(struct _operand tar,struct _operand op1,TAC_OP opCode);
+void movCondition(struct _operand tar,struct _operand op1,enum _Suffix cond);
 /**
  * @brief cmpii
  * @birth: Created by LGD on 2023-4-4
@@ -166,6 +166,16 @@ void movCondition(struct _operand tar,struct _operand op1,TAC_OP opCode);
 */
 void cmpii(struct _operand tar,struct _operand op1);
 
+/**
+ * @brief 取两个数相与的结果
+ * @birth: Created by LGD on 2023-7-16
+**/
+void andiii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2);
+/**
+ * @brief 取两个数相或的结果
+ * @birth: Created by LGD on 2023-7-16
+**/
+void oriii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2);
 
 /**
  * @brief 双目运算 双整型

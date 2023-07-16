@@ -661,16 +661,43 @@ void translate_unary_instructions(Instruction* this){
     }
 }
 
+/**
+ * @brief 翻译And Or运算
+ * @birth: Created by LGD on 2023-7-16
+**/
+void translate_and_or_instructions(Instruction* this){
+    AssembleOperand opList[3];
+    
+    opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
+    opList[SECOND_OPERAND] = toOperand(this,SECOND_OPERAND);
+    opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
+
+    if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
+    {
+        assert(NULL && "暂时不支持浮点比较");
+    }
+
+    switch(ins_get_opCode(this))
+    {
+        case LogicAndOP:
+            andiii(opList[TARGET_OPERAND], opList[FIRST_OPERAND], opList[SECOND_OPERAND]);
+        break;
+        case LogicOrOP:
+            oriii(opList[TARGET_OPERAND], opList[FIRST_OPERAND], opList[SECOND_OPERAND]);
+        break;
+    }
+}
+
 
 /**
  * @brief 翻译双目逻辑运算表达式重构版
  * @birth: Created by LGD on 2023-4-18
  * @update: 2023-7-11 条件语句应该在无条件之下
+ *          2023-7-16 重构 条件码的判断位置改变
 */
 void translate_logical_binary_instruction_new(Instruction* this)
 {
     AssembleOperand opList[3];
-    TAC_OP opCode = ins_get_opCode(this);
     
     opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
     opList[SECOND_OPERAND] = toOperand(this,SECOND_OPERAND);
@@ -679,12 +706,30 @@ void translate_logical_binary_instruction_new(Instruction* this)
     {
         assert(NULL && "暂时不支持浮点比较");
     }
-    else
+    cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+    movii(opList[TARGET_OPERAND],falseOp);
+    switch(ins_get_opCode(this))
     {
-        cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+        case GreatEqualOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,GE);
+        break;
+        case GreatThanOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,GT);
+        break;
+        case LessEqualOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,LE);
+        break;        
+        case LessThanOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,LT);
+        break;
+        case EqualOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,EQ);
+        break;
+        case NotEqualOP:
+            movCondition(opList[TARGET_OPERAND],trueOp,NE);
+        break;
     }
-    movCondition(opList[TARGET_OPERAND],falseOp,DefaultOP);
-    movCondition(opList[TARGET_OPERAND],trueOp,opCode);
+
 }
 
 /**

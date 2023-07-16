@@ -21,7 +21,7 @@ char* enum_shift_2_str(enum SHIFT_WAY shiftWay)
     }
 }
 
-char* enum_instruction_mnemonic_2_str(enum _ARM_Instruction_Mnemonic aim)
+char* instructionMnemonic2Str(enum _ARM_Instruction_Mnemonic aim)
 {
     switch(aim)
     {
@@ -51,6 +51,12 @@ char* enum_instruction_mnemonic_2_str(enum _ARM_Instruction_Mnemonic aim)
             return "LDR";
         case STR:
             return "STR";
+        case AND:
+            return "AND";
+        case ORR:
+            return "ORR";
+        default:
+            assert("Uncognize instruction_mnemonic");
     }
 }
 
@@ -66,53 +72,26 @@ char* vfp_suffix_from_type(TypeID type)
     }
 }
 
-char* from_tac_op_2_str(TAC_OP op)
+/**
+ * @brief 条件后缀转换为字符串
+ * @birth: Created by LGD on 2023-7-16
+**/
+char* cond2Str(enum _Suffix cond)
 {
-    switch(op)
+    switch(cond)
     {
-        case AddOP:
-            return "ADD";
-        case SubOP:
-            return "SUB";
-        case MulOP:
-            return "MUL";
-        // case Goto:
-        //     return "B";
-        case LessEqualOP:
-            return "LE";
-        case GreatEqualOP:
-            return "GE";
-        case LessThanOP:
-            return "LT";
-        case GreatThanOP:
-            return "GT";
-        case EqualOP:
-            return "EQ";
-        case NotEqualOP:
+        case NE:
             return "NE";
-
-
-        // case Goto_LessEqual:
-        //     return "LE";
-        // case Goto_GreatEqual:
-        //     return "GE";
-        // case Goto_LessThan:
-        //     return "LT";
-        // case Goto_GreatThan:
-        //     return "GT";
-        // case Goto_Equal:
-        //     return "E";
-        // case Goto_NotEqual:
-        //     return "NE";
-        
-        case GotoWithConditionOP:
-            return "E";
-        //add on 20221208
-        case AssignOP:
-            return "MOV";
-
-        default:
-            return "";
+        case EQ:
+            return "EQ";
+        case GT:
+            return "GT";
+        case LT:
+            return "LT";
+        case GE:
+            return "GE";
+        case LE:
+            return "LE";
     }
 }
 

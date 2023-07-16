@@ -22,6 +22,9 @@ typedef enum _ARM_Instruction_Mnemonic
     MVN,
     CMP,
 
+    AND,
+    ORR,
+
     FADD,
     FSUB,
     FMUL,
@@ -310,7 +313,7 @@ extern struct _operand falseOp;
 #define Rm  SECOND_OPERAND
 #define Ra  3
 
-typedef enum{
+typedef enum _Suffix{
     GT,LT,GE,LE,EQ,NE,
     S
 } Suffix;

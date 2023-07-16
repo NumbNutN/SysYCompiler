@@ -34,7 +34,7 @@ void general_data_processing_instructions(enum _ARM_Instruction_Mnemonic opCode,
     assmNode* node = arm_instruction_node_init();
 
 
-    strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
+    strcpy(node->opCode,instructionMnemonic2Str(opCode));
 
     //对于目标数  允许 寄存器寻址
     assert(rd.addrMode==REGISTER_DIRECT);
@@ -80,7 +80,7 @@ void general_data_processing_instructions_extend(enum _ARM_Instruction_Mnemonic 
     //创建新的节点
     assmNode* node = arm_instruction_node_init();
 
-    strcpy(node->opCode,enum_instruction_mnemonic_2_str(opCode));
+    strcpy(node->opCode,instructionMnemonic2Str(opCode));
 
     //处理不定长参数列表
     va_list ops;

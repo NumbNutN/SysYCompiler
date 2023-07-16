@@ -192,15 +192,6 @@ void initDlist()
 */
 
 
-
-
-void suffix(char* suffix)
-{
-    /*
-    为当前指令添加一个cond域
-    */
-}
-
 //Test
 // void instruct_add_suffix(char* opcode,Suffix suf)
 // {
@@ -235,6 +226,35 @@ bool goto_is_conditional(TAC_OP op)
     }
 
 }
+
+/**
+ * @brief 双目运算 双整型
+ * @birth: Created by LGD on 20230226
+ * @update: 20230227 添加了对寄存器的回收
+ *          2023-3-29 添加在寄存器中变量的直传
+*/
+ BinaryOperand binaryOpii(AssembleOperand op1,AssembleOperand op2)
+ {
+    AssembleOperand tarOp;
+    AssembleOperand cvtOp1;
+    AssembleOperand cvtOp2;
+    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        cvtOp1 = operand_load_from_memory(op1,ARM);
+    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        cvtOp1 = operand_load_immediate(op1,ARM);
+    else
+        cvtOp1 = op1;
+
+    if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
+        cvtOp2 = operand_load_from_memory(op2,ARM);
+    else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
+        cvtOp2 = operand_load_immediate(op2,ARM);
+    else
+        cvtOp2 = op2;
+    
+    BinaryOperand binaryOp = {cvtOp1,cvtOp2};
+    return binaryOp;
+ }
 
 /**
  * @brief 和ins_variable_load_in_register是替代关系
@@ -556,55 +576,81 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
 }
 
 /**
+ * @brief 取两个数相与的结果
+ * @birth: Created by LGD on 2023-7-16
+**/
+void andiii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2)
+{
+    AssembleOperand middleOp;
+    BinaryOperand binaryOp;
+    
+    binaryOp = binaryOpii(op1,op2);
+    
+    middleOp = operand_pick_temp_register(ARM);
+    general_data_processing_instructions(AND,
+        middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+    
+    movii(tar,middleOp);
+
+    if(!operand_is_same(op1,binaryOp.op1))
+        operand_recycle_temp_register(binaryOp.op1);
+    
+    if(!operand_is_same(op2,binaryOp.op2))
+        operand_recycle_temp_register(binaryOp.op2);
+
+    //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
+
+/**
+ * @brief 取两个数相或的结果
+ * @birth: Created by LGD on 2023-7-16
+**/
+void oriii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2)
+{
+    AssembleOperand middleOp;
+    BinaryOperand binaryOp;
+    
+    binaryOp = binaryOpii(op1,op2);
+    
+    middleOp = operand_pick_temp_register(ARM);
+    general_data_processing_instructions(ORR,
+        middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+    
+    movii(tar,middleOp);
+
+    if(!operand_is_same(op1,binaryOp.op1))
+        operand_recycle_temp_register(binaryOp.op1);
+    
+    if(!operand_is_same(op2,binaryOp.op2))
+        operand_recycle_temp_register(binaryOp.op2);
+
+    //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
+
+/**
  * @brief movCondition
  * @birth: Created by LGD on 2023-2-1
  * @update: 2023-5-29 考虑了布尔变量在内存中的情况
 */
-void movCondition(AssembleOperand tar,AssembleOperand op1,TAC_OP opCode)
+void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
 {
     //如果tar为寄存器
     struct _operand original_op1 = op1;
     if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
     {
-        general_data_processing_instructions(MOV,tar,nullop,op1,from_tac_op_2_str(opCode),false);
+        general_data_processing_instructions(MOV,tar,nullop,op1,cond2Str(cond),false);
     }
     else
     {   
         op1 = operand_load_to_register(original_op1, nullop);
-        memory_access_instructions("STR",op1,tar,from_tac_op_2_str(opCode),false,NONELABEL);
+        memory_access_instructions("STR",op1,tar,cond2Str(cond),false,NONELABEL);
         if(!operand_is_same(op1,original_op1))
             operand_recycle_temp_register(op1);
     }
 }
 
-/**
- * @brief 双目运算 双整型
- * @birth: Created by LGD on 20230226
- * @update: 20230227 添加了对寄存器的回收
- *          2023-3-29 添加在寄存器中变量的直传
-*/
- BinaryOperand binaryOpii(AssembleOperand op1,AssembleOperand op2)
- {
-    AssembleOperand tarOp;
-    AssembleOperand cvtOp1;
-    AssembleOperand cvtOp2;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-        cvtOp1 = operand_load_from_memory(op1,ARM);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
-        cvtOp1 = operand_load_immediate(op1,ARM);
-    else
-        cvtOp1 = op1;
-
-    if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
-        cvtOp2 = operand_load_from_memory(op2,ARM);
-    else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
-        cvtOp2 = operand_load_immediate(op2,ARM);
-    else
-        cvtOp2 = op2;
-    
-    BinaryOperand binaryOp = {cvtOp1,cvtOp2};
-    return binaryOp;
- }
 
 /**
  * @brief 双目运算 整数浮点混合双目运算
