@@ -749,11 +749,10 @@ void translate_goto_instruction_test_bool(Instruction* this)
     if(goto_is_conditional(ins_get_opCode(this)))
     {
         AssembleOperand op = toOperand(this,FIRST_OPERAND);
-        int tempReg;
         //有条件时   CMP 不需要cond  不需要S(本身会影响)
         //比较指令
-        cmpii(op,trueOp);
-        branch_instructions_test(ins_get_tarLabel_Conditional(this,false),"NE",false,NONELABEL);
+        cmpii(op,falseOp);
+        branch_instructions_test(ins_get_tarLabel_Conditional(this,false),"EQ",false,NONELABEL);
         branch_instructions_test(ins_get_tarLabel_Conditional(this,true),NONESUFFIX,false,NONELABEL);
     }
     else{
