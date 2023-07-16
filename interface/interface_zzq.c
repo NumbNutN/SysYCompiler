@@ -547,10 +547,12 @@ Instruction* traverse_to_specified_function(List* this,int order)
 /**
  * @brief 从指令中返回步长
  * @birth: Created by LGD on 2023-5-1
+ * @update: 2023-7-16 步长应当为数组维度*元素的大小
+ * @TODO
 */
 int ins_getelementptr_get_step_long(Instruction* this)
 {
-    return ins_get_operand(this,1)->pdata->array_pdata.step_long;
+    return ins_get_operand(this,1)->pdata->array_pdata.step_long * 4;
 }
 
 
