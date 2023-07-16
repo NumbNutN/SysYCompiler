@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "type.h"
 
+#include "cds.h"
+
 extern int CntAssemble;
 
 #define ARM_WORD_IMMEDIATE_OFFSET_RANGE 4096
@@ -183,7 +185,7 @@ extern struct _AsDirective* asPrev;
 /*                      Data Section                          */
 /***************************************************************/
 
-extern struct _dataNode* dataList;
+extern List* dataList;
 extern struct _dataNode* bssList;
 extern struct _dataNode* dataPrev;
 extern struct _dataNode* bssPrev;
@@ -204,7 +206,12 @@ typedef struct _dataNode{
     struct _dataNode* next;
 } DataNode;
 
-void dot_long_expression(char* name,struct _operand expr);
+/**
+ * @brief: .long表达式
+ * @birth:Created by LGD on 2023-5-29
+ * @update: long指令被设计为可替换的
+*/
+void dot_long_expression(char* name,struct _operand expr,bool replacale);
 void dot_zero_expression(char* name);
 
 /****************************************************************/

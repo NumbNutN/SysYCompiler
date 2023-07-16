@@ -147,3 +147,9 @@ void translate_store_instruction(Instruction* this);
 @update:2023-5-29
 */
 void translate_global_store_instruction(Instruction* this);
+
+/**
+ * @brief 翻译allocate语句
+ * @birth: Created by LGD on 2023-7-16
+**/
+void translate_global_allocate_instruction(Instruction* this);

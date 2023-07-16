@@ -216,8 +216,11 @@ void print_as_node(struct _AsDirective *node) {
 
 void print_model() {
   // 打印数据段节点
+  struct _dataNode *node;
   printf(".section .data\n");
-  for (struct _dataNode *node = dataList; node != NULL; node = node->next) {
+  ListFirst(dataList, false);
+  while(ListNext(dataList, &node)) 
+  {
     print_single_data(node);
   }
   // 打印zeroInit段节点

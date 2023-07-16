@@ -421,6 +421,9 @@ void translate_global_variable_list(List* this)
             case StoreOP:
                 translate_global_store_instruction(p);
             break;
+            case AllocateOP:
+                translate_global_allocate_instruction(p);
+            break;
             default:
             break;
         }
