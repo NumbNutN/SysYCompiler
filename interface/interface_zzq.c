@@ -618,6 +618,7 @@ size_t getLocalVariableSize(ALGraph* self_cfg)
 
 /**
  * @brief 设置当前所有参数的初始位置
+ * @warning 所有的参数应当已经初始化VarInfo信息块，未分配寄存器除外
  * @birth: Created by LGD on 2023-7-17
 */
 void set_param_origin_place(HashMap* varMap,size_t param_number)
@@ -628,8 +629,8 @@ void set_param_origin_place(HashMap* varMap,size_t param_number)
     {
         sprintf(paramName,"param%d",i);
         if(!HashMapContain(varMap, paramName)){
-            assert(false && "不可能没生成");
-            varInfo = varInfoInit();
+            //当前参数没有分配寄存器
+            continue;
         }
         varInfo = HashMapGet(varMap, paramName);
         
