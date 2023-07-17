@@ -2,9 +2,11 @@ build
 bin
 .vscode
 .cache
-output
+output 
 llvm_demo
 compiler
 lib
 compile_commands.json
-test_cases
+test_cases 
+lib
+sysy
