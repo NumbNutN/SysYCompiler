@@ -113,6 +113,9 @@ void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset)
     vi->ori.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     vi->ori.oprendVal = FP;
     vi->ori.addtion = offset;
+    vi->current.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
+    vi->current.oprendVal = FP;
+    vi->current.addtion = offset;
 }
 
 /**
@@ -124,6 +127,8 @@ void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder r
     VarInfo* vi = HashMapGet(map,name);
     vi->ori.addrMode = REGISTER_DIRECT;
     vi->ori.oprendVal = reg_order;
+    vi->current.addrMode = REGISTER_DIRECT;
+    vi->current.oprendVal = reg_order;
 }
 
 /**
@@ -578,11 +583,6 @@ size_t traverse_list_and_count_total_size_of_var(List* this,int order)
     return totalSize;
 }
 
-size_t get_parameter_order(char* name)
-{
-    return name[5] - '0';
-}
-
 /**
  * @brief 整合了开辟栈空间和寄存器分配
  * @birth: Created by LGD on 2023-5-3
@@ -603,35 +603,64 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
     ListFirst(this,false);
     ListNext(this,&p);
     HashMap_foreach(zzqMap,name,loc)
-    {
+    {            
         /* 已作寄存器分配的变量 实参 */
         isFound = HashMapGet(*myMap,name);
-        if(isFound)break;
+        if(isFound && !name_is_parameter(name))break;
         //新建变量信息项
-        var_info = (VarInfo*)malloc(sizeof(VarInfo));
-        memset(var_info,0,sizeof(VarInfo));
+            var_info = (VarInfo*)malloc(sizeof(VarInfo));
+            memset(var_info,0,sizeof(VarInfo));
 #ifdef DEBUG_MODE
-        printf("插入新的实参名：%s \n",name);
+            printf("插入新的实参名：%s \n",name);
 #endif
-        HashMapPut(*myMap,name,var_info);
+            HashMapPut(*myMap,name,var_info);
+
+
 
         //分配寄存器或内存单元
         if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
-        {
-            int offset = request_new_local_variable_memory_unit(IntegerTyID);
-            set_variable_stack_offset_by_name(*myMap,name,offset);
+        { 
+            //如果当前为编号大于3的参数且分配的内存空间为内存，则不需要规划新的内存，直接使用栈即可
+            if(name_is_parameter(name))
+            {
+                int idx;
+                if((idx =get_parameter_idx_by_name(name)) >= 4)
+                {
+                    continue;
+                }
+                else{
+                    int offset = request_new_local_variable_memory_unit(IntegerTyID);
+                    VarInfo* varInfo = HashMapGet(*myMap, name);
+                    set_var_curStkOff(varInfo,offset);
 #ifdef DEBUG_MODE
-            printf("%s分配了地址%d\n",name,offset);
+                printf("%s分配了地址%d\n",name,offset);
 #endif
+                }
+            }
+            else {
+                int offset = request_new_local_variable_memory_unit(IntegerTyID);
+                set_variable_stack_offset_by_name(*myMap,name,offset);
+#ifdef DEBUG_MODE
+                printf("%s分配了地址%d\n",name,offset);
+#endif
+            }
         }
         else
         {
             int idx = *((enum _LOCATION*)HashMapGet(zzqMap,name));
             RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
-            //为该变量(名)创建寄存器映射
-            set_variable_register_order_by_name(*myMap,name,reg_order);
+
+            //TEMP 2023-7-17 TODO
+            if(name_is_parameter(name))
+            {
+                VarInfo* varInfo = HashMapGet(*myMap, name);
+                set_var_curReg(varInfo, reg_order);
+            }
+            else
+                //为该变量(名)创建寄存器映射
+                set_variable_register_order_by_name(*myMap,name,reg_order);
+#ifdef DEBUG_MODE
             //打印分配结果
-#ifdef DEBUG
             printf("%s分配了寄存器%d\n",name,reg_order);    
 #endif                
         }    
@@ -701,12 +730,9 @@ void move_parameter_to_recorded_place(HashMap* varMap)
     {
         if(name_is_parameter(name))
         {
-            //该参数使用相对FP偏移的方式获取存储位置
-            if(varInfo->ori.addrMode == REGISTER_INDIRECT_WITH_OFFSET)
-            {
-
-            }
-            movii(varInfo->ori,r027[get_parameter_order(name)]);  
+            // if(get_parameter_idx_by_name(name) < 4)
+            //     movii(varInfo->ori,r027[get_parameter_idx_by_name(name)]); 
+            update_variable_location(varInfo,true); 
         }
     }
 }
@@ -729,16 +755,16 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
 
     HashMap_foreach(register_attribute_map,name,reg)
     {
-        if(operand_is_via_r4212(reg->ori))
+        if(operand_is_via_r4212(reg->current))
         {
             bool already_included = 0;
             for(int i =0;i<9;i++)
             {
-                if(operand_is_same(reg_list[i],reg->ori))
+                if(operand_is_same(reg_list[i],reg->current))
                     already_included = 1;
             }
             if(already_included)continue;
-            reg_list[idx] = reg->ori;
+            reg_list[idx] = reg->current;
             ++idx;
         }
     }

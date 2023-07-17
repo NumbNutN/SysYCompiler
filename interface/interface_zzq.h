@@ -131,6 +131,24 @@ void translate_global_variable_list(List* this);
 int ins_getelementptr_get_step_long(Instruction* this);
 
 /**
+ * @brief 获取函数的参数个数
+ * @birth: Created by LGD on 2023-7-17
+*/
+size_t func_get_param_numer(Function* func);
+
+/**
+ * @brief 获取局部变量域的大小
+ * @birth: Created by LGD on 2023-7-17
+**/
+size_t getLocalVariableSize(ALGraph* self_cfg);
+
+/**
+ * @brief 设置当前所有参数的初始位置
+ * @birth: Created by LGD on 2023-7-17
+*/
+void set_param_origin_place(HashMap* varMap,size_t param_number);
+
+/**
  * @brief 打印一句中端代码信息
  * @birth: Created by LGD on 2023-7-16
 */

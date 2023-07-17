@@ -11,11 +11,25 @@ struct _operand sp = {REGISTER_DIRECT,SP,0};
 struct _operand lr = {REGISTER_DIRECT,LR,0};
 struct _operand fp = {REGISTER_DIRECT,R7,0};
 struct _operand pc = {REGISTER_DIRECT,PC,0};
+
 struct _operand sp_indicate_offset = {
                 REGISTER_INDIRECT_WITH_OFFSET,
                 SP,
                 0
 };
+
+struct _operand fp_indicate_offset = {
+    .addrMode = REGISTER_INDIRECT_WITH_OFFSET,
+    .oprendVal = FP,
+    .addtion = 0
+};
+
+struct _operand param_push_op = {
+    .addrMode = REGISTER_INDIRECT_PRE_INCREMENTING,
+    .oprendVal = SP,
+    .addtion = -4
+};
+
 struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R1},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R2},

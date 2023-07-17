@@ -171,16 +171,16 @@ void translate_param_instructions(Instruction* this)
     
     int offset;
     if(passed_param_number <= 3)
-    //小于等于4个则直接丢R0-R3
-        operand_load_to_specified_register(param_op,r027[passed_param_number]);
-    else
-    //申请一个新的参数存放的内存单元
     {
-        sp_indicate_offset.addtion = request_new_parameter_stack_memory_unit();
-        memory_access_instructions("STR",param_op,sp_indicate_offset,NONESUFFIX,false,NONELABEL);
+        //小于等于4个则直接丢R0-R3
+        operand_load_to_specified_register(param_op,r027[passed_param_number]);
+        //寄存器限制
+        add_register_limited(1 << passed_param_number);
     }
-    //寄存器限制
-    add_register_limited(1 << passed_param_number);
+    else
+        //申请一个新的参数存放的内存单元
+        movii(param_push_op,param_op);
+        //memory_access_instructions("STR",param_op,param_push_op,NONESUFFIX,false,NONELABEL);
 }
 
 /**
@@ -788,7 +788,7 @@ void translate_return_instructions(Instruction* this)
     //add_register_limited(RETURN_VALUE_LIMITED);
     //为了确保函数正常返回，这里将添加跳出语句
     //恢复当前函数栈帧
-    reset_stack_frame_status();
+    reset_sp_value(false);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);
     //退出函数

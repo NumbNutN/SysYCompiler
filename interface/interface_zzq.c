@@ -1,5 +1,8 @@
 #include "interface_zzq.h"
+
 #include "instruction.h"
+#include "function.h"
+
 #include "variable_map.h"
 #include "arm.h"
 #include "arm_assembly.h"
@@ -555,103 +558,6 @@ int ins_getelementptr_get_step_long(Instruction* this)
     return ins_get_operand(this,1)->pdata->array_pdata.step_long * 4;
 }
 
-
-/**
- * @brief 打印一个函数
- * @birth: Created by LGD on 2023-5-13
-*/
-void translate_a_function(Function *self_func,ALGraph *self_cfg)
-{
-    printf("打印所有指令的名字\n");
-  struct _Instruction* get_name;
-  //名字
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&get_name)!=0)
-    {
-      printf("%s\n",get_name->user.value.name);
-    }
-  }
-  //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
-  //遍历每一个block的list
-  size_t totalLocalVariableSize = 0;
-  HashMap* VariableInfoMap = NULL;
-
-  //打印函数标号
-  struct _Instruction* function_name;
-  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
-  ListNext((self_cfg->node_set)[0]->bblock_head->inst_list,&function_name);
-  translate_label(function_name);
-
-
-  //计算栈帧大小
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
-  }
-  //翻译前初始化
-  //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
-  InitBeforeFunction();
-  //初始化函数栈帧
-  new_stack_frame_init(totalLocalVariableSize);
-  //设置当前函数栈帧
-  set_stack_frame_status(0,totalLocalVariableSize/4);
-
-  //将形式参数装载到对应的寄存器/内存分配位置
-
-  //变量信息表转换
-//   for (int i = 0; i < self_cfg->node_num; i++) {
-//     int iter_num = 0;
-//     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-//     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,self_func->var_location,&VariableInfoMap); 
-//   }
-
-
-  // VarInfo testVarInfo;
-  // VarInfo* testVarInfoPtr;
-  // HashMapPut(VariableInfoMap,"name",&testVarInfo);
-  // testVarInfoPtr = HashMapGet(VariableInfoMap,"name");
-  
-  //由于变量的寄存器和内存地址都是静态的，为变量定义全局固定的寄存器和内存位置
-  //将zzq提供的变量定位表转换为变量信息表
-  //interface_cvt_zzq_register_allocate_map_to_variable_info_map(var_location,VariableInfoMap);
-
-
-  Instruction* element = NULL;
-  //第二次function遍历，为每一句Instruction安插一个map
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
-    ins_deepSet_varMap(element,VariableInfoMap);
-
-  }
-  //打印变量信息表
-  // for (int i = 0; i < self_cfg->node_num; i++) {
-  //   print_list_info_map((self_cfg->node_set)[i]->bblock_head->inst_list,0,true);
-  // }
-  
-
-  //第三次function遍历，翻译每一个list
-
-  //第一次翻译函数Label所在的块
-  ListFirst((self_cfg->node_set)[0]->bblock_head->inst_list,false);
-  traverse_list_and_translate_all_instruction((self_cfg->node_set)[0]->bblock_head->inst_list,0);
-
-  //第二次翻译其余的块
-  for (int i = 1; i < self_cfg->node_num; i++) {
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
-  }
-
-  //恢复当前函数栈帧
-  reset_stack_frame_status();
-
-  freopen("out.txt","w",stdout);
-  print_model();
-}
-
 /**
  * @brief 打印一句中端代码信息
  * @birth: Created by LGD on 2023-7-16
@@ -684,4 +590,56 @@ void print_ins(Instruction *element)
       printf("\t%10s", "null");
     }
     printf("\n");
+}
+
+/**
+ * @brief 获取函数的参数个数
+ * @birth: Created by LGD on 2023-7-17
+*/
+size_t func_get_param_numer(Function* func)
+{
+    return (size_t)func->label->pdata->symtab_func_pdata.param_num;
+}
+
+/**
+ * @brief 获取局部变量域的大小
+ * @birth: Created by LGD on 2023-7-17
+**/
+size_t getLocalVariableSize(ALGraph* self_cfg)
+{
+    size_t totalLocalVariableSize = 0;
+    for (int i = 0; i < self_cfg->node_num; i++) {
+        int iter_num = 0;
+        ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+        totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
+    }
+    return totalLocalVariableSize;
+}
+
+/**
+ * @brief 设置当前所有参数的初始位置
+ * @birth: Created by LGD on 2023-7-17
+*/
+void set_param_origin_place(HashMap* varMap,size_t param_number)
+{
+    char paramName[16] = {0};
+    VarInfo* varInfo;
+    for(int i=0;i<param_number;++i)
+    {
+        sprintf(paramName,"param%d",i);
+        if(!HashMapContain(varMap, paramName)){
+            assert(false && "不可能没生成");
+            varInfo = varInfoInit();
+        }
+        varInfo = HashMapGet(varMap, paramName);
+        
+        //HashMapPut(varMap, strdup(paramName), varInfo);
+        if(i <= 3){
+            set_var_oriLoc(varInfo, r027[i]);
+        }
+        else{
+            fp_indicate_offset.addtion = get_param_stack_offset_by_idx(i);
+            set_var_oriLoc(varInfo, fp_indicate_offset);
+        }
+    }
 }

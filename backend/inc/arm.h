@@ -295,6 +295,8 @@ extern struct _operand lr;
 extern struct _operand fp;
 extern struct _operand pc;
 extern struct _operand sp_indicate_offset;
+extern struct _operand fp_indicate_offset;
+extern struct _operand param_push_op;
 
 extern struct _operand trueOp;
 extern struct _operand falseOp;
