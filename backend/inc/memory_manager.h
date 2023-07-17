@@ -42,6 +42,11 @@ struct _Produce_Frame{
     int fp_offset;
     //@brief 2023-6-6 定义了当前函数使用的通用寄存器
     struct _operand used_reg[8];
+
+    //@birth 2023-7-17 记录当前活动记录局部变量域的大小
+    size_t local_variable_size;
+    //@bith 2023-7-17 记录当前活动记录现场保护的大小
+    size_t env_protected_size;
 };
 
 extern struct _Produce_Frame  currentPF;
@@ -156,6 +161,12 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num);
  * @birth: Created by LGD on 2023-5-14
 */
 RegisterOrder request_new_allocatble_register_by_specified_ids(int ids);
+
+/**
+ * @brief 返回一个参数在栈区中的偏移位置，如果是param0-3，会断言错误
+ * @birth: Created by LGD on 2023-7-17
+**/
+int get_param_stack_offset_by_idx(size_t idx);
 
 
 /**********************************************/

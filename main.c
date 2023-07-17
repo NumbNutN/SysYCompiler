@@ -135,7 +135,9 @@ char *test_cases[] = {"./test_cases/00_main.c",
 
 int main(int argc, char **argv) {
 
+#ifndef DEBUG_MODE
   freopen("/dev/null", "w", stdout);
+#endif
   tty_path = ttyname(STDIN_FILENO);
 
   AllInit();
@@ -151,7 +153,9 @@ int main(int argc, char **argv) {
     return 1;
 
 #ifdef DEBUG_MODE
+#ifndef PRINT_TO_TERMINAL
   freopen("./output/printf_ast.txt", "w", stdout);
+#endif
 #endif
 
 #define PARSER
@@ -159,8 +163,9 @@ int main(int argc, char **argv) {
 
 
 #ifdef DEBUG_MODE
-  freopen(tty_path, "w", stdout);
+#ifndef PRINT_TO_TERMINAL
   freopen("./output/out.txt", "w", stdout);
+#endif
 #endif
 
   delete_return_deadcode_pass(ins_list);

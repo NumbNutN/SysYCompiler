@@ -1,5 +1,8 @@
 #include "interface_zzq.h"
+
 #include "instruction.h"
+#include "function.h"
+
 #include "variable_map.h"
 #include "arm.h"
 #include "arm_assembly.h"
@@ -587,4 +590,56 @@ void print_ins(Instruction *element)
       printf("\t%10s", "null");
     }
     printf("\n");
+}
+
+/**
+ * @brief 获取函数的参数个数
+ * @birth: Created by LGD on 2023-7-17
+*/
+size_t func_get_param_numer(Function* func)
+{
+    return (size_t)func->label->pdata->symtab_func_pdata.param_num;
+}
+
+/**
+ * @brief 获取局部变量域的大小
+ * @birth: Created by LGD on 2023-7-17
+**/
+size_t getLocalVariableSize(ALGraph* self_cfg)
+{
+    size_t totalLocalVariableSize = 0;
+    for (int i = 0; i < self_cfg->node_num; i++) {
+        int iter_num = 0;
+        ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+        totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
+    }
+    return totalLocalVariableSize;
+}
+
+/**
+ * @brief 设置当前所有参数的初始位置
+ * @birth: Created by LGD on 2023-7-17
+*/
+void set_param_origin_place(HashMap* varMap,size_t param_number)
+{
+    char paramName[16] = {0};
+    VarInfo* varInfo;
+    for(int i=0;i<param_number;++i)
+    {
+        sprintf(paramName,"param%d",i);
+        if(!HashMapContain(varMap, paramName)){
+            assert(false && "不可能没生成");
+            varInfo = varInfoInit();
+        }
+        varInfo = HashMapGet(varMap, paramName);
+        
+        //HashMapPut(varMap, strdup(paramName), varInfo);
+        if(i <= 3){
+            set_var_oriLoc(varInfo, r027[i]);
+        }
+        else{
+            fp_indicate_offset.addtion = get_param_stack_offset_by_idx(i);
+            set_var_oriLoc(varInfo, fp_indicate_offset);
+        }
+    }
 }

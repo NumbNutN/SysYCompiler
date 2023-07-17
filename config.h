@@ -56,4 +56,12 @@
 
 /* 测试模式 */
 #define DEBUG_MODE
+
+#ifdef DEBUG_MODE
+
+    /* 调试信息打印到终端 */
+    #define PRINT_TO_TERMINAL
+
+#endif
+
 #endif

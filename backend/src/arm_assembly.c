@@ -480,10 +480,14 @@ void movff(AssembleOperand tar,AssembleOperand op1)
  * @brief movii
  * @birth: Created by LGD on 20230201
  * @update: 2023-4-11 优化了立即数传入寄存器
+ *          2023-7-17 当检测两个操作数位置一致时，不作处理
 */
 void movii(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand oriOp1 = op1;
+
+    if(operand_is_same(tar, op1))
+        return;
     //如果tar为寄存器
     if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
     {

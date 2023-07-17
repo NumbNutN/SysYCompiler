@@ -84,10 +84,6 @@ RegisterOrder param_passing_register[PARAMETER_ON_THE_STACK_BOUNDARY];
 */
 void set_stack_frame_status(size_t param_num,size_t local_var_num)
 {   
-
-    //堆栈LR寄存器和R7
-    bash_push_pop_instruction("PUSH",&fp,&lr,END);
-
     //设置栈帧和栈顶指针的相对位置
     currentPF.FPOffset -= local_var_num*4;
     currentPF.SPOffset -= (local_var_num + param_num)*4;
@@ -95,9 +91,6 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
     //设置当前用户使用的栈帧偏移
     currentPF.cur_use_variable_offset = local_var_num*4;
     currentPF.cur_use_parameter_offset = (param_num - 1)*4;
-
-    //2023-5-22 对R7和LR的保存也要计算在偏移值内
-    currentPF.fp_offset -= 2*4;
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED
     //初始化寄存器映射表
@@ -450,6 +443,16 @@ void recycle_a_local_variable_memory_unit(int baseAddr)
     }
     assert(next_result && "没有找到需要归还的内存单元");
     ListRemove(currentPF.stack_frame_memory_unit_list,idx);
+}
+
+/**
+ * @brief 返回一个参数在栈区中的偏移位置，如果是param0-3，会断言错误
+ * @birth: Created by LGD on 2023-7-17
+**/
+int get_param_stack_offset_by_idx(size_t idx)
+{
+    assert(idx >= 4 && "param with this idx is not converted in stack");
+    return currentPF.local_variable_size + currentPF.env_protected_size + (idx - 4)*4;
 }
 
 #ifdef LLVM_LOAD_AND_STORE_INSERTED

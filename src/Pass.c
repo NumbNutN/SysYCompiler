@@ -1630,28 +1630,49 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
   InitBeforeFunction();
 
+  //计算栈帧大小（局部变量作用域部分）
+  totalLocalVariableSize = getLocalVariableSize(self_cfg);
 
-  //计算栈帧大小
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
-  }
-  //2023-5-22 这决定了局部变量区间的累计偏移值
-  currentPF.fp_offset -= totalLocalVariableSize;
+  //记录局部变量域的大小
+  currentPF.local_variable_size = totalLocalVariableSize;
 
   //初始化函数栈帧
   new_stack_frame_init(totalLocalVariableSize);
+
+  //2023-5-22 这决定了局部变量区间的累计偏移值
+  currentPF.fp_offset -= totalLocalVariableSize;
+
+  //堆栈LR寄存器和R7
+  bash_push_pop_instruction("PUSH",&fp,&lr,END);
+  //2023-5-22 对R7和LR的保存也要计算在偏移值内
+  currentPF.fp_offset -= 2*4;
+  
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
 
+  //根据传递参数的个数修正FP的偏移值
+  size_t param_num = func_get_param_numer(self_func);
+  if(param_num > 4)
+    currentPF.fp_offset -= (param_num-4)*4;
+  
+  
+  variable_map_init(&VariableInfoMap);
+  
+  char* name;
+  VarInfo* varINfo;
+  HashMap_foreach(VariableInfoMap, name, varINfo)
+  {
+    printf("%s %p\n",name,varINfo);
+  }
+
   //变量信息表转换  
+  //包括对 局部变量 局部数组指针 参数的地址分配
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
   }
-  
+
   //统计当前函数使用的所有R4-R12的通用寄存器
   //前提 已经完成寄存器分配
   size_t used_reg_size = 0;
@@ -1659,9 +1680,34 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //保存现场
   bash_push_pop_instruction_list("PUSH",currentPF.used_reg);
 
+  //记录保护现场域的大小
+  currentPF.env_protected_size = used_reg_size + 8;
+
   //2023-5-22 这决定了现场保护区域FP的偏移值
   currentPF.fp_offset -= used_reg_size;
 
+  //为所有参数设置初始位置
+  set_param_origin_place(VariableInfoMap,param_num);
+  HashMap_foreach(VariableInfoMap, name, varINfo)
+  {
+    printf("%s %p\n",name,varINfo);
+  }
+  
+  //为大于4的参数分配空间
+  // char* name;
+  // VarInfo* varInfo;
+  // HashMap_foreach(VariableInfoMap,name,varInfo)
+  // {
+  //   if(name_is_parameter(name))
+  //   {
+  //       int idx;
+  //       if(((idx =get_parameter_idx_by_name(name)) >= 4) && operand_is_in_memory(varInfo->ori))
+  //       {
+  //           int offset = get_param_stack_offset_by_idx(idx);
+  //           set_variable_stack_offset_by_name(VariableInfoMap,name,offset);
+  //       }
+  //   }
+  // }
   Instruction* element = NULL;
   //第二次function遍历，为每一句Instruction安插一个map
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -1686,7 +1732,10 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   update_sp_value();
   //使当前R7与SP保持一致
   general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
-
+  HashMap_foreach(VariableInfoMap, name, varINfo)
+  {
+    printf("%s %p\n",name,varINfo);
+  }
   //传递参数
   move_parameter_to_recorded_place(VariableInfoMap);
 

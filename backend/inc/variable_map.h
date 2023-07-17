@@ -346,4 +346,44 @@ bool name_is_parameter(char* name);
 */
 size_t get_parameter_idx_by_name(char* name);
 
+
+
+/******************************/
+/*         varInfo           */
+/****************************/
+
+/**
+ * @brief 初始化一个变量信息块
+ * @birth: Created by LGD on 2023-7-17
+*/
+VarInfo* varInfoInit();
+/**
+ * @brief 使变量位置转换生效
+ *        当原始位置为空时，或原始和当前位置一致时，不产生指令
+ *        当当前位置为空时，产生断言错误
+ * @birth: Created by LGD on 2023-7-17
+ * @param doClear 舍弃变量原来的位置，将新位置定义为原始位置
+*/
+void update_variable_location(VarInfo* varInfo,bool doClear);
+/**
+ * @brief 设置变量的原始位置
+ * @birth: Created by LGD on 2023-7-17
+**/
+void set_var_oriLoc(VarInfo* varInfo,struct _operand loc);
+/**
+ * @brief 设置变量的当前位置
+ * @birth: Created by LGD on 2023-7-17
+**/
+void set_var_curLoc(VarInfo* varInfo,struct _operand loc);
+/**
+ * @brief 设置当前所处寄存器
+ * @birth: Created by LGD on 2023-7-17
+*/
+void set_var_curReg(VarInfo* varInfo,RegisterOrder reg);
+/**
+ * @brief 设置变量当前偏移
+ * @birth: Created by LGD on 2023-7-17
+**/
+void set_var_curStkOff(VarInfo* varInfo,int offset);
+
 #endif
