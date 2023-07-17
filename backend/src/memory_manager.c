@@ -107,24 +107,6 @@ void set_stack_frame_status(size_t param_num,size_t local_var_num)
 #endif
 }
 
-/**
- * @brief 恢复函数的栈帧和栈顶
- * @birth: Created by LGD on 2023-4-4
- * @update:2023-5-13 不再需要恢复FP的值，因为它妥善保管在栈中
- *         2023-7-15 reset_stack_frame可能会被调用多次，因此不能改变sp的真实值
-*/
-void reset_stack_frame_status()
-{
-    currentPF.FPOffset = - currentPF.FPOffset;
-    currentPF.SPOffset = - currentPF.SPOffset;
-
-    //执行期间使指针变动生效
-    // update_fp_value();
-    update_sp_value();
-
-    currentPF.FPOffset = - currentPF.FPOffset;
-    currentPF.SPOffset = - currentPF.SPOffset;
-}
 
 
 /**
@@ -164,10 +146,26 @@ void update_sp_value()
         general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
     else
         general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
-    //struct _operand immd = operand_create_immediate_op(currentPF.SPOffset);
-    //struct _operand reg_off = operand_load_immediate(immd,ARM);
-    //general_data_processing_instructions(ADD,sp,sp,reg_off," ",false);
-    //operand_recycle_temp_register(reg_off);
+}
+
+/**
+ * @brief 使栈指针的偏移撤销
+ * @param doClear 是否将偏移值回复到0
+ * @birth: Created by LGD on 2023-7-17
+**/
+void reset_sp_value(bool doClear)
+{
+    if(!currentPF.SPOffset)
+        return;
+    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
+
+    if(currentPF.SPOffset > 0)
+        general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
+    else
+        general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
+
+    if(doClear)
+        currentPF.SPOffset = 0;
 }
 
 /**

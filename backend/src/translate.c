@@ -788,7 +788,7 @@ void translate_return_instructions(Instruction* this)
     //add_register_limited(RETURN_VALUE_LIMITED);
     //为了确保函数正常返回，这里将添加跳出语句
     //恢复当前函数栈帧
-    reset_stack_frame_status();
+    reset_sp_value(false);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);
     //退出函数

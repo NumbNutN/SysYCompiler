@@ -1659,6 +1659,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
   //保存现场
   bash_push_pop_instruction_list("PUSH",currentPF.used_reg);
 
+  //2023-5-22 这决定了现场保护区域FP的偏移值
+  currentPF.fp_offset -= used_reg_size;
 
   Instruction* element = NULL;
   //第二次function遍历，为每一句Instruction安插一个map
@@ -1676,9 +1678,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
-
-  //2023-5-22 这决定了现场保护区域FP的偏移值
-  currentPF.fp_offset -= used_reg_size;
 
   //得知参数个数
   //在参数个数小于4的情况下，可以暂时不予考虑
@@ -1698,8 +1697,8 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
 
-  //恢复当前函数栈帧
-  reset_stack_frame_status();
+  //恢复SP
+  reset_sp_value(true);
   //恢复现场
   bash_push_pop_instruction_list("POP",currentPF.used_reg);
   //退出函数
