@@ -2,10 +2,10 @@ build
 bin
 .vscode
 .cache
-output
+output 
 llvm_demo
 compiler
 compile_commands.json
-test_cases
+test_cases 
 lib
 sysy
