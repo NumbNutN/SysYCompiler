@@ -2,6 +2,8 @@
 #define _INTERFACE_H
 
 #include "Pass.h"
+#include "config.h"
+
 typedef enum _LOCATION { ALLOCATE_R1 = 1, ALLOCATE_R2, ALLOCATE_R3, MEMORY } LOCATION;
 
 extern char *location_string[];
@@ -140,7 +142,11 @@ size_t func_get_param_numer(Function* func);
  * @brief 获取局部变量域的大小
  * @birth: Created by LGD on 2023-7-17
 **/
+#ifdef COUNT_STACK_SIZE_VIA_TRAVERSAL_INS_LIST
 size_t getLocalVariableSize(ALGraph* self_cfg);
+#elif defined COUNT_STACK_SIZE_VIA_TRAVERSAL_MAP
+size_t getLocalVariableSize(HashMap* varMap);
+#endif
 
 /**
  * @brief 设置当前所有参数的初始位置

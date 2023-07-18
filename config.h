@@ -54,6 +54,10 @@
 /* 遇到操作数无法识别的指令生成未定义指令 */
 //#define GEN_UNDEF
 
+/* 通过何种方式计算栈帧大小 */
+#define COUNT_STACK_SIZE_VIA_TRAVERSAL_INS_LIST
+//#define COUNT_STACK_SIZE_VIA_TRAVERSAL_MAP
+
 /* 测试模式 */
 //#define DEBUG_MODE
 

@@ -607,14 +607,27 @@ size_t func_get_param_numer(Function* func)
  * @brief 获取局部变量域的大小
  * @birth: Created by LGD on 2023-7-17
 **/
+#ifdef COUNT_STACK_SIZE_VIA_TRAVERSAL_INS_LIST
 size_t getLocalVariableSize(ALGraph* self_cfg)
+#elif defined COUNT_STACK_SIZE_VIA_TRAVERSAL_MAP
+size_t getLocalVariableSize(HashMap* varMap)
+#endif
 {
     size_t totalLocalVariableSize = 0;
+#ifdef COUNT_STACK_SIZE_VIA_TRAVERSAL_INS_LIST
     for (int i = 0; i < self_cfg->node_num; i++) {
         int iter_num = 0;
         ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
         totalLocalVariableSize += traverse_list_and_count_total_size_of_var((self_cfg->node_set)[i]->bblock_head->inst_list,0); 
     }
+#elif defined COUNT_STACK_SIZE_VIA_TRAVERSAL_MAP
+    char* name;
+    VarInfo* varInfo;
+    HashMap_foreach(varMap, name,varInfo)
+    {
+        
+    }
+#endif
     return totalLocalVariableSize;
 }
 
