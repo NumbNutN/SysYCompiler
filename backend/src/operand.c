@@ -3,6 +3,8 @@
 
 #include "interface_zzq.h"
 
+#include <stdarg.h>
+
 
 struct _operand r0 = {REGISTER_DIRECT,R0,0};
 struct _operand r1 = {REGISTER_DIRECT,R1,0};
@@ -451,12 +453,29 @@ AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op
  * @brief 将一个操作数加载到指定的寄存器，无论其在任何位置均确保生产合法的指令，且不破坏其他的寄存器
  * @birth: Created by LGD on 2023-5-14
  * @update: 2023-7-18 目标可以为ARM/VFP的寄存器
+ *          2023-7-18 该方法可以判断源和目标是否是相同的寄存器
 */
 void operand_load_to_specified_register(struct _operand oriOp,struct _operand tarOp)
 {
-    assert(tarOp.addrMode == REGISTER_DIRECT && "该方法要求目的操作数必须是寄存器！");
+    assert(tarOp.addrMode == REGISTER_DIRECT && "load to register should specify a real register!");
 
+    if(operand_is_same(tarOp, oriOp)) return;
+    if(judge_operand_in_RegOrMem(oriOp) == IN_MEMORY)
+        operand_load_from_memory_to_spcified_register(oriOp,tarOp);
+    else if(judge_operand_in_RegOrMem(oriOp) == IN_INSTRUCTION)
+        operand_load_immediate_to_specified_register(oriOp,tarOp);
 
+    else if(judge_operand_in_RegOrMem(oriOp) == IN_REGISTER)
+    {
+        if((operand_get_regType(tarOp) == ARM) && (operand_get_regType(oriOp) == ARM))
+            general_data_processing_instructions(MOV,tarOp,nullop,oriOp,NONESUFFIX,false);
+        else if((operand_get_regType(tarOp) == VFP) && (operand_get_regType(oriOp) == VFP))
+            fabs_fcpy_and_fneg_instruction("FCPY",tarOp,oriOp,FloatTyID);
+        else if((operand_get_regType(tarOp) == VFP) && (operand_get_regType(oriOp) == ARM))
+            fmrs_and_fmsr_instruction("FMSR",oriOp,tarOp,FloatTyID);
+        else if((operand_get_regType(tarOp) == ARM) && (operand_get_regType(oriOp) == VFP))
+            fmrs_and_fmsr_instruction("FMRS",tarOp,oriOp,FloatTyID);
+    }
 }
 
 
@@ -469,6 +488,7 @@ void operand_load_to_specified_register(struct _operand oriOp,struct _operand ta
 */
 AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp,...)
 {
+    //假如选择一个暂存寄存器负责加载
     if(operand_is_none(tarOp))
     {
         //处理不定长参数列表
@@ -485,26 +505,18 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
         {
             tarOp = operand_load_immediate(srcOp,type);
         }
+        //当源操作数在寄存器时
+        //挑选一个寄存器进行寄存器间传递
         else if(operand_is_in_register(srcOp))
         {
-            if(operand_get_regType(srcOp) != type)
-            {
-                if(type == ARM)
-                {
-                    struct _operand temp = operand_pick_temp_register(ARM);
-
-                }
-                else if(type ==VFP)
-                {
-                    0;
-                }
-            }
-            tarOp = srcOp;
+            tarOp = operand_pick_temp_register(type);
+            operand_load_to_specified_register(srcOp,tarOp);
         }
+    //挑选指定的寄存器
     }
     else
     {
-        movii(tarOp,srcOp);
+        operand_load_to_specified_register(srcOp,tarOp);
     }
     return tarOp;
 }
@@ -583,10 +595,9 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
 }
 
 
-
-
 /**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求
+ *          当读取寄存器被阻止时，返回原来的值
  *        
  * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载
  * @param mask 为1时表示第四个参数为屏蔽选项，及当前操作数处于这些位置时不加载到寄存器
@@ -618,21 +629,20 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
             (judge_operand_in_RegOrMem(op) == IN_REGISTER) &&
             operand_get_regType(op) != aov)
             cvtOp = operand_load_to_register(op,nullop,aov);
-
     }
     else
     {
-        if( ((rom & IN_MEMORY == IN_MEMORY) || !rom) && 
+        if( (((rom & IN_MEMORY) == IN_MEMORY) || !rom) && 
             judge_operand_in_RegOrMem(op) == IN_MEMORY)
             return cvtOp;
-        if(((rom & IN_INSTRUCTION == IN_INSTRUCTION) || !rom ) &&
+        if((((rom & IN_INSTRUCTION) == IN_INSTRUCTION) || !rom ) &&
             judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
             return cvtOp;
-        if(((rom & IN_INSTRUCTION == IN_REGISTER) || !rom ) &&
+        if((((rom & IN_INSTRUCTION) == IN_REGISTER) || !rom ) &&
             judge_operand_in_RegOrMem(op) == IN_REGISTER)
             return cvtOp;
-
-        return operandConvert(op,aov,0,0);
+        
+        cvtOp = operand_load_to_register(op,nullop,aov);
     }
     return cvtOp;
 }

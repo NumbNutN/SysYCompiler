@@ -487,6 +487,8 @@ void movff(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_from_memory_to_spcified_register(op1,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,tar);
+        else
+            fabs_fcpy_and_fneg_instruction("FCPY",tar,op1,FloatTyID);
     }
     else
     {
@@ -497,8 +499,7 @@ void movff(AssembleOperand tar,AssembleOperand op1)
         
         if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
             vfp_memory_access_instructions("FST",op1,tar,FloatTyID);
-        else
-            fabs_fcpy_and_fneg_instruction("FCPY",tar,op1,FloatTyID);
+
 
         if((judge_operand_in_RegOrMem(original_op1) == IN_MEMORY) ||
             (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
@@ -522,7 +523,12 @@ void movii(AssembleOperand tar,AssembleOperand op1)
     //如果tar为寄存器
     if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
     {
-
+        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+            op1 = operand_load_from_memory_to_spcified_register(op1,tar);
+        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+            op1 = operand_load_immediate_to_specified_register(op1,tar);
+        if(!operand_is_same(tar,op1))
+            general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
     else
     {
