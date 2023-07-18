@@ -125,78 +125,6 @@ struct _operand operand_create_immediate_op(int immd)
     return op;
 }
 
-
-/**
- * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
- * @birth: Created by LGD on 20230130
- * @update: 2023-4-10 更改名字为load_from_memory
- * @update: 2023-4-20 初始化时清空内存
-*/
-AssembleOperand operand_load_from_memory(AssembleOperand op,enum _ARMorVFP type)
-{
-    AssembleOperand tempReg;
-    memset(&tempReg,0,sizeof(AssembleOperand));
-    switch(judge_operand_in_RegOrMem(op))
-    {
-        case IN_REGISTER:
-            return op;
-        case IN_MEMORY:
-            tempReg.addrMode = REGISTER_DIRECT;
-            tempReg.format = op.format;
-            switch(type)
-            {
-                case ARM:
-                    tempReg.oprendVal = pick_one_free_temp_arm_register();
-                    mem2reg(tempReg, op);
-                break;
-                case VFP:
-                    tempReg.oprendVal = pick_one_free_vfp_register();
-                    vfp_memory_access_instructions("FLD",tempReg,op,FloatTyID);
-                break;
-            }
-            return tempReg;
-    }
-    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
-}
-
-/**
- * @brief 
- * @param op 需要读取到寄存器的operand
- * @param type 读取到的寄存器类型
- * @update: Created by LGD on 2023-4-11
-*/
-AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,AssembleOperand dst)
-{
-    enum _ARMorVFP regType = register_type(dst.oprendVal);
-    switch(judge_operand_in_RegOrMem(op))
-    {
-        case IN_REGISTER:
-            return op;
-        case IN_MEMORY:
-            switch(regType)
-            {
-                case ARM:
-                    mem2reg(dst, op);
-                break;
-                case VFP:
-                    vfp_memory_access_instructions("FLD",dst,op,FloatTyID);
-                break;
-            }
-            return dst;
-    }
-    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
-}
-
-/**
- * @brief 将一个操作数加载到指定的寄存器，无论其在任何位置均确保生产合法的指令，且不破坏其他的寄存器
- * @birth: Created by LGD on 2023-5-14
-*/
-void operand_load_to_specified_register(struct _operand oriOp,struct _operand tarOp)
-{
-    assert(tarOp.addrMode == REGISTER_DIRECT && "该方法要求目的操作数必须是寄存器！");
-    movii(tarOp,oriOp);
-}
-
 /**
  * @brief 比较两个操作数是否一致
 */
@@ -371,6 +299,126 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
     return dst;
 }
 
+/**
+ * @brief AssembleOperand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
+ * @birth: Created by LGD on 20230130
+ * @update: 2023-4-10 更改名字为load_from_memory
+ * @update: 2023-4-20 初始化时清空内存
+*/
+AssembleOperand operand_load_from_memory(AssembleOperand op,enum _ARMorVFP type)
+{
+    AssembleOperand tempReg;
+    memset(&tempReg,0,sizeof(AssembleOperand));
+    switch(judge_operand_in_RegOrMem(op))
+    {
+        case IN_REGISTER:
+            return op;
+        case IN_MEMORY:
+            tempReg.addrMode = REGISTER_DIRECT;
+            tempReg.format = op.format;
+            switch(type)
+            {
+                case ARM:
+                    tempReg.oprendVal = pick_one_free_temp_arm_register();
+                    mem2reg(tempReg, op);
+                break;
+                case VFP:
+                    tempReg.oprendVal = pick_one_free_vfp_register();
+                    vfp_memory_access_instructions("FLD",tempReg,op,FloatTyID);
+                break;
+            }
+            return tempReg;
+    }
+    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
+}
+
+/**
+ * @brief 
+ * @param op 需要读取到寄存器的operand
+ * @param type 读取到的寄存器类型
+ * @update: Created by LGD on 2023-4-11
+*/
+AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,AssembleOperand dst)
+{
+    enum _ARMorVFP regType = register_type(dst.oprendVal);
+    switch(judge_operand_in_RegOrMem(op))
+    {
+        case IN_REGISTER:
+            return op;
+        case IN_MEMORY:
+            switch(regType)
+            {
+                case ARM:
+                    mem2reg(dst, op);
+                break;
+                case VFP:
+                    vfp_memory_access_instructions("FLD",dst,op,FloatTyID);
+                break;
+            }
+            return dst;
+    }
+    assert(judge_operand_in_RegOrMem(op) != IN_INSTRUCTION);
+}
+
+/**
+ * @brief 将一个操作数加载到指定的寄存器，无论其在任何位置均确保生产合法的指令，且不破坏其他的寄存器
+ * @birth: Created by LGD on 2023-5-14
+ * @update: 2023-7-18 目标可以为ARM/VFP的寄存器
+*/
+void operand_load_to_specified_register(struct _operand oriOp,struct _operand tarOp)
+{
+    assert(tarOp.addrMode == REGISTER_DIRECT && "该方法要求目的操作数必须是寄存器！");
+
+
+}
+
+
+/**
+ * @brief 从内存或者将立即数加载到一个寄存器中，将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
+ * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
+ * @param type 若选择nullop，需要用第三个参数指定传递的类型
+ * @birth: Created by LGD on 2023-5-1
+ * @update: 当目标为null时，允许选择寄存器类型
+*/
+AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp,...)
+{
+    if(operand_is_none(tarOp))
+    {
+        //处理不定长参数列表
+        va_list ops;
+        va_start(ops,tarOp);
+        enum _ARMorVFP type = va_arg(ops,enum _ARMorVFP type);
+        va_end(ops);
+
+        if(operand_is_in_memory(srcOp))
+        {
+            tarOp = operand_load_from_memory(srcOp,type);
+        }
+        else if(opernad_is_immediate(srcOp))
+        {
+            tarOp = operand_load_immediate(srcOp,type);
+        }
+        else if(operand_is_in_register(srcOp))
+        {
+            if(operand_get_regType(srcOp) != type)
+            {
+                if(type == ARM)
+                {
+                    struct _operand temp = operand_pick_temp_register(ARM);
+
+                }
+                else if(type ==VFP)
+            }
+            tarOp = srcOp;
+        }
+    }
+    else
+    {
+        movii(tarOp,srcOp);
+    }
+    return tarOp;
+}
+
 
 /**
  * @brief 判断一个operand是否在指令中
@@ -502,36 +550,6 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
     
 }
 
-/**
- * @brief 从内存或者将立即数加载到一个寄存器中，将操作数加载到指定寄存器，该方法不负责检查该寄存器是否被使用
- * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
- * @birth: Created by LGD on 2023-5-1
-*/
-AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp)
-{
-    if(operand_is_none(tarOp))
-    {
-        if(operand_is_in_memory(srcOp))
-        {
-            tarOp = operand_load_from_memory(srcOp,ARM);
-        }
-        else if(opernad_is_immediate(srcOp))
-        {
-            tarOp = operand_load_immediate(srcOp,ARM);
-        }
-        else if(operand_is_in_register(srcOp))
-        {
-            tarOp = srcOp;
-        }
-    }
-    else
-    {
-        movii(tarOp,srcOp);
-    }
-    return tarOp;
-}
-
-
 
 /**
  * @brief 获取操作数的立即数
@@ -554,12 +572,25 @@ void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftN
 }
 
 /**
+ * @brief 获取操作数的寄存器类型
+ * @birth: Created by LGD on 2023-7-18
+*/
+enum _ARMorVFP operand_get_regType(struct _operand op)
+{
+    return register_type(op.oprendVal);
+}
+
+/**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求
+ *        
  * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载
  * @param mask 为1时表示第四个参数为屏蔽选项，及当前操作数处于这些位置时不加载到寄存器
  *             为0时表示第四个参数为选择选项，及当前操作数处于这些位置时要加载到寄存器
- *             选项包括 IN_MEMORY IN_REGISTER IN_INSTRUCTION 这些选项可以或在一起
- * @param rom 见第三个参数的描述
+ *             可供的选项由第三个参数提供
+ * @param rom  选项包括 IN_MEMORY IN_REGISTER IN_INSTRUCTION 0
+ *              为0时代表所有情况
+ *              当选项为寄存器时，只有在寄存器类型不一致的情况下才会加载到寄存器
+ *              其余情况下，函数返回源操作数自身
  * @birth: Created by LGD on 2023-4-24
  * @update: 2023-7-11 修复了优先级导致判断错误的BUG
 */
@@ -573,9 +604,16 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
         if( (((rom & IN_MEMORY) == IN_MEMORY) || !rom) &&  
             judge_operand_in_RegOrMem(op) == IN_MEMORY)
             cvtOp = operand_load_from_memory(op,aov);
+
         if((((rom & IN_INSTRUCTION) == IN_INSTRUCTION) || !rom ) && 
             judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
             cvtOp = operand_load_immediate(op,aov);
+
+        if((((rom & IN_INSTRUCTION) == IN_REGISTER) || !rom ) && 
+            (judge_operand_in_RegOrMem(op) == IN_REGISTER) &&
+            operand_get_regType(op) != aov)
+            cvtOp = operand_load_to_register(op,nullop,aov);
+
     }
     else
     {
@@ -585,10 +623,11 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
         if(((rom & IN_INSTRUCTION == IN_INSTRUCTION) || !rom ) &&
             judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
             return cvtOp;
-        if(judge_operand_in_RegOrMem(op) == IN_MEMORY)
-            return operand_load_from_memory(op,aov);
-        if(judge_operand_in_RegOrMem(op) == IN_INSTRUCTION)
-            return operand_load_immediate(op,aov);
+        if(((rom & IN_INSTRUCTION == IN_REGISTER) || !rom ) &&
+            judge_operand_in_RegOrMem(op) == IN_REGISTER)
+            return cvtOp;
+
+        return operandConvert(op,aov,0,0);
     }
     return cvtOp;
 }

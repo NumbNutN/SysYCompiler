@@ -41,7 +41,7 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
  * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
  * @birth: Created by LGD on 2023-5-1
 */
-struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp);
+struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp,...);
 
 /**
  * @brief 比较两个操作数是否一致
@@ -96,6 +96,11 @@ struct _operand operand_pick_temp_register(enum _ARMorVFP type);
 */
 void operand_recycle_temp_register(struct _operand tempReg);
 
+/**
+ * @brief 获取操作数的寄存器类型
+ * @birth: Created by LGD on 2023-7-18
+*/
+enum _ARMorVFP operand_get_regType(struct _operand op);
 
 
 

@@ -500,9 +500,9 @@ void translate_getelementptr_instruction(Instruction* this)
     struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this));
 
     //使用乘加指令
-    step_long = operand_load_to_register(step_long,nullop);
-    arrBase = operand_load_to_register(arrBase,nullop);
-    idx = operand_load_to_register(idx,nullop);
+    step_long = operand_load_to_register(step_long,nullop,ARM);
+    arrBase = operand_load_to_register(arrBase,nullop,ARM);
+    idx = operand_load_to_register(idx,nullop,ARM);
 
     struct _operand middleOp = operand_pick_temp_register(ARM);
     //乘加指令，且tarOp不会作为立即数，没必要从内存加载
@@ -536,7 +536,7 @@ void translate_store_instruction(Instruction* this)
     if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
         //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop);
+        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //申请存放地址的临时寄存器
         struct _operand tempAddrOp = operand_pick_temp_register(ARM);
         //取全局变量标号指示的内存单元
@@ -553,7 +553,7 @@ void translate_store_instruction(Instruction* this)
     }
     else {
         //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop);
+        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
         reg2mem(stored_elem, memOffset);
@@ -588,7 +588,7 @@ void translate_load_instruction(Instruction* this)
     }
     else{
         //确保加载位置是寄存器
-        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
+        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
         mem2reg(middle_loaded_target, memOffset);

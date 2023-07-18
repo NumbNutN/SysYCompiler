@@ -691,7 +691,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
     }
     else
     {   
-        op1 = operand_load_to_register(original_op1, nullop);
+        op1 = operand_load_to_register(original_op1, nullop,ARM);
         //TODO
         memory_access_instructions("STR",op1,tar,cond2Str(cond),false,NONELABEL);
         if(!operand_is_same(op1,original_op1))
@@ -767,15 +767,14 @@ BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2)
 }
 
 /**
-@brief:完成一次整数的相加
-@birth:Created by LGD on 2023-5-29
+ * @brief:完成一次整数的相加
+ * @birth:Created by LGD on 2023-5-29
+ * @update:2023-7-18 消去一条无用的VFP寄存器分配指令
 */
 void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
 {
     AssembleOperand middleOp;
     BinaryOperand binaryOp;
-        
-    middleOp = operand_pick_temp_register(VFP);
 
     binaryOp = binaryOpii(op1,op2);
     
