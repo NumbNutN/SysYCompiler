@@ -155,7 +155,8 @@ void translate_IR_test(struct _Instruction* this)
     // @brief:这个方法通过判断Instruction的指令来执行对应的翻译方法
     // @birth:Created by LGD on 20221224
     // @update:Latest 20221224:添加对比较运算符的翻译支持
-    switch(ins_get_opCode(this))
+    TAC_OP opCode = ins_get_opCode(this);
+    switch(opCode)
     {
 #ifdef OPEN_TRANSLATE_BINARY
         case AddOP:
@@ -186,6 +187,7 @@ void translate_IR_test(struct _Instruction* this)
 #endif
         case NegativeOP:
             translate_unary_instructions(this);
+        break;
         case GotoWithConditionOP:
             translate_goto_instruction_test_bool(this);
         break;

@@ -30,6 +30,15 @@ void translate_binary_expression(Instruction* ins);
 void translate_binary_expression_binary_and_assign(Instruction* this);
 
 void translate_goto_instruction(Instruction* this);
+
+/**
+ * @brief 翻译只包含一个bool变量作为条件的跳转指令
+ * @author Created by LGD on 20221225
+ * @update: 2023-5-29 重写goto_instruction
+ *          2023-7-11 区分GotoOp和GotoOp_WithCond
+*/
+void translate_goto_instruction_test_bool(Instruction* this);
+
 /**
  * @brief 翻译单目运算
  * @birth: Created by LGD on 2023-7-11
