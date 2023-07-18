@@ -165,14 +165,15 @@ AssembleOperand operand_load_from_memory(AssembleOperand op,enum _ARMorVFP type)
  * @param type 读取到的寄存器类型
  * @update: Created by LGD on 2023-4-11
 */
-AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,enum _ARMorVFP type,AssembleOperand dst)
+AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op,AssembleOperand dst)
 {
+    enum _ARMorVFP regType = register_type(dst.oprendVal);
     switch(judge_operand_in_RegOrMem(op))
     {
         case IN_REGISTER:
             return op;
         case IN_MEMORY:
-            switch(type)
+            switch(regType)
             {
                 case ARM:
                     mem2reg(dst, op);
@@ -353,10 +354,12 @@ AssembleOperand operand_load_immediate(AssembleOperand src,enum _ARMorVFP type)
 /**
  * @brief 立即数读取到指令寄存器
  * @update:Created by LGD on 2023-4-11
+ *         2023-7-18 删去不必要的参数type
 */
-AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,enum _ARMorVFP type,AssembleOperand dst)
+AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,AssembleOperand dst)
 {
-    switch(type)
+    enum _ARMorVFP regType = register_type(dst.oprendVal);
+    switch(regType)
     {
         case ARM:
             pseudo_ldr("LDR",dst,src);

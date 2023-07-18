@@ -1708,6 +1708,12 @@ Pair *ptr_pair;
     ins_deepSet_varMap(element,VariableInfoMap);
   }
 
+  //执行期间使指针变动生效
+  update_sp_value();
+
+  //使当前R7与SP保持一致
+  general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
+
   //为数组分配空间并装载到基址存储位置
   //前提 所有的指令都分配了变量信息表
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -1715,15 +1721,6 @@ Pair *ptr_pair;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
-
-  //得知参数个数
-  //在参数个数小于4的情况下，可以暂时不予考虑
-
-  //执行期间使指针变动生效
-  update_sp_value();
-  //使当前R7与SP保持一致
-  
-  general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
   
   // HashMap_foreach(VariableInfoMap, name, varINfo)
   // {

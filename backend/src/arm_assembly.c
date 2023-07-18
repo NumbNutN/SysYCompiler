@@ -484,9 +484,9 @@ void movff(AssembleOperand tar,AssembleOperand op1)
     if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
     {
         if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory_to_spcified_register(op1,VFP,tar);
+            op1 = operand_load_from_memory_to_spcified_register(op1,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate_to_specified_register(op1,VFP,tar);
+            op1 = operand_load_immediate_to_specified_register(op1,tar);
     }
     else
     {
@@ -523,9 +523,9 @@ void movii(AssembleOperand tar,AssembleOperand op1)
     if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
     {
         if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory_to_spcified_register(op1,ARM,tar);
+            op1 = operand_load_from_memory_to_spcified_register(op1,tar);
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
+            op1 = operand_load_immediate_to_specified_register(op1,tar);
         if(!operand_is_same(tar,op1))
             general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
@@ -567,7 +567,7 @@ void movini(AssembleOperand tar,AssembleOperand op1)
         else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
         {
             op1.oprendVal = - op1.oprendVal;
-            op1 = operand_load_immediate_to_specified_register(op1,ARM,tar);
+            op1 = operand_load_immediate_to_specified_register(op1,tar);
         }
         //寄存器 使用MVN
         if(!operand_is_same(tar,op1))
