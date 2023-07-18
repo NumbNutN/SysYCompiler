@@ -1660,25 +1660,12 @@ Pair *ptr_pair;
   
   variable_map_init(&VariableInfoMap);
 
-
-  char* name;
-  VarInfo* varINfo;
-  HashMap_foreach(var_location, name, varINfo)
-  {
-    printf("%s %p\n",name,varINfo);
-  }
-
   //变量信息表转换  
   //包括对 局部变量 局部数组指针 参数的地址分配
   for (int i = 0; i < self_cfg->node_num; i++) {
     int iter_num = 0;
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_list_and_allocate_for_variable((self_cfg->node_set)[i]->bblock_head->inst_list,var_location,&VariableInfoMap); 
-  }
-
-  HashMap_foreach(VariableInfoMap, name, varINfo)
-  {
-    printf("%s %p\n",name,varINfo);
   }
 
   //统计当前函数使用的所有R4-R12的通用寄存器
@@ -1735,11 +1722,13 @@ Pair *ptr_pair;
   //执行期间使指针变动生效
   update_sp_value();
   //使当前R7与SP保持一致
+  
   general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
-  HashMap_foreach(VariableInfoMap, name, varINfo)
-  {
-    printf("%s %p\n",name,varINfo);
-  }
+  
+  // HashMap_foreach(VariableInfoMap, name, varINfo)
+  // {
+  //   printf("%s %p\n",name,varINfo);
+  // }
   //传递参数
   move_parameter_to_recorded_place(VariableInfoMap);
 
