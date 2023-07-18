@@ -128,6 +128,21 @@ ARMorVFP register_type(RegisterOrder reg);
  * @todo 反思一下为什么一个函数要调用这么多复杂的形参呢？
 */
 struct _operand toOperand(Instruction* this,int i);
+
+
+/**
+ * @brief 将数据从寄存器溢出到内存，由于相对寻址范围可能解释成多条指令
+ * @birth: Created by LGD on 2023-7-17
+**/
+void reg2mem(struct _operand reg,struct _operand mem);
+
+
+/**
+ * @brief 将数据从内存加载到寄存器，由于相对寻址范围可能解释成多条指令
+ * @birth: Created by LGD on 2023-7-17
+**/
+void mem2reg(struct _operand reg,struct _operand mem);
+
 /***
  * tar:int = op:float
  * @birth: Created by LGD on 20230130

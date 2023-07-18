@@ -125,6 +125,18 @@ TypeID value_get_type(Value* val);
 */
 bool number_is_power_of_2(int num);
 
+/**
+ * @brief 检查相对寻址范围合法性
+ * @birth: Created by LGD on 2023-7-17
+*/
+bool check_indirect_offset_valid(int offset);
+
+/**
+ * @brief 检查立即数在数据传输指令中的合法性
+ * @birth: Created by LGD on 2023-7-18
+*/
+bool check_immediate_valid(int num);
+
 
 /**
  * @brief 翻译前执行的初始化

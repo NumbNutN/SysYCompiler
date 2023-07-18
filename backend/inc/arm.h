@@ -131,6 +131,7 @@ enum _OffsetType{
     OFFSET_IMMED,
     OFFSET_IN_REGISTER
 };
+
 typedef struct _operand
 {
     //定义了操作数的寻址方式
@@ -147,6 +148,13 @@ typedef struct _operand
     enum SHIFT_WAY shiftWay;
     //定义了移位的数量  2023-4-20
     size_t shiftNum;
+
+    // union {
+    //     struct {
+    //         //定义了访存指令的偏移选项
+    //         enum _OffsetType flexOffsetWay;
+    //     }
+    // }
 
 } AssembleOperand;
 

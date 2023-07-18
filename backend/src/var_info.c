@@ -34,7 +34,9 @@ void update_variable_location(VarInfo* varInfo,bool doClear)
     //assert(!operand_is_none(varInfo->current) && "current location is unallocated!");
     if(operand_is_none(varInfo->current))
     {
-        memcpy(&varInfo->current,&varInfo->ori,sizeof(VarInfo));
+        //TODO 内存溢出！！！ 2023-7-17
+        //memcpy(&(varInfo->current),&(varInfo->ori),sizeof(VarInfo));
+        varInfo->current = varInfo->ori;
         return;
     }
     movii(varInfo->current,varInfo->ori);

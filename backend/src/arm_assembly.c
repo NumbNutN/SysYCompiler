@@ -228,6 +228,47 @@ bool goto_is_conditional(TAC_OP op)
 }
 
 /**
+ * @brief 将数据从寄存器溢出到内存，由于相对寻址范围可能解释成多条指令
+ * @birth: Created by LGD on 2023-7-17
+**/
+void reg2mem(struct _operand reg,struct _operand mem)
+{
+    //当立即数偏移超出寻址范围时
+    if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+    {
+        //将数据传入偏移寄存器
+        struct _operand immed = operand_create_immediate_op(mem.addtion);
+        struct _operand offReg = operand_load_immediate(immed, ARM);
+        //构造带偏移的寻址操作数
+        struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
+        memory_access_instructions("STR",reg,offMem,NONESUFFIX,false,NONELABEL);
+        //归还寄存器
+        operand_recycle_temp_register(offReg);
+    }
+    else
+        memory_access_instructions("STR",reg,mem,NONESUFFIX,false,NONELABEL);
+}
+
+/**
+ * @brief 将数据从内存加载到寄存器，由于相对寻址范围可能解释成多条指令
+ * @birth: Created by LGD on 2023-7-17
+**/
+void mem2reg(struct _operand reg,struct _operand mem)
+{
+    //当立即数偏移超出寻址范围时
+    if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+    {
+        RegisterOrder offRegOrder = pick_one_free_temp_arm_register();
+        struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offRegOrder);
+        memory_access_instructions("LDR",reg,offMem,NONESUFFIX,false,NONELABEL);
+        //归还寄存器
+        recycle_temp_arm_register(offRegOrder);
+    }
+    else
+        memory_access_instructions("LDR",reg,mem,NONESUFFIX,false,NONELABEL);
+}
+
+/**
  * @brief 双目运算 双整型
  * @birth: Created by LGD on 20230226
  * @update: 20230227 添加了对寄存器的回收
@@ -256,16 +297,6 @@ bool goto_is_conditional(TAC_OP op)
     return binaryOp;
  }
 
-/**
- * @brief 和ins_variable_load_in_register是替代关系
- *        当操作数为Add Sub Mov 等指令的目的操作数时，没必要将其从内存中取出，只需要pick一个临时寄存器即可
- * @author LGD
- * @date 20230109
-*/
-void variable_pick_a_free_temp_register(AssembleOperand* op)
-{
-
-}
 
 /**
  * @brief 判断一个变量是否是浮点数
@@ -506,7 +537,7 @@ void movii(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_immediate(op1,ARM);
 
         if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
-            memory_access_instructions("STR",op1,tar,NONESUFFIX,false,NONELABEL);
+            reg2mem(op1,tar);
         else
             general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
 
@@ -541,7 +572,7 @@ void movini(AssembleOperand tar,AssembleOperand op1)
             op1 = operand_load_immediate(op1,ARM);
 
         if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
-            memory_access_instructions("STR",op1,tar,NONESUFFIX,false,NONELABEL);
+            reg2mem(op1,tar);
         else
             general_data_processing_instructions(MVN,tar,nullop,op1,NONESUFFIX,false);
 
@@ -649,6 +680,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
     else
     {   
         op1 = operand_load_to_register(original_op1, nullop);
+        //TODO
         memory_access_instructions("STR",op1,tar,cond2Str(cond),false,NONELABEL);
         if(!operand_is_same(op1,original_op1))
             operand_recycle_temp_register(op1);

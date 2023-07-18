@@ -134,11 +134,17 @@ void update_sp_value()
     if(!abs(currentPF.SPOffset))
         return;
     struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
+    //检查立即数合法性
+    if(!operand_check_immed_valid(offset))
+        offset = operand_load_immediate(offset, ARM);
 
     if(currentPF.SPOffset > 0)
         general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
     else
         general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
+
+    if(operand_is_in_register(offset))
+        operand_recycle_temp_register(offset);
 }
 
 /**
@@ -151,12 +157,18 @@ void reset_sp_value(bool doClear)
     if(!currentPF.SPOffset)
         return;
     struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
+    //检查立即数合法性
+    if(!operand_check_immed_valid(offset))
+        offset = operand_load_immediate(offset, ARM);
 
     if(currentPF.SPOffset > 0)
         general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
     else
         general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
-
+    
+    if(operand_is_in_register(offset))
+        operand_recycle_temp_register(offset);
+        
     if(doClear)
         currentPF.SPOffset = 0;
 }

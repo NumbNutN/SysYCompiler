@@ -113,9 +113,11 @@ void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset)
     vi->ori.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     vi->ori.oprendVal = FP;
     vi->ori.addtion = offset;
+    vi->ori.offsetType = OFFSET_IMMED;
     vi->current.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     vi->current.oprendVal = FP;
     vi->current.addtion = offset;
+    vi->ori.offsetType = OFFSET_IMMED;
 }
 
 /**
