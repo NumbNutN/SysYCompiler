@@ -1730,7 +1730,7 @@ Pair *ptr_pair;
   //   printf("%s %p\n",name,varINfo);
   // }
   //传递参数
-  move_parameter_to_recorded_place(VariableInfoMap);
+  move_parameter_to_recorded_place(VariableInfoMap,param_num);
 
 
   //第三次function遍历，翻译每一个list

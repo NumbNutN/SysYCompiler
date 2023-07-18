@@ -325,8 +325,10 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
 /**
  * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
  * @birth: Created by LGD on 2023-5-13
+ * @update: 2023-5-16 添加对数组指针访问的重定向
+ *          2023-7-18 传递参数时，应当优先将R0-R3传递出来
 */
-void move_parameter_to_recorded_place(HashMap* varMap);
+void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum);
 
 extern char *op_string[];
 /**记录当前函数的栈总容量*/

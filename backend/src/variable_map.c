@@ -524,8 +524,15 @@ bool name_is_global(char* name)
 */
 size_t get_parameter_idx_by_name(char* name)
 {
+    size_t idx = 0;
     assert(name_is_parameter(name) && "is not a parameter");
-    return name[5]-'0';
+    size_t nob = strlen(name) - strlen("param");
+    for(int i=nob;i>0;--i)
+    {
+        idx += ( name[strlen("param") + (nob - i)] - '0') * pow(10,i-1);
+    }
+
+    return idx;
 }
 
 size_t traverse_list_and_count_total_size_of_var(List* this,int order)
@@ -608,7 +615,7 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
     {            
         /* 已作寄存器分配的变量 实参 */
         isFound = HashMapGet(*myMap,name);
-        if(isFound && !name_is_parameter(name))break;
+        if(isFound)break;
         //新建变量信息项
             var_info = (VarInfo*)malloc(sizeof(VarInfo));
             memset(var_info,0,sizeof(VarInfo));
@@ -617,7 +624,9 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
 #endif
             HashMapPut(*myMap,name,var_info);
 
-
+        //当变量为全局变量应该是什么也不做的
+        if(name_is_global(name))
+            continue;
 
         //分配寄存器或内存单元
         if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
@@ -723,19 +732,17 @@ void traverse_list_and_do_static_register_distribute(List* insList,HashMap* zzqM
  * @brief 这个函数接受一个变量信息表，并将所有的参数传递到它在例程的活动记录被访问的位置
  * @birth: Created by LGD on 2023-5-13
  * @update: 2023-5-16 添加对数组指针访问的重定向
+ *          2023-7-18 传递参数时，应当优先将R0-R3传递出来
 */
-void move_parameter_to_recorded_place(HashMap* varMap)
+void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
 {
-    char* name;
+    char name[16] = {0};
     VarInfo* varInfo;
-    HashMap_foreach(varMap,name,varInfo)
+    for(int i=0;i<paramNum;++i)
     {
-        if(name_is_parameter(name))
-        {
-            // if(get_parameter_idx_by_name(name) < 4)
-            //     movii(varInfo->ori,r027[get_parameter_idx_by_name(name)]); 
-            update_variable_location(varInfo,true); 
-        }
+        sprintf(name,"param%d",i);
+        varInfo = HashMapGet(varMap,name);
+        update_variable_location(varInfo,true);
     }
 }
 

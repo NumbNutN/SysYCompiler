@@ -453,10 +453,11 @@ void translate_sub(Instruction* this)
             general_data_processing_instructions(RSB,
                 middleOp,op2,op1,NONESUFFIX,false);
         }
-        //如果第2个操作数为立即数，使用SUB指令
+        //第1个操作数不是立即数，第2个操作数可以是任何数，使用SUB指令
         else{
-                op1 = operandConvert(op1,ARM,false,IN_MEMORY | IN_INSTRUCTION);
-                general_data_processing_instructions(SUB,
+            op1 = operandConvert(op1,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+            op2 = operandConvert(op2,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+            general_data_processing_instructions(SUB,
                 middleOp,op1,op2,NONESUFFIX,false);
         }
 
