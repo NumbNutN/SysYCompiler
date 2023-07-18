@@ -249,3 +249,24 @@ void InitBeforeFunction()
 
 }
 
+/**
+ * @brief 检查相对寻址范围合法性
+ * @birth: Created by LGD on 2023-7-17
+*/
+bool check_indirect_offset_valid(int offset)
+{
+    if(offset >= -4096 && offset <= 4095)return true;
+    else return false;
+}
+
+/**
+ * @brief 检查立即数在数据传输指令中的合法性
+ * @birth: Created by LGD on 2023-7-18
+*/
+bool check_immediate_valid(int num)
+{
+    for(int i=0;i<=30;i+=2)
+        if( (((num >> i) | (num <<(32-i)) ) & ~(0xFF)) == 0)return true;
+    return false;
+}
+

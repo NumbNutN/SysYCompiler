@@ -149,6 +149,12 @@ bool operand_is_in_register(struct _operand op);
 * @brith: Created by LGD on 2023-7-9
 */
 bool operand_is_unallocated(AssembleOperand op);
+
+/**
+ * @brief 判断一个操作数是否是合法立即数
+ * @birth:Created by LGD on 2023-7-18
+*/
+bool operand_check_immed_valid(struct _operand op);
 /**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求
  * @param op 需要被加载到其他位置的操作数，如果第四个参数置为0，则视为全部情况加载

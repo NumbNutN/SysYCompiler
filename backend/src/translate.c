@@ -281,11 +281,12 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         ins_mul_2_lsl(this);
         return;
     }
-    if(ins_get_opCode(this) == SubOP)
+    if(opCode == SubOP)
     {
         translate_sub(this);
         return;
     }
+
     AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
     AssembleOperand op2 = toOperand(this,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
@@ -542,7 +543,8 @@ void translate_store_instruction(Instruction* this)
         //修改临时寄存器的寻址模式
         operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
         //将数据送入内存单元
-        memory_access_instructions("STR", stored_elem, tempAddrOp, NONESUFFIX, false, NONELABEL);
+        //TODO
+        reg2mem(stored_elem, tempAddrOp);
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
         //归还临时地址寄存器
@@ -553,7 +555,7 @@ void translate_store_instruction(Instruction* this)
         stored_elem = operand_load_to_register(stored_elem,nullop);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-        memory_access_instructions("STR",stored_elem,memOffset,NONESUFFIX,false,NONELABEL);
+        reg2mem(stored_elem, memOffset);
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
         //归还可能的存储偏移量的临时寄存器
@@ -588,7 +590,7 @@ void translate_load_instruction(Instruction* this)
         struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-        memory_access_instructions("LDR",middle_loaded_target,memOffset,NONESUFFIX,false,NONELABEL);
+        mem2reg(middle_loaded_target, memOffset);
 
         //如果原加载位置与当前loaded_target不符，需要再次传输
         if(!operand_is_same(middle_loaded_target,loaded_target))
@@ -981,4 +983,6 @@ void translate_logical_binary_instruction(Instruction* this)
 }
 
 #endif
+
+
 

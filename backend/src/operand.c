@@ -81,6 +81,7 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* var)
             op.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
             op.oprendVal = FP;
             op.addtion = get_variable_register_order_or_memory_offset_test(this,var);
+            op.offsetType = OFFSET_IMMED;
         break;
         case IN_DATA_SEC:
             op.addrMode = LABEL_MARKED_LOCATION;
@@ -146,7 +147,7 @@ AssembleOperand operand_load_from_memory(AssembleOperand op,enum _ARMorVFP type)
             {
                 case ARM:
                     tempReg.oprendVal = pick_one_free_temp_arm_register();
-                    memory_access_instructions("LDR",tempReg,op,NONESUFFIX,false,NONELABEL);
+                    mem2reg(tempReg, op);
                 break;
                 case VFP:
                     tempReg.oprendVal = pick_one_free_vfp_register();
@@ -174,7 +175,7 @@ AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand op
             switch(type)
             {
                 case ARM:
-                    memory_access_instructions("LDR",dst,op,NONESUFFIX,false,NONELABEL);
+                    mem2reg(dst, op);
                 break;
                 case VFP:
                     vfp_memory_access_instructions("FLD",dst,op,FloatTyID);
@@ -369,33 +370,6 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
 
 
 /**
- * @brief 创建一个相对FP/SP偏移的寻址方式操作数
- * @birth: Created by LGD on 2023-5-3
-*/
-struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _OffsetType immedORreg,int offset)
-{
-    struct _operand memOff = 
-    {
-        .addrMode = REGISTER_INDIRECT_WITH_OFFSET,
-        .oprendVal = SPorFP,
-        .offsetType = immedORreg,
-        .addtion = offset
-    };
-    //为寄存器时
-    if(immedORreg == OFFSET_IN_REGISTER)return memOff;
-    //为立即数时
-    if(abs(offset) <= ARM_WORD_IMMEDIATE_OFFSET_RANGE)return memOff;
-    //超过立即数限制时，需要调用临时寄存器
-    else
-    {
-        struct _operand immd = operand_create_immediate_op(offset);
-        struct _operand regStoreImmd = operand_load_immediate(immd,ARM);
-        return regStoreImmd;
-    }
-    
-}
-
-/**
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
@@ -450,6 +424,35 @@ bool operand_is_in_register(AssembleOperand op)
 bool operand_is_via_r4212(struct _operand reg)
 {
     return (reg.oprendVal >= R4 && reg.oprendVal <= R12 && reg.oprendVal!=R7);
+}
+
+
+/**
+ * @brief 创建一个相对FP/SP偏移的寻址方式操作数
+ * @birth: Created by LGD on 2023-5-3
+*/
+struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _OffsetType immedORreg,int offset)
+{
+    struct _operand memOff = 
+    {
+        .addrMode = REGISTER_INDIRECT_WITH_OFFSET,
+        .oprendVal = SPorFP,
+        .offsetType = immedORreg,
+        .addtion = offset
+    };
+    //为寄存器时
+    if(immedORreg == OFFSET_IN_REGISTER)return memOff;
+    //为立即数时
+    if(abs(offset) <= ARM_WORD_IMMEDIATE_OFFSET_RANGE)return memOff;
+    //超过立即数限制时，需要调用临时寄存器
+    else
+    {
+        assert("function hasn't supported out of range");
+        struct _operand immd = operand_create_immediate_op(offset);
+        struct _operand regStoreImmd = operand_load_immediate(immd,ARM);
+        return regStoreImmd;
+    }
+    
 }
 
 /**
@@ -594,5 +597,15 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
 void operand_change_addressing_mode(struct _operand* op,AddrMode addrMode)
 {
     op->addrMode = addrMode;
+}
+
+/**
+ * @brief 判断一个操作数是否是合法立即数
+ * @birth:Created by LGD on 2023-7-18
+*/
+bool operand_check_immed_valid(struct _operand op)
+{
+    assert(op.addrMode == IMMEDIATE && "Could only check if immediate is valid");
+    return check_immediate_valid(op.oprendVal);
 }
 
