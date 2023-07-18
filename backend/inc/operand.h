@@ -81,7 +81,7 @@ void operand_load_to_specified_register(struct _operand oriOp,struct _operand ta
  * @param type 读取到的寄存器类型
  * @update: Created by LGD on 2023-4-11
 */
-struct _operand operand_load_from_memory_to_spcified_register(struct _operand op,enum _ARMorVFP type,struct _operand dst);
+struct _operand operand_load_from_memory_to_spcified_register(struct _operand op,struct _operand dst);
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -126,8 +126,9 @@ struct _operand operand_load_immediate(struct _operand src,enum _ARMorVFP type);
 /**
  * @brief 立即数读取到指令寄存器
  * @update:Created by LGD on 2023-4-11
+ *         2023-7-18 删去不必要的参数type
 */
-struct _operand operand_load_immediate_to_specified_register(struct _operand src,enum _ARMorVFP type,struct _operand dst);
+AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src,AssembleOperand dst);
 /**
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328

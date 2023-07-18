@@ -128,6 +128,7 @@ void update_fp_value()
  * @brief 使对栈顶指针的更改生效
  * @birth:???
  * @update:2023-5-13 多数情况下，对SP的改动借助临时寄存器是不可取的
+ *          2023-7-18 用r7负责不合法的立即数
 */
 void update_sp_value()
 {
@@ -136,21 +137,20 @@ void update_sp_value()
     struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
-        offset = operand_load_immediate(offset, ARM);
+        offset = operand_load_immediate_to_specified_register(offset, fp);
 
     if(currentPF.SPOffset > 0)
         general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
     else
         general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
 
-    if(operand_is_in_register(offset))
-        operand_recycle_temp_register(offset);
 }
 
 /**
  * @brief 使栈指针的偏移撤销
  * @param doClear 是否将偏移值回复到0
  * @birth: Created by LGD on 2023-7-17
+ * @update: 2023-7-18 用r7负责不合法的立即数
 **/
 void reset_sp_value(bool doClear)
 {
@@ -159,15 +159,12 @@ void reset_sp_value(bool doClear)
     struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
-        offset = operand_load_immediate(offset, ARM);
+        offset = operand_load_immediate_to_specified_register(offset, fp);
 
     if(currentPF.SPOffset > 0)
         general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
     else
         general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
-    
-    if(operand_is_in_register(offset))
-        operand_recycle_temp_register(offset);
         
     if(doClear)
         currentPF.SPOffset = 0;

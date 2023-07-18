@@ -803,7 +803,8 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         } else {
           Value *call_fun_ins =
               (Value *)ins_new_no_operator_v2(CallWithReturnValueOP);
-
+          call_fun_ins->VTy->TID = 
+            func_label->pdata->symtab_func_pdata.return_type;
           call_fun_ins->name = strdup(temp_str);
 
           ListPushBack(ins_list, (void *)call_fun_ins);
