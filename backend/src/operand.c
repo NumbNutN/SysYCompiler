@@ -136,6 +136,93 @@ bool operand_is_same(struct _operand dst,struct _operand src)
         return true;
 }
 
+/**
+ * @brief 判断一个operand是否在指令中
+ * @birth: Created by LGD on 20230328
+*/
+bool opernad_is_immediate(AssembleOperand op)
+{
+    return (op.addrMode == IMMEDIATE);
+}
+
+/**
+ * @brief 判断一个operand是否在内存中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_memory(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
+            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
+            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
+            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
+}
+
+/**
+ * @brief 判断一个操作数是否是空指针
+ * @birth: Created by LGD on 2023-5-2
+*/
+bool operand_is_none(AssembleOperand op)
+{
+    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
+}
+
+/**
+* @brief 判断当前操作数是否未分配
+* @brith: Created by LGD on 2023-7-9
+*/
+bool operand_is_unallocated(AssembleOperand op)
+{
+    return (op.addrMode == NONE_ADDRMODE);
+}
+
+/**
+ * @brief 判断一个operand是否在寄存器中
+ * @birth: Created by LGD on 2023-4-24
+*/
+bool operand_is_in_register(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_DIRECT);
+}
+
+/**
+ * @brief 判断一个寄存器属于R4-R12(不包括R7)
+ * @birth: Created by LGD on 2023-5-13
+*/
+bool operand_is_via_r4212(struct _operand reg)
+{
+    return (reg.oprendVal >= R4 && reg.oprendVal <= R12 && reg.oprendVal!=R7);
+}
+
+
+/**
+ * @brief 获取操作数的立即数
+ * @birth: Created by LGD on 2023-4-18
+*/
+size_t operand_get_immediate(AssembleOperand op)
+{
+    assert(op.addrMode == IMMEDIATE);
+    return op.oprendVal;
+}
+
+/**
+ * @brief 设置操作数的移位操作
+ * @birth: Created by LGD on 2023-4-20
+*/
+void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftNum)
+{
+    rm->shiftWay = shiftWay;
+    rm->shiftNum = shiftNum;
+}
+
+/**
+ * @brief 获取操作数的寄存器类型
+ * @birth: Created by LGD on 2023-7-18
+*/
+enum _ARMorVFP operand_get_regType(struct _operand op)
+{
+    return register_type(op.oprendVal);
+}
+
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -387,7 +474,7 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
         //处理不定长参数列表
         va_list ops;
         va_start(ops,tarOp);
-        enum _ARMorVFP type = va_arg(ops,enum _ARMorVFP type);
+        enum _ARMorVFP type = va_arg(ops,enum _ARMorVFP);
         va_end(ops);
 
         if(operand_is_in_memory(srcOp))
@@ -408,6 +495,9 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
 
                 }
                 else if(type ==VFP)
+                {
+                    0;
+                }
             }
             tarOp = srcOp;
         }
@@ -417,64 +507,6 @@ AssembleOperand operand_load_to_register(AssembleOperand srcOp,AssembleOperand t
         movii(tarOp,srcOp);
     }
     return tarOp;
-}
-
-
-/**
- * @brief 判断一个operand是否在指令中
- * @birth: Created by LGD on 20230328
-*/
-bool opernad_is_immediate(AssembleOperand op)
-{
-    return (op.addrMode == IMMEDIATE);
-}
-
-/**
- * @brief 判断一个operand是否在内存中
- * @birth: Created by LGD on 2023-4-24
-*/
-bool operand_is_in_memory(AssembleOperand op)
-{
-    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
-            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
-            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
-            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
-}
-
-/**
- * @brief 判断一个操作数是否是空指针
- * @birth: Created by LGD on 2023-5-2
-*/
-bool operand_is_none(AssembleOperand op)
-{
-    return (op.addrMode == NONE_ADDRMODE && op.addtion == 0 && op.oprendVal == 0);
-}
-
-/**
-* @brief 判断当前操作数是否未分配
-* @brith: Created by LGD on 2023-7-9
-*/
-bool operand_is_unallocated(AssembleOperand op)
-{
-    return (op.addrMode == NONE_ADDRMODE);
-}
-
-/**
- * @brief 判断一个operand是否在寄存器中
- * @birth: Created by LGD on 2023-4-24
-*/
-bool operand_is_in_register(AssembleOperand op)
-{
-    return (op.addrMode == REGISTER_DIRECT);
-}
-
-/**
- * @brief 判断一个寄存器属于R4-R12(不包括R7)
- * @birth: Created by LGD on 2023-5-13
-*/
-bool operand_is_via_r4212(struct _operand reg)
-{
-    return (reg.oprendVal >= R4 && reg.oprendVal <= R12 && reg.oprendVal!=R7);
 }
 
 
@@ -551,34 +583,7 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
 }
 
 
-/**
- * @brief 获取操作数的立即数
- * @birth: Created by LGD on 2023-4-18
-*/
-size_t operand_get_immediate(AssembleOperand op)
-{
-    assert(op.addrMode == IMMEDIATE);
-    return op.oprendVal;
-}
 
-/**
- * @brief 设置操作数的移位操作
- * @birth: Created by LGD on 2023-4-20
-*/
-void operand_set_shift(AssembleOperand* rm,enum SHIFT_WAY shiftWay,size_t shiftNum)
-{
-    rm->shiftWay = shiftWay;
-    rm->shiftNum = shiftNum;
-}
-
-/**
- * @brief 获取操作数的寄存器类型
- * @birth: Created by LGD on 2023-7-18
-*/
-enum _ARMorVFP operand_get_regType(struct _operand op)
-{
-    return register_type(op.oprendVal);
-}
 
 /**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求
