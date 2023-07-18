@@ -279,16 +279,16 @@ void mem2reg(struct _operand reg,struct _operand mem)
     AssembleOperand tarOp;
     AssembleOperand cvtOp1;
     AssembleOperand cvtOp2;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         cvtOp1 = operand_load_from_memory(op1,ARM);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         cvtOp1 = operand_load_immediate(op1,ARM);
     else
         cvtOp1 = op1;
 
-    if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
+    if(operand_in_regOrmem(op2) == IN_MEMORY)
         cvtOp2 = operand_load_from_memory(op2,ARM);
-    else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op2) == IN_INSTRUCTION)
         cvtOp2 = operand_load_immediate(op2,ARM);
     else
         cvtOp2 = op2;
@@ -424,16 +424,16 @@ enum _DataFormat valueFindFormat(Value* var)
 void movif(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand orginal_op1 = op1;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         op1 = operand_load_from_memory(op1,VFP);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         op1 = operand_load_immediate(op1,VFP);
 
     AssembleOperand tarTempReg = operand_float_convert(op1,
-        judge_operand_in_RegOrMem(orginal_op1) == IN_MEMORY ||
-        judge_operand_in_RegOrMem(orginal_op1) == IN_INSTRUCTION);
+        operand_in_regOrmem(orginal_op1) == IN_MEMORY ||
+        operand_in_regOrmem(orginal_op1) == IN_INSTRUCTION);
     
-    if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+    if(operand_in_regOrmem(tar) == IN_MEMORY)
         vfp_memory_access_instructions("FST",tarTempReg,tar,FloatTyID);
     else
         fmrs_and_fmsr_instruction("FMRS",tar,tarTempReg,FloatTyID);
@@ -447,9 +447,9 @@ void movif(AssembleOperand tar,AssembleOperand op1)
 */
 void movfi(AssembleOperand tar,AssembleOperand op1)
 {
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         op1 = operand_load_from_memory(op1,VFP);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         op1 = operand_load_immediate(op1,VFP);
     else
     {
@@ -457,7 +457,7 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
         op1 = operand_float_deliver(op1_arm_reg,false);
     }
 
-    if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+    if(operand_in_regOrmem(tar) == IN_MEMORY)
     {
         AssembleOperand tarTempReg = operand_float_convert(op1,true);
         vfp_memory_access_instructions("FST",tarTempReg,tar,FloatTyID);
@@ -481,28 +481,28 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
 void movff(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand original_op1 = op1;
-    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    if(operand_in_regOrmem(tar) == IN_REGISTER)
     {
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
             op1 = operand_load_from_memory_to_spcified_register(op1,tar);
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,tar);
         else
             fabs_fcpy_and_fneg_instruction("FCPY",tar,op1,FloatTyID);
     }
     else
     {
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
             op1 = operand_load_from_memory(op1,VFP);
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate(op1,VFP);
         
-        if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+        if(operand_in_regOrmem(tar) == IN_MEMORY)
             vfp_memory_access_instructions("FST",op1,tar,FloatTyID);
 
 
-        if((judge_operand_in_RegOrMem(original_op1) == IN_MEMORY) ||
-            (judge_operand_in_RegOrMem(original_op1) == IN_INSTRUCTION))
+        if((operand_in_regOrmem(original_op1) == IN_MEMORY) ||
+            (operand_in_regOrmem(original_op1) == IN_INSTRUCTION))
             operand_recycle_temp_register(op1);
     }
 
@@ -521,29 +521,29 @@ void movii(AssembleOperand tar,AssembleOperand op1)
     if(operand_is_same(tar, op1))
         return;
     //如果tar为寄存器
-    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    if(operand_in_regOrmem(tar) == IN_REGISTER)
     {
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
             op1 = operand_load_from_memory_to_spcified_register(op1,tar);
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate_to_specified_register(op1,tar);
         if(!operand_is_same(tar,op1))
             general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
     }
     else
     {
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
             op1 = operand_load_from_memory(op1,ARM);
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
             op1 = operand_load_immediate(op1,ARM);
 
-        if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+        if(operand_in_regOrmem(tar) == IN_MEMORY)
             reg2mem(op1,tar);
         else
             general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
 
-        if(judge_operand_in_RegOrMem(oriOp1) == IN_MEMORY ||
-        (judge_operand_in_RegOrMem(oriOp1) == IN_INSTRUCTION))
+        if(operand_in_regOrmem(oriOp1) == IN_MEMORY ||
+        (operand_in_regOrmem(oriOp1) == IN_INSTRUCTION))
             operand_recycle_temp_register(op1);
     }
 }
@@ -557,15 +557,15 @@ void movini(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand oriOp1 = op1;
     //如果tar为寄存器
-    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    if(operand_in_regOrmem(tar) == IN_REGISTER)
     {
         //取出内存后取反
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
         {
             op1 = operand_load_from_memory(op1,ARM);
         }
         //立即数直接取反
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         {
             op1.oprendVal = - op1.oprendVal;
             op1 = operand_load_immediate_to_specified_register(op1,tar);
@@ -576,12 +576,12 @@ void movini(AssembleOperand tar,AssembleOperand op1)
     }
     else
     {
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
         {
             op1 = operand_load_from_memory(op1,ARM);
             general_data_processing_instructions(MVN,op1,nullop,op1,NONESUFFIX,false);
         }
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         {
             op1.oprendVal = -op1.oprendVal;
             op1 = operand_load_immediate(op1,ARM);
@@ -589,8 +589,8 @@ void movini(AssembleOperand tar,AssembleOperand op1)
 
         reg2mem(op1,tar);
 
-        if(judge_operand_in_RegOrMem(oriOp1) == IN_MEMORY ||
-        (judge_operand_in_RegOrMem(oriOp1) == IN_INSTRUCTION))
+        if(operand_in_regOrmem(oriOp1) == IN_MEMORY ||
+        (operand_in_regOrmem(oriOp1) == IN_INSTRUCTION))
             operand_recycle_temp_register(op1);
     }
 }
@@ -605,12 +605,12 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand original_tar = tar;
     AssembleOperand original_op1 = op1;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         op1 = operand_load_from_memory(op1,ARM);
 
-    if(judge_operand_in_RegOrMem(tar) == IN_MEMORY)
+    if(operand_in_regOrmem(tar) == IN_MEMORY)
         tar = operand_load_from_memory(tar,ARM);
-    if(judge_operand_in_RegOrMem(tar) == IN_INSTRUCTION)
+    if(operand_in_regOrmem(tar) == IN_INSTRUCTION)
         tar = operand_load_immediate(tar, ARM);
     
     general_data_processing_instructions(CMP,tar,nullop,op1,NONESUFFIX,false);
@@ -686,7 +686,7 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
 {
     //如果tar为寄存器
     struct _operand original_op1 = op1;
-    if(judge_operand_in_RegOrMem(tar) == IN_REGISTER)
+    if(operand_in_regOrmem(tar) == IN_REGISTER)
     {
         general_data_processing_instructions(MOV,tar,nullop,op1,cond2Str(cond),false);
     }
@@ -711,9 +711,9 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
     AssembleOperand tarOp;
     AssembleOperand cvtOp1;
     AssembleOperand cvtOp2;
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         cvtOp1 = operand_load_from_memory(op1,VFP);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         cvtOp1 = operand_load_immediate(op1,VFP);
     else
     {
@@ -727,9 +727,9 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
             break;
         }
     } 
-    if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
+    if(operand_in_regOrmem(op2) == IN_MEMORY)
         cvtOp2 = operand_load_from_memory(op2,VFP);
-    else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op2) == IN_INSTRUCTION)
         cvtOp2 = operand_load_immediate(op2,VFP);
     else
     {
@@ -753,14 +753,14 @@ void movCondition(AssembleOperand tar,AssembleOperand op1,enum _Suffix cond)
 */
 BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2)
 {
-    if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+    if(operand_in_regOrmem(op1) == IN_MEMORY)
         op1 = operand_load_from_memory(op1,VFP);
-    else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         op1 = operand_load_immediate(op1,VFP);
 
-    if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
+    if(operand_in_regOrmem(op2) == IN_MEMORY)
         op2 = operand_load_from_memory(op2,VFP);
-    else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
+    else if(operand_in_regOrmem(op2) == IN_INSTRUCTION)
         op2 = operand_load_immediate(op2,VFP);
 
     BinaryOperand binaryOp = {op1,op2};
