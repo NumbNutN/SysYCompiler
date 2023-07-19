@@ -468,15 +468,6 @@ Instruction* get_next_instruction(List* this)
 
 
 /**
- * @brief 判断一个变量是不是return_value，这是为了处理zzq引入的return_val记号
- * @author Created by LGD on 20230109
-*/
-bool var_is_return_val(Value* var)
-{
-    return var == return_val;
-}
-
-/**
  * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
  * @author Created by LGD on 20230109
  * @update: 2023-3-28 使用get_left_value基本方法

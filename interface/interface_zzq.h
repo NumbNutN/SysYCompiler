@@ -4,16 +4,11 @@
 #include "Pass.h"
 #include "config.h"
 
-typedef enum _LOCATION { ALLOCATE_R1 = 1, ALLOCATE_R2, ALLOCATE_R3, MEMORY } LOCATION;
-
+extern const int REGISTER_NUM;
+typedef enum _LOCATION { ALLOC_R0=0,ALLOC_R1 = 1, ALLOC_R2, ALLOC_R3, ALLOC_R4, ALLOC_R5,ALLOC_R6,ALLOC_R8,ALLOC_R9,ALLOC_R10,ALLOC_R11,ALLOC_R12,MEMORY } LOCATION;
 extern char *location_string[];
 
-extern int REGISTER_NUM;
 
-void register_replace(ALGraph *self_cfg, Function *self_func,
-                      HashMap *var_location);
-
-//typedef enum _LOCATION { R1 = 1, R2, R3, MEMORY } LOCATION;
 
 #include "instruction.h"
 
@@ -26,7 +21,6 @@ void register_replace(ALGraph *self_cfg, Function *self_func,
       ListGetAt((self_cfg->node_set)[i]->bblock_head->inst_list, iter_num,  \
                 &element);  
 
-extern Value *return_val;
 
 int ins_get_opCode(Instruction* this);
 char* ins_get_label(Instruction* this);
@@ -91,10 +85,6 @@ Instruction* get_next_instruction(List* this);
 
 
 
-/**
- * @brief 判断一个变量是不是return_value
-*/
-bool var_is_return_val(Value* var);
 /**
  * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
  * @author Created by LGD on 20230109

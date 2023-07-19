@@ -245,8 +245,6 @@ RegorMem get_variable_place(Instruction* this,Value* var)
     }
     else
     {
-        if(var_is_return_val(var))
-            return IN_REGISTER;
         if(op_is_in_instruction(var))
             return IN_INSTRUCTION;
         VarInfo* vs = variable_map_get_value(this->map,var);
@@ -276,7 +274,6 @@ RegorMem get_variable_place_by_order(Instruction* this,int i)
 */
 size_t get_variable_register_order(Instruction* this,Value* var)
 { 
-    if(var_is_return_val(var))return R0;
     VarInfo* vs = variable_map_get_value(this->map,var);
     return vs->ori.oprendVal;
 }
@@ -319,7 +316,6 @@ size_t get_variable_stack_offset_by_order(Instruction* this,int i)
 */
 size_t get_variable_register_order_or_memory_offset_test(Instruction* this,Value* var)
 { 
-    if(var_is_return_val(var))return R0;
     VarInfo* vs = variable_map_get_value(this->map,var);
     if(variable_is_in_memory(this,var))
     {
@@ -629,7 +625,7 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
             continue;
 
         //分配寄存器或内存单元
-        if(*((enum _LOCATION*)HashMapGet(zzqMap,name)) == MEMORY)
+        if((enum _LOCATION)(intptr_t)HashMapGet(zzqMap,name) == MEMORY)
         { 
             //如果当前为编号大于3的参数且分配的内存空间为内存，则不需要规划新的内存，直接使用栈即可
             if(name_is_parameter(name))
@@ -658,7 +654,7 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
         }
         else
         {
-            int idx = *((enum _LOCATION*)HashMapGet(zzqMap,name));
+            int idx = ((enum _LOCATION)(intptr_t)HashMapGet(zzqMap,name));
             RegisterOrder reg_order = request_new_allocatble_register_by_specified_ids(idx);
 
             //TEMP 2023-7-17 TODO
@@ -750,12 +746,15 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
  * @brief 统计当前函数使用的所有R4-R12间的所有寄存器
  * @birth: Created by LGD on 2023-5-13
  * @update:2023-5-14 添加了检查重复项
+ *         2023-7-19 检查参数列表
 */
-struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_map,struct _operand* reg_list,size_t* list_size)
+size_t count_register_change_from_R42R12(HashMap* register_attribute_map)
 {
     char* name;
     VarInfo* reg;
     size_t idx = 0;
+    size_t list_size = 0;
+    struct _operand* reg_list = currentPF.used_reg;
     if (reg_list == NULL)
     {
         reg_list = malloc(9*sizeof(struct _operand)); 
@@ -778,7 +777,7 @@ struct _operand* count_register_change_from_R42R12(HashMap* register_attribute_m
         }
     }
     reg_list[idx] = nullop;
-    *list_size = idx*4;
+    list_size = idx*4;
 }
 
 /**
