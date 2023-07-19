@@ -113,16 +113,31 @@ enum _ARMorVFP operand_get_regType(struct _operand op);
 struct _operand operand_float_deliver(struct _operand src,bool recycleSrc);
 
 /**
- * @brief 封装转换函数，可以自行判断res是什么数据类型
+ * @brief 将浮点数从寄存器转换为整数
+ * @birth: Created by LGD on 2023-7-19
+*/
+AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar,...);
+/**
+ * @brief 将整数从寄存器转换为浮点数
+ * @birth: Created by LGD on 2023-7-19
+*/
+AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar,...);
+
+/**
+ * @brief 封装转换函数，判断src的格式确定转换格式
  * @param src 源寄存器
- * @param recycleSrc 是否回收源寄存器
- * 
+ * @param tar 目标寄存器，如果留空，则选取临时寄存器，同时需要设置第三个参数确定寄存器类型
  * @param pickTempReg 是否申请一个临时寄存器，如果选否，需要为第四函数赋值，同时返回值将为nullop 否则赋nullop
- * @param res 目标寄存器
+
  * @birth: Created by LGD on 20230201
 */
-struct _operand operand_float_convert(struct _operand src,bool recycleSrc);
+struct _operand operand_r2r_cvt(struct _operand src,struct _operand tar,...);
 
+/**
+ * @brief 将源转换格式后送入目标寄存器
+ * @birth: Created by LGD on 2023-7-19
+*/
+struct _operand operand_load_to_reg_cvt(struct _operand src,struct _operand tar,...);
 /**
  * @brief 将立即数用FLD伪指令读取到临时寄存器中，LDR / FLD通用
  * @birth: Created by LGD on 20230202

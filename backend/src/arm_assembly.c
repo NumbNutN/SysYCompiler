@@ -184,30 +184,6 @@ void initDlist()
     nullop.oprendVal = 0;
 }
 
-/*
-**二元运算**
-设计模式：
-    Instruction的Value存放新的赋值
-    Use指向的两个Value分别存放操作数
-*/
-
-
-//Test
-// void instruct_add_suffix(char* opcode,Suffix suf)
-// {
-//     switch(suf)
-//     {
-//         case GT:
-
-//     }
-// }
-
-// unsigned get_register_order(Value* val)
-// {
-//     //获取寄存器编号，暂定
-//     return ((ConstantNum*)val)->num.num_int;
-// }
-
 //TODO
 bool goto_is_conditional(TAC_OP op)
 {
@@ -227,26 +203,52 @@ bool goto_is_conditional(TAC_OP op)
 
 }
 
+
+/**
+ * @brief 返回当前寄存器的类型
+ * @return 两类 arm寄存器 或vfp浮点寄存器
+ * @author Created by LGD on 20230113
+*/
+ARMorVFP register_type(RegisterOrder reg)
+{
+    if(reg >= R0 && reg <= SPSR)
+        return ARM;
+    if(reg >= S0 && reg <= S31)
+        return VFP;
+}
+
 /**
  * @brief 将数据从寄存器溢出到内存，由于相对寻址范围可能解释成多条指令
  * @birth: Created by LGD on 2023-7-17
 **/
 void reg2mem(struct _operand reg,struct _operand mem)
 {
-    //当立即数偏移超出寻址范围时
-    if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+    switch(register_type(reg.oprendVal))
     {
-        //将数据传入偏移寄存器
-        struct _operand immed = operand_create_immediate_op(mem.addtion);
-        struct _operand offReg = operand_load_immediate(immed, ARM);
-        //构造带偏移的寻址操作数
-        struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
-        memory_access_instructions("STR",reg,offMem,NONESUFFIX,false,NONELABEL);
-        //归还寄存器
-        operand_recycle_temp_register(offReg);
+        case ARM:
+        {
+            //当立即数偏移超出寻址范围时
+            if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+            {
+                //将数据传入偏移寄存器
+                struct _operand immed = operand_create_immediate_op(mem.addtion);
+                struct _operand offReg = operand_load_immediate(immed, ARM);
+                //构造带偏移的寻址操作数
+                struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
+                memory_access_instructions("STR",reg,offMem,NONESUFFIX,false,NONELABEL);
+                //归还寄存器
+                operand_recycle_temp_register(offReg);
+            }
+            else
+                memory_access_instructions("STR",reg,mem,NONESUFFIX,false,NONELABEL);
+        }
+        break;
+        case VFP:
+        {
+            vfp_memory_access_instructions("FLDR",reg,mem,FloatTyID);
+        }
+        break;
     }
-    else
-        memory_access_instructions("STR",reg,mem,NONESUFFIX,false,NONELABEL);
 }
 
 /**
@@ -255,17 +257,30 @@ void reg2mem(struct _operand reg,struct _operand mem)
 **/
 void mem2reg(struct _operand reg,struct _operand mem)
 {
-    //当立即数偏移超出寻址范围时
-    if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+    switch(register_type(reg.oprendVal))
     {
-        RegisterOrder offRegOrder = pick_one_free_temp_arm_register();
-        struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offRegOrder);
-        memory_access_instructions("LDR",reg,offMem,NONESUFFIX,false,NONELABEL);
-        //归还寄存器
-        recycle_temp_arm_register(offRegOrder);
+        case ARM:
+        {
+            //当立即数偏移超出寻址范围时
+            if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+            {
+                RegisterOrder offRegOrder = pick_one_free_temp_arm_register();
+                struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offRegOrder);
+                memory_access_instructions("LDR",reg,offMem,NONESUFFIX,false,NONELABEL);
+                //归还寄存器
+                recycle_temp_arm_register(offRegOrder);
+            }
+            else
+                memory_access_instructions("LDR",reg,mem,NONESUFFIX,false,NONELABEL);
+        }
+        break;
+        case VFP:
+        {
+            vfp_memory_access_instructions("FSTR",reg,mem,FloatTyID);
+        }
+        break;
     }
-    else
-        memory_access_instructions("LDR",reg,mem,NONESUFFIX,false,NONELABEL);
+    
 }
 
 /**
@@ -328,18 +343,6 @@ bool ins_operand_is_float(Instruction* this,int opType)
     }
 }
 
-/**
- * @brief 返回当前寄存器的类型
- * @return 两类 arm寄存器 或vfp浮点寄存器
- * @author Created by LGD on 20230113
-*/
-ARMorVFP register_type(RegisterOrder reg)
-{
-    if(reg >= R0 && reg <= SPSR)
-        return ARM;
-    if(reg >= S0 && reg <= S31)
-        return VFP;
-}
 
 
 /**
@@ -423,22 +426,40 @@ enum _DataFormat valueFindFormat(Value* var)
 */
 void movif(AssembleOperand tar,AssembleOperand op1)
 {
-    AssembleOperand orginal_op1 = op1;
-    if(operand_in_regOrmem(op1) == IN_MEMORY)
-        op1 = operand_load_from_memory(op1,VFP);
-    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-        op1 = operand_load_immediate(op1,VFP);
-
-    AssembleOperand tarTempReg = operand_float_convert(op1,
-        operand_in_regOrmem(orginal_op1) == IN_MEMORY ||
-        operand_in_regOrmem(orginal_op1) == IN_INSTRUCTION);
-    
-    if(operand_in_regOrmem(tar) == IN_MEMORY)
-        vfp_memory_access_instructions("FST",tarTempReg,tar,FloatTyID);
-    else
-        fmrs_and_fmsr_instruction("FMRS",tar,tarTempReg,FloatTyID);
-    //回收转换后的临时寄存器
-    operand_recycle_temp_register(tarTempReg);
+    //如果目标在寄存器
+    if(operand_is_in_register(tar))
+    {
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+            operand_regInt2Float(op1,tar);
+        //源在内存
+        else
+        {   
+            struct _operand temp;
+            temp = operand_load_to_register(op1, nullop,VFP);
+            operand_regInt2Float(temp,tar);
+            operand_recycle_temp_register(temp);        
+        }
+    } 
+    //目标在内存
+    else if(operand_is_in_memory(tar))
+    {
+        struct _operand temp;
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+        {
+            temp = operand_regInt2Float(op1,nullop,VFP);
+            reg2mem(temp,tar);
+        }
+        //如果源在内存
+        else if(operand_is_in_memory(op1))
+        {
+            temp = operand_load_to_register(op1, nullop,VFP);
+            temp = operand_regInt2Float(op1,temp);
+            reg2mem(temp,tar);
+        }
+        operand_recycle_temp_register(temp);       
+    }
 }
 
 /***
@@ -447,29 +468,40 @@ void movif(AssembleOperand tar,AssembleOperand op1)
 */
 void movfi(AssembleOperand tar,AssembleOperand op1)
 {
-    if(operand_in_regOrmem(op1) == IN_MEMORY)
-        op1 = operand_load_from_memory(op1,VFP);
-    else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-        op1 = operand_load_immediate(op1,VFP);
-    else
+    //如果目标在寄存器
+    if(operand_is_in_register(tar))
     {
-        AssembleOperand op1_arm_reg = op1;
-        op1 = operand_float_deliver(op1_arm_reg,false);
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+            operand_regFloat2Int(op1,tar);
+        //源在内存
+        else
+        {   
+            struct _operand temp;
+            temp = operand_load_to_register(op1, nullop,VFP);
+            operand_regFloat2Int(temp,tar);
+            operand_recycle_temp_register(temp);        
+        }
+    } 
+    //目标在内存
+    else if(operand_is_in_memory(tar))
+    {
+        struct _operand temp;
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+        {
+            temp = operand_regFloat2Int(op1,nullop,VFP);
+            reg2mem(temp,tar);
+        }
+        //如果源在内存
+        else if(operand_is_in_memory(op1))
+        {
+            temp = operand_load_to_register(op1, nullop,VFP);
+            temp = operand_regFloat2Int(op1,temp);
+            reg2mem(temp,tar);
+        }
+        operand_recycle_temp_register(temp);       
     }
-
-    if(operand_in_regOrmem(tar) == IN_MEMORY)
-    {
-        AssembleOperand tarTempReg = operand_float_convert(op1,true);
-        vfp_memory_access_instructions("FST",tarTempReg,tar,FloatTyID);
-        //回收转换后的临时寄存器
-        operand_recycle_temp_register(tarTempReg);
-    }
-    else
-    {
-        fsito_and_fuito_instruction("FSITO",tar,op1,FloatTyID);
-        //回收op1的临时寄存器
-        operand_recycle_temp_register(op1);
-    }    
 }
 
 /**
@@ -477,35 +509,24 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
  * @birth: Created by LGD on 20230201
  * @todo mem = reg 还可以优化一个语句
  * @update: 2023-4-11 目标数为寄存器时的直接位移
+ *          2023-7-18 重构
 */
 void movff(AssembleOperand tar,AssembleOperand op1)
 {
     AssembleOperand original_op1 = op1;
+
+    //如果target为寄存器
     if(operand_in_regOrmem(tar) == IN_REGISTER)
     {
-        if(operand_in_regOrmem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory_to_spcified_register(op1,tar);
-        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate_to_specified_register(op1,tar);
-        else
-            fabs_fcpy_and_fneg_instruction("FCPY",tar,op1,FloatTyID);
+        operand_load_to_register(op1, tar);
     }
+    //如果target在内存
     else
     {
-        if(operand_in_regOrmem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory(op1,VFP);
-        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate(op1,VFP);
-        
-        if(operand_in_regOrmem(tar) == IN_MEMORY)
-            vfp_memory_access_instructions("FST",op1,tar,FloatTyID);
-
-
-        if((operand_in_regOrmem(original_op1) == IN_MEMORY) ||
-            (operand_in_regOrmem(original_op1) == IN_INSTRUCTION))
-            operand_recycle_temp_register(op1);
+        struct _operand temp = operand_load_to_register(op1, nullop,VFP);
+        reg2mem(temp,tar);
+        operand_recycle_temp_register(temp);
     }
-
 }
 
 /**
@@ -513,38 +534,19 @@ void movff(AssembleOperand tar,AssembleOperand op1)
  * @birth: Created by LGD on 20230201
  * @update: 2023-4-11 优化了立即数传入寄存器
  *          2023-7-17 当检测两个操作数位置一致时，不作处理
+ *          2023-7-18 重构
 */
 void movii(AssembleOperand tar,AssembleOperand op1)
 {
-    AssembleOperand oriOp1 = op1;
-
-    if(operand_is_same(tar, op1))
-        return;
     //如果tar为寄存器
     if(operand_in_regOrmem(tar) == IN_REGISTER)
-    {
-        if(operand_in_regOrmem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory_to_spcified_register(op1,tar);
-        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate_to_specified_register(op1,tar);
-        if(!operand_is_same(tar,op1))
-            general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
-    }
+        operand_load_to_register(op1, tar);
+    //如果tar在内存
     else
     {
-        if(operand_in_regOrmem(op1) == IN_MEMORY)
-            op1 = operand_load_from_memory(op1,ARM);
-        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-            op1 = operand_load_immediate(op1,ARM);
-
-        if(operand_in_regOrmem(tar) == IN_MEMORY)
-            reg2mem(op1,tar);
-        else
-            general_data_processing_instructions(MOV,tar,nullop,op1,NONESUFFIX,false);
-
-        if(operand_in_regOrmem(oriOp1) == IN_MEMORY ||
-        (operand_in_regOrmem(oriOp1) == IN_INSTRUCTION))
-            operand_recycle_temp_register(op1);
+        struct _operand temp = operand_load_to_register(op1, nullop,ARM);
+        reg2mem(temp,tar);
+        operand_recycle_temp_register(temp);
     }
 }
 
