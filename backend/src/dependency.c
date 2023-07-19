@@ -100,7 +100,7 @@ bool variable_is_in_register(Instruction* this,Value* var)
  * @birth: Created by LGD on 20230123
  * @update: 2023-3-28 采用ins_get_left_assign基本方法
 */
-ins_get_operand_num(Instruction* this)
+int ins_get_operand_num(Instruction* this)
 {
     return this->user.num_oprands;
 }

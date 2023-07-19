@@ -13,6 +13,8 @@
 
 #include "config.h"
 
+#include "print_format.h"
+
 extern List *ins_list;
 extern List *global_func_list;
 extern List *global_var_list;
@@ -211,7 +213,6 @@ int main(int argc, char **argv) {
 #endif
 #endif
 
-#define PARSER
   parser(choose_case);
 
 
@@ -227,7 +228,6 @@ int main(int argc, char **argv) {
   printf("\n\n\n\n");
 #endif
 
-#ifdef PARSER
 
   delete_return_deadcode_pass(ins_list);
 
@@ -253,7 +253,6 @@ int main(int argc, char **argv) {
     register_replace((Function *)element);
   }
 
-#endif
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);

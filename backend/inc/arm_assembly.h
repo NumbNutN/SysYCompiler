@@ -48,7 +48,7 @@ void Init_arm_tempReg();
 unsigned pick_one_free_temp_arm_register();
 void recycle_temp_arm_register(int reg);
 
-
+bool goto_is_conditional(TAC_OP op);
 /*******************************************/
 /*             限制级别的寄存器             */
 /*  这些方法将对所有获取临时寄存器的行为生效  */

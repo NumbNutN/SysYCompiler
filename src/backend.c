@@ -2,15 +2,20 @@
 #include "cds.h"
 #include "function.h"
 
-static const int REGISTER_NUM = 3;
-typedef enum _LOCATION { R1 = 1, R2, R3, MEMORY } LOCATION;
-static char *location_string[] = {"null", "R1", "R2", "R3", "M"};
+#include "translate.h"
+#include "variable_map.h"
+#include "dependency.h"
+#include "interface_zzq.h"
+#include "memory_manager.h"
+
+const int REGISTER_NUM = 12;
+char *location_string[] = {"null", "R0","R1", "R2", "R3","R4","R5","R6","R8","R9","R10","R11","R12", "M"};
 
 void register_replace(Function *handle_func) {
   HashMap *var_location = handle_func->var_localtion;
   ALGraph *self_cfg = handle_func->self_cfg;
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   Pair *ptr_pair;
   HashMapFirst(var_location);
   while ((ptr_pair = HashMapNext(var_location)) != NULL) {
@@ -19,7 +24,7 @@ void register_replace(Function *handle_func) {
   }
 #endif
 
-Label(handle_func->label->name);
+  Label(handle_func->label->name);
 
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
   //遍历每一个block的list
@@ -51,7 +56,7 @@ Label(handle_func->label->name);
   set_stack_frame_status(0,totalLocalVariableSize/4);
 
   //根据传递参数的个数修正FP的偏移值
-  size_t param_num = func_get_param_numer(self_func);
+  size_t param_num = func_get_param_numer(handle_func);
   if(param_num > 4)
     currentPF.fp_offset -= (param_num-4)*4;
   
@@ -68,8 +73,7 @@ Label(handle_func->label->name);
 
   //统计当前函数使用的所有R4-R12的通用寄存器
   //前提 已经完成寄存器分配
-  size_t used_reg_size = 0;
-  count_register_change_from_R42R12(VariableInfoMap,currentPF.used_reg,&used_reg_size);
+  size_t used_reg_size = count_register_change_from_R42R12(VariableInfoMap);
   //保存现场
   bash_push_pop_instruction_list("PUSH",currentPF.used_reg);
 
@@ -82,21 +86,6 @@ Label(handle_func->label->name);
   //为所有参数设置初始位置
   set_param_origin_place(VariableInfoMap,param_num);
   
-  //为大于4的参数分配空间
-  // char* name;
-  // VarInfo* varInfo;
-  // HashMap_foreach(VariableInfoMap,name,varInfo)
-  // {
-  //   if(name_is_parameter(name))
-  //   {
-  //       int idx;
-  //       if(((idx =get_parameter_idx_by_name(name)) >= 4) && operand_is_in_memory(varInfo->ori))
-  //       {
-  //           int offset = get_param_stack_offset_by_idx(idx);
-  //           set_variable_stack_offset_by_name(VariableInfoMap,name,offset);
-  //       }
-  //   }
-  // }
   Instruction* element = NULL;
   //第二次function遍历，为每一句Instruction安插一个map
   for (int i = 0; i < self_cfg->node_num; i++) {

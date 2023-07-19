@@ -81,7 +81,7 @@ void Init_tempValueReg();
  * @brief 返回指令的操作数个数
  * @birth: Created by LGD on 20230123
 */
-ins_get_operand_num(Instruction* this);
+int ins_get_operand_num(Instruction* this);
 /**
  * @brief 判断一个变量是否在内存中
  * @birth: Created by LGD on 20230123
