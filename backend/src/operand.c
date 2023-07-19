@@ -333,66 +333,44 @@ AssembleOperand operand_float_deliver(AssembleOperand src,struct _operand tar,bo
 /**
  * @brief 将浮点数从寄存器转换为整数
  * @birth: Created by LGD on 2023-7-19
+ * @update: 2023-7-19 不再支持申请临时寄存器
 */
-AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar,...)
+AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar)
 {
     AssembleOperand temp;
     enum _ARMorVFP type;
     assert((operand_in_regOrmem(src) == IN_REGISTER) && "当前转换方法仅支持寄存器");
     assert(src.format == IEEE754_32BITS && "源寄存器只支持IEEE754");
 
-    if(operand_is_none(tar))
-    {
-        //处理不定长参数列表
-        va_list ops;
-        va_start(ops,tar);
-        type = va_arg(ops,enum _ARMorVFP);
-        va_end(ops);
-        //转换为整数
-        temp = operand_pick_temp_register(VFP);
-        if(operand_get_regType(src) == ARM)
-        {
-            operand_float_deliver(src,temp,false);
-            fsito_and_fuito_instruction("FTOST",temp,temp,FloatTyID);
-        }
-        else {
-            ftost_and_ftout_instruction("FTOST",temp,src,FloatTyID);
-        }
-        if(type == ARM)
-            temp = operand_float_deliver(temp,nullop,true);
-        return temp;
-    }
     //指定目标寄存器
-    else{
-        //如果源为arm寄存器
-        if(operand_get_regType(src) == ARM)
+    //如果源为arm寄存器
+    if(operand_get_regType(src) == ARM)
+    {
+        temp = operand_float_deliver(src,nullop,false);
+        //如果目标为VFP
+        if(operand_get_regType(tar) == VFP)
         {
-            temp = operand_float_deliver(src,nullop,false);
-            //如果目标为VFP
-            if(operand_get_regType(tar) == VFP)
-            {
-                ftost_and_ftout_instruction("FTOST",tar,temp,FloatTyID);
-                operand_recycle_temp_register(temp);
-            }
-            //目标为arm
-            else if(operand_get_regType(tar) == ARM)
-            {
-                ftost_and_ftout_instruction("FTOST",temp,temp,FloatTyID);
-                operand_float_deliver(temp,tar,true);
-            }
+            ftost_and_ftout_instruction("FTOST",tar,temp,FloatTyID);
+            operand_recycle_temp_register(temp);
         }
-        else if(operand_get_regType(src) == VFP)
+        //目标为arm
+        else if(operand_get_regType(tar) == ARM)
         {
-            //如果目标为VFP
-            if(operand_get_regType(tar) == VFP)
-                ftost_and_ftout_instruction("FTOST",tar,src,FloatTyID);
-            //目标为arm
-            else if(operand_get_regType(tar) == ARM)
-            {
-                struct _operand temp = operand_pick_temp_register(VFP);
-                ftost_and_ftout_instruction("FTOST",temp,src,FloatTyID);
-                operand_float_deliver(temp,tar,true);
-            }
+            ftost_and_ftout_instruction("FTOST",temp,temp,FloatTyID);
+            operand_float_deliver(temp,tar,true);
+        }
+    }
+    else if(operand_get_regType(src) == VFP)
+    {
+        //如果目标为VFP
+        if(operand_get_regType(tar) == VFP)
+            ftost_and_ftout_instruction("FTOST",tar,src,FloatTyID);
+        //目标为arm
+        else if(operand_get_regType(tar) == ARM)
+        {
+            struct _operand temp = operand_pick_temp_register(VFP);
+            ftost_and_ftout_instruction("FTOST",temp,src,FloatTyID);
+            operand_float_deliver(temp,tar,true);
         }
     }
     return temp;
@@ -401,66 +379,44 @@ AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar,...
 /**
  * @brief 将整数从寄存器转换为浮点数
  * @birth: Created by LGD on 2023-7-19
+ * @update: 2023-7-19 不再支持申请临时寄存器
 */
-AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar,...)
+AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar)
 {
     AssembleOperand temp;
     enum _ARMorVFP type;
     assert((operand_in_regOrmem(src) == IN_REGISTER) && "当前转换方法仅支持寄存器");
     assert(src.format == IEEE754_32BITS && "源寄存器只支持IEEE754");
 
-    if(operand_is_none(tar))
-    {
-        //处理不定长参数列表
-        va_list ops;
-        va_start(ops,tar);
-        type = va_arg(ops,enum _ARMorVFP);
-        va_end(ops);
-        //转换为整数
-        temp = operand_pick_temp_register(VFP);
-        if(operand_get_regType(src) == ARM)
-        {
-            operand_float_deliver(src,temp,false);
-            fsito_and_fuito_instruction("FSITO",temp,temp,FloatTyID);
-        }
-        else {
-            fsito_and_fuito_instruction("FSITO",src,temp,FloatTyID);
-        }
-        if(type == ARM)
-            temp = operand_float_deliver(temp,nullop,true);
-        return temp;
-    }
     //指定目标寄存器
-    else{
-        //如果源为arm寄存器
-        if(operand_get_regType(src) == ARM)
+    //如果源为arm寄存器
+    if(operand_get_regType(src) == ARM)
+    {
+        temp = operand_float_deliver(src,nullop,false);
+        //如果目标为VFP
+        if(operand_get_regType(tar) == VFP)
         {
-            temp = operand_float_deliver(src,nullop,false);
-            //如果目标为VFP
-            if(operand_get_regType(tar) == VFP)
-            {
-                fsito_and_fuito_instruction("FSITO",tar,temp,FloatTyID);
-                operand_recycle_temp_register(temp);
-            }
-            //目标为arm
-            else if(operand_get_regType(tar) == ARM)
-            {
-                fsito_and_fuito_instruction("FSITO",temp,temp,FloatTyID);
-                operand_float_deliver(temp,tar,true);
-            }
+            fsito_and_fuito_instruction("FSITO",tar,temp,FloatTyID);
+            operand_recycle_temp_register(temp);
         }
-        else if(operand_get_regType(src) == VFP)
+        //目标为arm
+        else if(operand_get_regType(tar) == ARM)
         {
-            //如果目标为VFP
-            if(operand_get_regType(tar) == VFP)
-                fsito_and_fuito_instruction("FSITO",tar,src,FloatTyID);
-            //目标为arm
-            else if(operand_get_regType(tar) == ARM)
-            {
-                struct _operand temp = operand_pick_temp_register(VFP);
-                fsito_and_fuito_instruction("FSITO",temp,src,FloatTyID);
-                operand_float_deliver(temp,tar,true);
-            }
+            fsito_and_fuito_instruction("FSITO",temp,temp,FloatTyID);
+            operand_float_deliver(temp,tar,true);
+        }
+    }
+    else if(operand_get_regType(src) == VFP)
+    {
+        //如果目标为VFP
+        if(operand_get_regType(tar) == VFP)
+            fsito_and_fuito_instruction("FSITO",tar,src,FloatTyID);
+        //目标为arm
+        else if(operand_get_regType(tar) == ARM)
+        {
+            struct _operand temp = operand_pick_temp_register(VFP);
+            fsito_and_fuito_instruction("FSITO",temp,src,FloatTyID);
+            operand_float_deliver(temp,tar,true);
         }
     }
     return temp;
@@ -485,11 +441,12 @@ struct _operand operand_r2r_cvt(struct _operand src,struct _operand tar,...)
         va_start(ops,tar);
         type = va_arg(ops,enum _ARMorVFP);
         va_end(ops);
-
+        struct _operand temp = operand_pick_temp_register(VFP);
         if(src.format == IEEE754_32BITS)
-            return operand_regFloat2Int(src,tar,type);
+            operand_regFloat2Int(src,temp);
         else if(src.format == INTERGER_TWOSCOMPLEMENT)
-            return operand_regInt2Float(src,tar,type);
+            operand_regInt2Float(src,temp);
+        return temp;
     }
     else{
         if(src.format == IEEE754_32BITS)

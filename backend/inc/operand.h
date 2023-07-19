@@ -115,13 +115,15 @@ struct _operand operand_float_deliver(struct _operand src,bool recycleSrc);
 /**
  * @brief 将浮点数从寄存器转换为整数
  * @birth: Created by LGD on 2023-7-19
+ * @update: 2023-7-19 不再支持申请临时寄存器
 */
-AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar,...);
+AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar);
 /**
  * @brief 将整数从寄存器转换为浮点数
  * @birth: Created by LGD on 2023-7-19
+ * @update: 2023-7-19 不再支持申请临时寄存器
 */
-AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar,...);
+AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar);
 
 /**
  * @brief 封装转换函数，判断src的格式确定转换格式
