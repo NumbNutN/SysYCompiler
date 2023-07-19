@@ -30,8 +30,6 @@ char *tty_path;
 char *read_code_from_file(const char *);
 void register_replace(Function *func_list);
 
-<<<<<<< HEAD
-=======
 char *test_cases[] = {"./test_cases/00_main.c",
                       "./test_cases/01_var_defn2.c",
                       "./test_cases/02_var_defn3.c",
@@ -178,7 +176,6 @@ char *hidden_cases[] = {
 };
 
 // --------------------------------------------------
->>>>>>> dev
 int main(int argc, char **argv) {
 
 #ifndef DEBUG_MODE
@@ -201,7 +198,7 @@ int main(int argc, char **argv) {
   } else {
     // choose_case = read_code_from_file(test_cases[81]);
     is_functional_test = true;
-    choose_case = read_code_from_file(hidden_cases[4]);
+    // choose_case = read_code_from_file(hidden_cases[4]);
     assert("invalid parameters");
     // choose_case = read_code_from_file("./my_cases/test_case.c");
   }
@@ -223,8 +220,9 @@ int main(int argc, char **argv) {
   freopen("./output/out.txt", "w", stdout);
   setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 #endif
+#endif
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   print_ins_pass(ins_list);
   printf("\n\n\n\n");
 #endif
@@ -235,7 +233,6 @@ int main(int argc, char **argv) {
 
   print_ins_pass(ins_list);
 
-#ifdef PARSER
   ins_toBBlock_pass(ins_list);
 
 #ifdef DEBUG_MODE

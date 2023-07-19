@@ -279,7 +279,7 @@ void dom_relation_pass() {
             graph_for_dom_tree->node_set[i]->dom_set,
             strdup(graph_for_dom_tree->node_set[j]->bblock_head->label->name),
             graph_for_dom_tree->node_set[j]->bblock_head);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
         printf("%s,",
                graph_for_dom_tree->node_set[j]->bblock_head->label->name);
 #endif
@@ -290,7 +290,7 @@ void dom_relation_pass() {
     printf("\n");
   }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf("\n打印每个节点的立即支配节点\n");
 #endif
 
@@ -316,7 +316,7 @@ void dom_relation_pass() {
 
     graph_for_dom_tree->node_set[i]->idom_node =
         graph_for_dom_tree->node_set[cur_subscript];
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf(
         "idom(%s) = %s\n",
         graph_for_dom_tree->node_set[i]->bblock_head->label->name,
@@ -324,7 +324,7 @@ void dom_relation_pass() {
 #endif
   }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf("\n打印支配树中的层级关系\n");
 #endif
 
@@ -338,7 +338,7 @@ void dom_relation_pass() {
     StackTop(dom_tree_stack, &element);
     StackPop(dom_tree_stack);
 // 打印树中每一层的信息
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("%s: ",
            ((dom_tree *)element)->bblock_node->bblock_head->label->name);
 #endif
@@ -348,7 +348,7 @@ void dom_relation_pass() {
           ((dom_tree *)element)->bblock_node) {
         dom_tree *cur = (dom_tree *)malloc(sizeof(dom_tree));
         cur->bblock_node = graph_for_dom_tree->node_set[i];
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
         printf("%s,", cur->bblock_node->bblock_head->label->name);
 #endif
         cur->child = ListInit();
@@ -360,7 +360,7 @@ void dom_relation_pass() {
     printf("\n");
   }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf("\n打印每个基本块的支配边界节点\n");
 #endif
 
@@ -385,7 +385,7 @@ void dom_relation_pass() {
   }
 
   // 打印每个节点和对应的支配边界
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   for (int i = 1; i < node_num; i++) {
     printf("cur node %s's dom frontier is ",
            graph_for_dom_tree->node_set[i]->bblock_head->label->name);
@@ -1338,7 +1338,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   HashMapDeinit(bblock_to_dom_graph_hashmap);
   hashmap_init(&bblock_to_dom_graph_hashmap);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   for (int i = 0; i < num_of_block; i++) {
     node_pair *element;
     printf("%s edge is ",
@@ -1355,7 +1355,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   delete_non_used_var_pass(self);
 
   if (!is_functional_test) {
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("performance is begin!!!!!!!\n");
     printf("performance is begin!!!!!!!\n");
     printf("performance is begin!!!!!!!\n");
@@ -1375,21 +1375,21 @@ void bblock_to_dom_graph_pass(Function *self) {
 
     printf("\n");
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf_cur_func_ins(self);
     printf("begin rename pass and delete alloca,store,load instruction!\n");
 #endif
 
     rename_pass(self);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("rename pass over\n");
 #endif
 
     // 删除alloca store load语句
     delete_alloca_store_load_ins_pass(graph_for_dom_tree);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("delete alloca,store,load instruction over\n");
 #endif
 
@@ -1403,7 +1403,7 @@ void bblock_to_dom_graph_pass(Function *self) {
     //   exit(-1);
     // }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf_cur_func_ins(self);
 #endif
 
@@ -1413,7 +1413,7 @@ void bblock_to_dom_graph_pass(Function *self) {
     replace_phi_nodes(dom_tree_root);
 
     remove_bblock_phi_func_pass(graph_for_dom_tree);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("performance is over!!!!!!!\n");
     printf("performance is over!!!!!!!\n");
     printf("performance is over!!!!!!!\n");
@@ -1423,7 +1423,7 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   printf("\n\n\n");
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf_cur_func_ins(self);
 #endif
 
