@@ -15,14 +15,12 @@
 #include <sys/stat.h>
 
 extern List *ins_list;
-extern List *func_list;
+extern List *global_func_list;
 extern List *global_var_list;
 
 SymbolTable *cur_symboltable = NULL;
 
-Value *return_val = NULL;
-
-ast *pre_astnode = NULL;
+bool is_functional_test = true;
 
 int yyparse(void);
 
@@ -31,6 +29,7 @@ int parser(char *input);
 char *tty_path;
 
 char *read_code_from_file(const char *);
+void register_replace(Function *func_list);
 
 char *test_cases[] = {"./test_cases/00_main.c",
                       "./test_cases/01_var_defn2.c",
@@ -176,6 +175,7 @@ char *hidden_cases[] = {
     "./hidden_cases/38_light2d.c",
     "./hidden_cases/39_fp_params.c",
 };
+
 // --------------------------------------------------
 int main(int argc, char **argv) {
 
@@ -186,12 +186,22 @@ int main(int argc, char **argv) {
 
   AllInit();
 
+#ifdef PRINT_OK
   printf("%%begin the pass\n");
+#endif
   char *choose_case = NULL;
   if (argc == 5) {
+    is_functional_test = true;
+    choose_case = read_code_from_file(argv[4]);
+  } else if (argc == 6) {
+    is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
   } else {
+    // choose_case = read_code_from_file(test_cases[81]);
+    is_functional_test = true;
+    choose_case = read_code_from_file(hidden_cases[4]);
     assert("invalid parameters");
+    // choose_case = read_code_from_file("./my_cases/test_case.c");
   }
   if (choose_case == NULL)
     return 1;
@@ -209,10 +219,19 @@ int main(int argc, char **argv) {
 #ifdef DEBUG_MODE
 #ifndef PRINT_TO_TERMINAL
   freopen("./output/out.txt", "w", stdout);
-#endif
+  setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 #endif
 
+#ifdef PRINT_OK
+  print_ins_pass(ins_list);
+  printf("\n\n\n\n");
+#endif
+
+#ifdef PARSER
+
   delete_return_deadcode_pass(ins_list);
+
+  print_ins_pass(ins_list);
 
 #ifdef PARSER
   ins_toBBlock_pass(ins_list);
@@ -225,12 +244,16 @@ int main(int argc, char **argv) {
   //翻译全局变量表
   translate_global_variable_list(global_var_list);
   
-  ListFirst(func_list, false);
+  ListFirst(global_func_list, false);
   void *element;
-  while (ListNext(func_list, &element)) {
+  while (ListNext(global_func_list, &element)) {
+#ifdef DEBUG_MODE
     puts(((Function *)element)->label->name);
+#endif
     bblock_to_dom_graph_pass((Function *)element);
+    register_replace((Function *)element);
   }
+
 #endif
 
   /* 生成文件 */
