@@ -317,10 +317,6 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
                 fadd_and_fsub_instruction("FADD",
                     middleOp,op1,op2,FloatTyID);
             break;
-            case SubOP:
-                fadd_and_fsub_instruction("FSUB",
-                    middleOp,op1,op2,FloatTyID);
-            break;
             case MulOP:
                 fadd_and_fsub_instruction("FMUL",
                     middleOp,op1,op2,FloatTyID);
@@ -408,32 +404,32 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 */
 void translate_sub(Instruction* this)
 {   
-
-    AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
-    AssembleOperand op2 = toOperand(this,SECOND_OPERAND);
+    struct _operand oriOp1,op1,oriOp2,op2;
+    oriOp1 = op1 = toOperand(this,FIRST_OPERAND);
+    oriOp2 = op2 = toOperand(this,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
     AssembleOperand middleOp;
 
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
-        BinaryOperand binaryOp;
-        //双目中任一不是浮点数
-        if(!ins_operand_is_float(this,FIRST_OPERAND) || !ins_operand_is_float(this,SECOND_OPERAND))
-        {
-            binaryOp = binaryOpfi(op1,op2);
-        }
-        else
-        {
-            binaryOp = binaryOpff(op1,op2);
-        }
+
+        //寄存器 内存 立即数 都转换
+        op1 = operandConvert(oriOp1,VFP,0,0);
+        op2 = operandConvert(oriOp2,VFP,0,0);
+        
+        if(!ins_operand_is_float(this,FIRST_OPERAND) )
+            operand_r2r_cvt(op1, op1);
+        if(!ins_operand_is_float(this,SECOND_OPERAND))
+            operand_r2r_cvt(op2, op2);
+        
         middleOp = operand_pick_temp_register(VFP);
 
         fadd_and_fsub_instruction("FSUB",
-            middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+            middleOp,op1,op2,FloatTyID);
 
         //释放第一、二操作数
-        general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
-        general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
+        general_recycle_temp_register_conditional(this,FIRST_OPERAND,op1);
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,op2);
     }
     else
     {   
@@ -442,7 +438,6 @@ void translate_sub(Instruction* this)
 #ifndef ALLOW_TWO_IMMEDIATE
         assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
 #endif
-        
         //如果第1个操作数为立即数，第2个不是，使用RSB指令
         if(opernad_is_immediate(op1) && !opernad_is_immediate(op2))
         {
@@ -508,16 +503,18 @@ void translate_getelementptr_instruction(Instruction* this)
     //乘加计算目标地址
     general_data_processing_instructions_extend(MLA,NONESUFFIX,false,middleOp,step_long,idx,arrBase,nullop);
     
+    general_recycle_temp_register_conditional(this,FIRST_OPERAND,arrBase);
+    general_recycle_temp_register_conditional(this,SECOND_OPERAND,idx);
+    //回收step_long 步长
+    recycle_temp_arm_register(step_long.oprendVal);
+
     //送入变量位置
     if(!operand_is_same(tarOp,middleOp))
     {
         movii(tarOp,middleOp);
         general_recycle_temp_register_conditional(this,TARGET_OPERAND,middleOp);
     }
-    general_recycle_temp_register_conditional(this,FIRST_OPERAND,arrBase);
-    general_recycle_temp_register_conditional(this,SECOND_OPERAND,idx);
-    //回收step_long 步长
-    recycle_temp_arm_register(step_long.oprendVal);
+
 }
 
 

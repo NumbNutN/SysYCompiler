@@ -448,15 +448,15 @@ void movif(AssembleOperand tar,AssembleOperand op1)
         //如果源在寄存器
         if(operand_is_in_register(op1))
         {
-            temp = operand_load_to_register(op1, nullop,VFP);
-            operand_regInt2Float(temp,temp);
+            temp = operand_pick_temp_register(VFP);
+            operand_regInt2Float(op1,temp);
             reg2mem(temp,tar);
         }
         //如果源在内存
         else if(operand_is_in_memory(op1))
         {
-            temp = operand_pick_temp_register(VFP);
-            operand_regInt2Float(op1,temp);
+            temp = operand_load_to_register(op1,nullop,VFP);
+            operand_regInt2Float(temp,temp);
             reg2mem(temp,tar);
         }
         operand_recycle_temp_register(temp);       
@@ -499,7 +499,7 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
         else if(operand_is_in_memory(op1))
         {
             temp = operand_load_to_register(op1, nullop,VFP);
-            operand_regFloat2Int(op1,temp);
+            operand_regFloat2Int(temp,temp);
             reg2mem(temp,tar);
         }
         operand_recycle_temp_register(temp);       
