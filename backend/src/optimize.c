@@ -41,9 +41,9 @@ void ins_mul_2_lsl(Instruction* ins)
     if(op1.addrMode == IMMEDIATE && number_is_power_of_2(op1.oprendVal))
     {
         AssembleOperand cvtOp2;
-        if(judge_operand_in_RegOrMem(op2) == IN_MEMORY)
+        if(operand_in_regOrmem(op2) == IN_MEMORY)
             cvtOp2 = operand_load_from_memory(op2,ARM);
-        else if(judge_operand_in_RegOrMem(op2) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op2) == IN_INSTRUCTION)
             cvtOp2 = operand_load_immediate(op2,ARM);
         else
             cvtOp2 = op2;
@@ -61,9 +61,9 @@ void ins_mul_2_lsl(Instruction* ins)
     {
         AssembleOperand cvtOp1;
 
-        if(judge_operand_in_RegOrMem(op1) == IN_MEMORY)
+        if(operand_in_regOrmem(op1) == IN_MEMORY)
             cvtOp1 = operand_load_from_memory(op1,ARM);
-        else if(judge_operand_in_RegOrMem(op1) == IN_INSTRUCTION)
+        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
             cvtOp1 = operand_load_immediate(op1,ARM);
         else
             cvtOp1 = op1;

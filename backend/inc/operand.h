@@ -41,7 +41,7 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
  * @param tarOp 如果指定为一个register operand，加载到该operand；若指定为nullop，选择一个operand
  * @birth: Created by LGD on 2023-5-1
 */
-struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp);
+struct _operand operand_load_to_register(AssembleOperand srcOp,AssembleOperand tarOp,...);
 
 /**
  * @brief 比较两个操作数是否一致
@@ -52,7 +52,7 @@ bool operand_is_same(struct _operand dst,struct _operand src);
  * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
  * @birth: Created by LGD on 20230130
 */
-RegorMem judge_operand_in_RegOrMem(AssembleOperand op);
+RegorMem operand_in_regOrmem(AssembleOperand op);
 
 /**
  * @brief 判断一个操作数是否是空指针
@@ -96,6 +96,11 @@ struct _operand operand_pick_temp_register(enum _ARMorVFP type);
 */
 void operand_recycle_temp_register(struct _operand tempReg);
 
+/**
+ * @brief 获取操作数的寄存器类型
+ * @birth: Created by LGD on 2023-7-18
+*/
+enum _ARMorVFP operand_get_regType(struct _operand op);
 
 
 
@@ -108,16 +113,31 @@ void operand_recycle_temp_register(struct _operand tempReg);
 struct _operand operand_float_deliver(struct _operand src,bool recycleSrc);
 
 /**
- * @brief 封装转换函数，可以自行判断res是什么数据类型
+ * @brief 将浮点数从寄存器转换为整数
+ * @birth: Created by LGD on 2023-7-19
+*/
+AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar,...);
+/**
+ * @brief 将整数从寄存器转换为浮点数
+ * @birth: Created by LGD on 2023-7-19
+*/
+AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar,...);
+
+/**
+ * @brief 封装转换函数，判断src的格式确定转换格式
  * @param src 源寄存器
- * @param recycleSrc 是否回收源寄存器
- * 
+ * @param tar 目标寄存器，如果留空，则选取临时寄存器，同时需要设置第三个参数确定寄存器类型
  * @param pickTempReg 是否申请一个临时寄存器，如果选否，需要为第四函数赋值，同时返回值将为nullop 否则赋nullop
- * @param res 目标寄存器
+
  * @birth: Created by LGD on 20230201
 */
-struct _operand operand_float_convert(struct _operand src,bool recycleSrc);
+struct _operand operand_r2r_cvt(struct _operand src,struct _operand tar,...);
 
+/**
+ * @brief 将源转换格式后送入目标寄存器
+ * @birth: Created by LGD on 2023-7-19
+*/
+struct _operand operand_load_to_reg_cvt(struct _operand src,struct _operand tar,...);
 /**
  * @brief 将立即数用FLD伪指令读取到临时寄存器中，LDR / FLD通用
  * @birth: Created by LGD on 20230202

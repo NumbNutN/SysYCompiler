@@ -250,7 +250,7 @@ RegorMem get_variable_place(Instruction* this,Value* var)
         if(op_is_in_instruction(var))
             return IN_INSTRUCTION;
         VarInfo* vs = variable_map_get_value(this->map,var);
-        return judge_operand_in_RegOrMem(vs->ori);
+        return operand_in_regOrmem(vs->ori);
     }
 
 }

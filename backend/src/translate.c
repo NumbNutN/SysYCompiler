@@ -286,31 +286,28 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         translate_sub(this);
         return;
     }
-
-    AssembleOperand op1 = toOperand(this,FIRST_OPERAND);
-    AssembleOperand op2 = toOperand(this,SECOND_OPERAND);
+    struct _operand op1,op2,srcOp1,srcOp2;
+    op1 = srcOp1 = toOperand(this,FIRST_OPERAND);
+    op2 = srcOp2 = toOperand(this,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
 
     AssembleOperand middleOp;
-
-    BinaryOperand binaryOp;
 
     //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
     if((opCode == DivOP) || (opCode == ModOP))
         add_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
 
+    //双目中有其一是浮点数
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
-        //双目中任一不是浮点数
-        if(!ins_operand_is_float(this,FIRST_OPERAND) || !ins_operand_is_float(this,SECOND_OPERAND))
-        {
-            binaryOp = binaryOpfi(op1,op2);
-        }
-        else
-        {
-            binaryOp = binaryOpff(op1,op2);
-        }
+        //寄存器 内存 立即数 都转换
+        op1 = operandConvert(srcOp1,VFP,0,0);
+        op2 = operandConvert(srcOp2,VFP,0,0);
 
+        if(!ins_operand_is_float(this,FIRST_OPERAND) )
+            operand_r2r_cvt(op1, op1);
+        if(!ins_operand_is_float(this,SECOND_OPERAND))
+            operand_r2r_cvt(op2, op2);
         
         middleOp = operand_pick_temp_register(VFP);
 
@@ -318,56 +315,57 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         {
             case AddOP:
                 fadd_and_fsub_instruction("FADD",
-                    middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+                    middleOp,op1,op2,FloatTyID);
             break;
             case SubOP:
                 fadd_and_fsub_instruction("FSUB",
-                    middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+                    middleOp,op1,op2,FloatTyID);
             break;
             case MulOP:
                 fadd_and_fsub_instruction("FMUL",
-                    middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+                    middleOp,op1,op2,FloatTyID);
             break;
             case DivOP:
                 fadd_and_fsub_instruction("FDIV",
-                    middleOp,binaryOp.op1,binaryOp.op2,FloatTyID);
+                    middleOp,op1,op2,FloatTyID);
             break;
-            
         }
     }
     else
     {   
-        binaryOp = binaryOpii(op1,op2);
-
+        if(!operand_is_in_register(srcOp1))
+            op1 = operand_load_to_register(srcOp1, nullop, ARM);
+        if(!operand_is_in_register(srcOp2))
+            op2 = operand_load_to_register(srcOp2, nullop, ARM);
     
         switch(ins_get_opCode(this))
         {
             case AddOP:
                 middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions(ADD,
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+                    middleOp,op1,op2,NONESUFFIX,false);
             break;
             case SubOP:
                 middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions(SUB,
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+                    middleOp,op1,op2,NONESUFFIX,false);
             break;
             case MulOP:
                 middleOp = operand_pick_temp_register(ARM);
                 general_data_processing_instructions(MUL,
-                    middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+                    middleOp,op1,op2,NONESUFFIX,false);
             break;
 #ifdef USE_DIV_ABI
             case DivOP:
                 middleOp = r0;
-                movii(r0,binaryOp.op1);
-                movii(r1,binaryOp.op2);
+                movii(r0,op1);
+                movii(r1,op2);
                 branch_instructions_test("__aeabi_idiv","L",false,NONELABEL);
             break;
             case ModOP:
                 middleOp = r1;
-                movii(r0,binaryOp.op1);
-                movii(r1,binaryOp.op2);
+                movii(r0,op1);
+                movii(r1,op2);
                 branch_instructions_test("__aeabi_idivmod","L",false,NONELABEL);
             break;
 #else
@@ -375,14 +373,13 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 #endif  
         }
     }
-
     //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
     if((opCode == DivOP) || (opCode == ModOP))
         remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
     
     //释放第一、二操作数
-    general_recycle_temp_register_conditional(this,FIRST_OPERAND,binaryOp.op1);
-    general_recycle_temp_register_conditional(this,SECOND_OPERAND,binaryOp.op2);
+    general_recycle_temp_register_conditional(this,FIRST_OPERAND,op1);
+    general_recycle_temp_register_conditional(this,SECOND_OPERAND,op2);
 
     //中间量传给目标变量
     if(ins_operand_is_float(this,TARGET_OPERAND))
@@ -500,9 +497,9 @@ void translate_getelementptr_instruction(Instruction* this)
     struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this));
 
     //使用乘加指令
-    step_long = operand_load_to_register(step_long,nullop);
-    arrBase = operand_load_to_register(arrBase,nullop);
-    idx = operand_load_to_register(idx,nullop);
+    step_long = operand_load_to_register(step_long,nullop,ARM);
+    arrBase = operand_load_to_register(arrBase,nullop,ARM);
+    idx = operand_load_to_register(idx,nullop,ARM);
 
     struct _operand middleOp = operand_pick_temp_register(ARM);
     //乘加指令，且tarOp不会作为立即数，没必要从内存加载
@@ -536,7 +533,7 @@ void translate_store_instruction(Instruction* this)
     if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
         //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop);
+        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //申请存放地址的临时寄存器
         struct _operand tempAddrOp = operand_pick_temp_register(ARM);
         //取全局变量标号指示的内存单元
@@ -553,7 +550,7 @@ void translate_store_instruction(Instruction* this)
     }
     else {
         //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop);
+        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
         reg2mem(stored_elem, memOffset);
@@ -588,7 +585,7 @@ void translate_load_instruction(Instruction* this)
     }
     else{
         //确保加载位置是寄存器
-        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop);
+        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
         //将偏移装载到前变址寻址中
         struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
         mem2reg(middle_loaded_target, memOffset);
