@@ -482,7 +482,8 @@ void delete_non_used_var_pass(Function *handle_func) {
       int i = 0;
       while (i != ListSize(cur_handle)) {
         ListGetAt(cur_handle, i, (void *)&element);
-        if (element->opcode < RETURN_USED &&
+        if (element->opcode < RETURN_USED && 
+            element->opcode != CallWithReturnValueOP &&
             ((Value *)element)->use_list == NULL) {
           ListRemove(cur_handle, i);
           is_over = false;
