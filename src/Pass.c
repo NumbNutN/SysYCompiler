@@ -891,12 +891,10 @@ void insert_copies_help(HashMap *insert_copies_stack_hashmap,
       phi_assign_ins->name = strdup(cur_pick_pair->dest->name);
       phi_assign_ins->VTy->TID = cur_pick_pair->dest->VTy->TID;
 
-
       // Insert a copy operation from map[src] to dest at the end of cur_bblock
       ListInsert(cur_bblock->bblock_node->bblock_head->inst_list,
                  ListSize(cur_bblock->bblock_node->bblock_head->inst_list) - 1,
                  phi_assign_ins);
-
 
       // map[src] <- dest
       HashMapPut(var_replace_hashmap, strdup(cur_pick_pair->src->name),
@@ -931,7 +929,6 @@ void insert_copies_help(HashMap *insert_copies_stack_hashmap,
       ListInsert(cur_bblock->bblock_node->bblock_head->inst_list,
                  ListSize(cur_bblock->bblock_node->bblock_head->inst_list) - 1,
                  assign_dest_to_temp);
-
 
       HashMapPut(var_replace_hashmap, strdup(cur_pick_pair->dest->name),
                  (Value *)assign_dest_to_temp);
@@ -1398,17 +1395,12 @@ void bblock_to_dom_graph_pass(Function *self) {
     bblock_pass_hashset = NULL;
     hashset_init(&(bblock_pass_hashset));
 
-    // if (freopen("instruction_list.txt", "w", stdout) == NULL) {
-    //   fprintf(stderr, "打开文件失败！");
-    //   exit(-1);
-    // }
 
 #ifdef DEBUG_MODE
     printf_cur_func_ins(self);
 #endif
 
-    // fflush(stdout);
-    // freopen(tty_path, "w", stdout);
+    delete_non_used_var_pass(self);
 
     replace_phi_nodes(dom_tree_root);
 
