@@ -797,6 +797,7 @@ size_t count_register_change_from_R42R12(HashMap* register_attribute_map)
             ++idx;
         }
     }
+    //TODO 这里有数组越界的风险
     reg_list[idx] = nullop;
     list_size = idx*4;
     return list_size;

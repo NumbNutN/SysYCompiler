@@ -41,7 +41,7 @@ struct _Produce_Frame{
     //@birth:2023-5-22 定义了当前函数引起的FP递减量的计数器，其用来矫正外部函数局部变量指针的寻址方式
     int fp_offset;
     //@brief 2023-6-6 定义了当前函数使用的通用寄存器
-    struct _operand used_reg[8];
+    struct _operand used_reg[64];
 
     //@birth 2023-7-17 记录当前活动记录局部变量域的大小
     size_t local_variable_size;
