@@ -312,17 +312,6 @@ void mem2reg(struct _operand reg,struct _operand mem)
     return binaryOp;
  }
 
-
-/**
- * @brief 判断一个变量是否是浮点数
- * @author Created by LGD on 20230113
-*/
-bool variable_is_float(Value* var)
-{
-    if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
-    else return false;
-}
-
 /**
  * @brief 判断一个指令的操作数是否是浮点数
  * @param opType 可选 TARGET_OPERAND FIRST_OPERAND SECOND_OPERAND FIRST_OPERAND | SECOND_OPERAND

@@ -715,6 +715,20 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
     return memOff;
 }
 
+/**
+ * @brief 创建一个寄存器间接寻址操作数
+ * @birth: Created by LGD on 2023-7-20
+*/
+struct _operand operand_Create_indirect_addressing(struct _operand reg)
+{
+    struct _operand reg_indirect = {
+        .addrMode = REGISTER_INDIRECT,
+        .oprendVal = reg.oprendVal,
+        .addtion = 0,
+        .format = INTERGER_TWOSCOMPLEMENT
+    };
+    return reg_indirect;
+}
 
 /**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求

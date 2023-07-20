@@ -84,12 +84,35 @@ void traverse_instruction_list_init(List* this);
 Instruction* get_next_instruction(List* this);
 
 
+/**
+ * @brief 翻译为局部数组分配地址空间的指令
+ * @birth:Created by LGD on 2023-5-2
+ * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
+ *          2023-5-29 考虑了指针在内存的情况
+ *          2023-7-20 全局变量作参数allocate时，无需矫正
+*/
+void translate_allocate_instruction(Instruction* this,HashMap* map);
+
 
 /**
  * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
  * @author Created by LGD on 20230109
 */
 bool label_is_entry(Instruction* label_ins);
+
+/**
+ * @brief 判断一个Value是否是全局的
+ * @birth: Created by LGD on 2023-7-20
+*/
+bool value_is_global(Value* var);
+
+/**
+ * @brief 判断一个变量是否是浮点数
+ * @author Created by LGD on 20230113
+ * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
+*/
+bool variable_is_float(Value* var);
+
 /**
  * @brief 遍历列表到指定编号的函数的FuncLabel位置
  * @author LGD
@@ -128,6 +151,14 @@ int ins_getelementptr_get_step_long(Instruction* this);
 */
 size_t func_get_param_numer(Function* func);
 
+
+/**
+ * @brief 每次翻译新函数前要执行的初始化
+ * @birth:Created by LGD on 2023-5-9
+*/
+void InitBeforeFunction();
+
+
 /**
  * @brief 获取局部变量域的大小
  * @birth: Created by LGD on 2023-7-17
@@ -139,10 +170,23 @@ size_t getLocalVariableSize(HashMap* varMap);
 #endif
 
 /**
+ * @brief 将为所有数组分配空间并将基地址（绝对的）传递给它们的指针
+ * @birth: Created by LGD on 2023-7-20
+*/
+void attribute_and_load_array_base_address(Function *handle_func,HashMap* map);
+
+/**
+ * @brief 为指令链安插变量信息表
+ * @birth: Created by LGD on 2023-7-20
+*/
+void insert_variable_map(Function *handle_func,HashMap* map);
+
+/**
  * @brief 设置当前所有参数的初始位置
  * @birth: Created by LGD on 2023-7-17
 */
 void set_param_origin_place(HashMap* varMap,size_t param_number);
+
 
 /**
  * @brief 打印一句中端代码信息

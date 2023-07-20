@@ -144,11 +144,7 @@ bool check_immediate_valid(int num);
 */
 void TranslateInit();
 
-/**
- * @brief 每次翻译新函数前要执行的初始化
- * @birth:Created by LGD on 2023-5-9
-*/
-void InitBeforeFunction();
+
 
 
 #endif

@@ -226,9 +226,6 @@ void translate_IR_test(struct _Instruction* this)
         case LoadOP:
             translate_load_instruction(this);
         break;
-        case AllocateOP:
-            translate_allocate_instruction(this);
-        break;
         case LabelOP:
             translate_label(this);
         break;
@@ -402,7 +399,7 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
         if(check_before_translate(p) == false)continue;
         translate_IR_test(p);
         currentInstruction = p;
-        //detect_temp_register_status();
+        detect_temp_register_status();
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
 
 }
@@ -479,6 +476,30 @@ bool label_is_entry(Instruction* label_ins)
 
 
 /**
+ * @brief 判断一个Value是否是全局的
+ * @birth: Created by LGD on 2023-7-20
+*/
+bool value_is_global(Value* var)
+{
+    return (bool)var->IsGlobalVar;
+}
+
+/**
+ * @brief 判断一个变量是否是浮点数
+ * @author Created by LGD on 20230113
+ * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
+*/
+bool variable_is_float(Value* var)
+{
+    if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
+    else if(value_get_type(var) == ArrayTyID){
+        if(var->pdata->array_pdata.array_type == FloatTyID) return true;
+        else return false;
+    }
+    else return false;
+}
+
+/**
  * @brief 遍历列表到指定编号的函数的FuncLabel位置
  * @return 返回当前遍历到的函数入口的指令地址
  * @author LGD
@@ -503,42 +524,6 @@ Instruction* traverse_to_specified_function(List* this,int order)
     }
     return p;
 }
-
-/**
- * @brief 将当前zzq寄存器分配表转换为变量信息表
- * @param myMap 变量信息表，它并不是一个未初始化的表，而应当是一个已经存储了所有变量名的表
- * @birth: Created by LGD on 2023-3-26
- * @update: 2023-4-4 不应该判断enum _LOCATION*是否为Memory
- *          2023-5-3 
-*/
-// HashMap* interface_cvt_zzq_register_allocate_map_to_variable_info_map(HashMap* zzqMap,HashMap* myMap)
-// {
-//     HashMapFirst(zzqMap);
-//     Pair* pair_ptr;
-//     while((pair_ptr = HashMapNext(zzqMap)) != NULL)
-//     {
-//         if(*((enum _LOCATION*)pair_ptr->value) == MEMORY)
-//         {
-//             //为该变量（名）进行物理地址映射
-//             int offset = request_new_local_variable_memory_unit();
-//             //TODO 为什么是size_t
-//             set_variable_stack_offset_by_name(myMap,pair_ptr->key,offset);
-//             //打印分配结果
-//             printf("%s分配了地址%d\n",pair_ptr->key,offset);
-//         }
-//         else
-//         {
-//             printf("正在为变量%s分配寄存器\n",pair_ptr->key);
-//             RegisterOrder reg_order = request_new_allocable_register();
-//             //为该变量(名)创建寄存器映射
-//             set_variable_register_order_by_name(myMap,pair_ptr->key,reg_order);
-//             //打印分配结果
-//             printf("%s分配了寄存器%d\n",pair_ptr->key,reg_order);
-//         }
-//     }
-
-// }
-
 
 /**
  * @brief 从指令中返回步长
@@ -595,6 +580,22 @@ size_t func_get_param_numer(Function* func)
 }
 
 /**
+ * @brief 每次翻译新函数前要执行的初始化
+ * @birth:Created by LGD on 2023-5-9
+*/
+void InitBeforeFunction()
+{
+    //初始化用于整型的临时寄存器
+    Init_arm_tempReg();
+    //初始化浮点临时寄存器
+    Free_Vps_Register_Init();
+    //初始化栈帧状态字
+    memset(&currentPF,0,sizeof(struct _Produce_Frame));
+    //重置当前Symbal_table
+
+}
+
+/**
  * @brief 获取局部变量域的大小
  * @birth: Created by LGD on 2023-7-17
 **/
@@ -621,6 +622,77 @@ size_t getLocalVariableSize(HashMap* varMap)
 #endif
     return totalLocalVariableSize;
 }
+
+/**
+ * @brief 翻译为局部数组分配地址空间的指令
+ * @birth:Created by LGD on 2023-5-2
+ * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
+ *          2023-5-29 考虑了指针在内存的情况
+ *          2023-7-20 全局变量作参数allocate时，无需矫正
+*/
+void translate_allocate_instruction(Instruction* this,HashMap* map)
+{
+    Value* var = ins_get_assign_left_value(this);
+    //如果是作为参数的数组，什么都不用做
+    if(name_is_parameter(var->name))
+        return;
+    //如果是全局数组，什么都不用做
+    if(value_get_type(var) == ArrayTyID && value_is_global(var))
+        return;
+    //如果当前是局部数组，在这里分配单元
+    else if(value_get_type(ins_get_assign_left_value(this)) == ArrayTyID){
+        VarInfo* info = HashMapGet(map,var->name);
+        //为数组也分配空间
+        int arrayOffset = request_new_local_variable_memory_units(this->user.value.pdata->array_pdata.total_member*4);
+        //构造立即数操作数
+        struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+        //和FP相加构成绝对地址
+        addiii(info->ori, fp, arrOff);
+        printf("数组%s分配了地址%d\n",var->name,arrayOffset);
+    }
+}
+
+
+/**
+ * @brief 将为所有数组分配空间并将基地址（绝对的）传递给它们的指针
+ * @birth: Created by LGD on 2023-7-20
+*/
+void attribute_and_load_array_base_address(Function *handle_func,HashMap* map)
+{
+  //不再有 所有的指令都分配了变量信息表 的前提
+  ALGraph *self_cfg = handle_func->self_cfg;
+  for (int i = 0; i < self_cfg->node_num; i++) {
+    int iter_num = 0;
+    List* list = (self_cfg->node_set)[i]->bblock_head->inst_list;
+    ListFirst(list,false);
+    Instruction* p;
+    ListFirst(list,false);
+    ListNext(list,&p);
+    do
+    {
+        if(ins_get_opCode(p) == AllocateOP)
+            translate_allocate_instruction(p,map);
+    }while(ListNext(list,&p) && ins_get_opCode(p)!=FuncLabelOP);
+  }
+}
+
+/**
+ * @brief 为指令链安插变量信息表
+ * @birth: Created by LGD on 2023-7-20
+*/
+void insert_variable_map(Function *handle_func,HashMap* map)
+{
+    ALGraph *self_cfg = handle_func->self_cfg;
+    Instruction* p;
+    //第二次function遍历，为每一句Instruction安插一个map
+    for (int i = 0; i < self_cfg->node_num; i++) {
+        int iter_num = 0;
+        ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
+        while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&p))
+        ins_deepSet_varMap(p,map);
+  }
+}
+
 
 /**
  * @brief 设置当前所有参数的初始位置
