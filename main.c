@@ -14,6 +14,7 @@
 #include "config.h"
 
 #include "print_format.h"
+#include "interface_zzq.h"
 
 extern List *ins_list;
 extern List *global_func_list;
@@ -42,9 +43,12 @@ int main(int argc, char **argv) {
 
   AllInit();
 
+#ifdef DEBUG_MODE
+  printf("%%begin the pass\n");
+#endif
   char *choose_case = NULL;
   if (argc == 5) {
-    is_functional_test = true;
+    is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
   } else if (argc == 6) {
     is_functional_test = false;
@@ -101,7 +105,6 @@ int main(int argc, char **argv) {
     bblock_to_dom_graph_pass((Function *)element);
     register_replace((Function *)element);
   }
-
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);

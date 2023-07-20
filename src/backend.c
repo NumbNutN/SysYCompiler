@@ -8,9 +8,8 @@
 #include "interface_zzq.h"
 #include "memory_manager.h"
 
-const int REGISTER_NUM = 12;
-char *location_string[] = {"null", "R0","R1", "R2", "R3","R4","R5","R6","R8","R9","R10","R11","R12", "M"};
-
+const int REGISTER_NUM = 8;
+char *location_string[] = {"null", "R4","R5","R6","R8","R9","R10","R11","R12", "M"};
 void register_replace(Function *handle_func) {
   HashMap *var_location = handle_func->var_localtion;
   ALGraph *self_cfg = handle_func->self_cfg;
@@ -101,6 +100,9 @@ void register_replace(Function *handle_func) {
   //使当前R7与SP保持一致
   general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
 
+  //传递参数
+  move_parameter_to_recorded_place(VariableInfoMap,param_num);
+
   //为数组分配空间并装载到基址存储位置
   //前提 所有的指令都分配了变量信息表
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -108,13 +110,6 @@ void register_replace(Function *handle_func) {
     ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
     traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
   }
-  
-  // HashMap_foreach(VariableInfoMap, name, varINfo)
-  // {
-  //   printf("%s %p\n",name,varINfo);
-  // }
-  //传递参数
-  move_parameter_to_recorded_place(VariableInfoMap,param_num);
 
 
   //第三次function遍历，翻译每一个list

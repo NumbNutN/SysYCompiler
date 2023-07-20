@@ -162,7 +162,7 @@ ast *newast(char *name, int num, ...) // 抽象语法树建立
 
 void eval_print(ast *a, int level) {
   // 打印该节点
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   if (a != NULL) {
     for (int i = 0; i < level; ++i) // 孩子结点相对父节点缩进2个空格
       printf("  ");
@@ -215,7 +215,7 @@ void pre_eval(ast *a) {
         free(cur_handle_func);
       cur_handle_func = strdup(a->l->idtype);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("Func: %s\n", a->l->idtype);
 #endif
 
@@ -253,7 +253,7 @@ void pre_eval(ast *a) {
       StackTop(stack_else_label, (void **)&else_label_ins);
       StackPop(stack_else_label);
       ListPushBack(ins_list, (void *)else_label_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("%s\n", else_label_ins->name);
 #endif
     }
@@ -281,7 +281,7 @@ void pre_eval(ast *a) {
       goto_label_ins->VTy->TID = GotoTyID;
       goto_label_ins->pdata->no_condition_goto.goto_location =
           while_head_label_ins;
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("br %s\n", while_head_label_ins->name);
       printf("%s\n", while_head_label_ins->name);
 #endif
@@ -315,7 +315,7 @@ void pre_eval(ast *a) {
 
       ListPushBack(ins_list, (void *)goto_else_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("br %s \n", then_label_ins->name);
 #endif
     }
@@ -339,7 +339,7 @@ void in_eval(ast *a, Value *left) {
           (Value *)ins_new_binary_operator_v2(StoreOP, left, cur_var);
       store_ins->IsInitArgs = 1;
       store_ins->pdata->param_init_pdata.the_param_index = param_seed;
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("store %s %s, %s,align 4\n",
              NowVarDecStr[cur_var->VTy->TID < 4 ? cur_var->VTy->TID
                                                 : cur_var->VTy->TID - 4],
@@ -421,7 +421,7 @@ void in_eval(ast *a, Value *left) {
     ListPushBack(ins_list, (void *)goto_condition_ins);
     ListPushBack(ins_list, true_label_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("br %s, true: %s  false : %s \n", left->name, true_label_ins->name,
            else_label_ins->name);
     printf("%s\n", temp_str);
@@ -441,7 +441,7 @@ void in_eval(ast *a, Value *left) {
     // 插入
     // ListPushBack(ins_list, (void *)func_param_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("%s %s insert\n", func_param_ins->name, left->name);
 #endif
   }
@@ -479,7 +479,7 @@ void in_eval(ast *a, Value *left) {
     ListPushBack(ins_list, (void *)goto_condition_ins);
     ListPushBack(ins_list, while_true_label_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("while br %s, true: %s  false : %s \n", left->name,
            while_true_label_ins->name, while_false_label_ins->name);
     printf("%s\n", while_true_label_ins->name);
@@ -597,7 +597,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
           array_list = ListInit();
           ListSetClean(array_list, CleanObject);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf("%s = alloca %s array,align 4\n", array_name,
                  NowVarDecStr[nowVarDecType]);
 #endif
@@ -616,7 +616,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
           // 添加变量类型
           if (StackSize(stack_symbol_table) == 1) {
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
             puts("global var");
 #endif
             temp_var = name_generate(GLOBAL);
@@ -643,7 +643,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
           // 设定allocate语句的指针所指向的value*
           cur_ins->pdata->allocate_pdata.point_value = cur_var;
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf("%s = alloca %s,align 4\n", temp_var,
                  NowVarDecStr[nowVarDecType]);
 #endif
@@ -705,7 +705,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
           ListPushBack(ins_list, (void *)load_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf("%s = load %s, %s,align 4\n", load_ins->name,
                  NowVarDecStr[load_ins->VTy->TID < 4 ? load_ins->VTy->TID
                                                      : load_ins->VTy->TID - 4],
@@ -810,7 +810,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
           ListPushBack(ins_list, (void *)call_fun_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf(
               "new instruction call func %s and goto %s without return value "
               "\n",
@@ -828,7 +828,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
           ListPushBack(ins_list, (void *)call_fun_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf(
               "new instruction call func %s and goto %s with return value \n",
               a->idtype, func_label->name);
@@ -860,7 +860,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
               Value *store_ins =
                   (Value *)ins_new_binary_operator_v2(StoreOP, left, right);
               ListPushBack(ins_list, (void *)store_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
               printf("store %s %s, %s,align 4\n",
                      NowVarDecStr[right->VTy->TID < 4 ? right->VTy->TID
                                                       : right->VTy->TID - 4],
@@ -900,7 +900,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         Instruction *store_ins =
             ins_new_binary_operator_v2(StoreOP, left, right);
         ListPushBack(ins_list, (void *)store_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
         printf("store %s %s, %s,align 4\n",
                NowVarDecStr[right->VTy->TID < 4 ? right->VTy->TID
                                                 : right->VTy->TID - 4],
@@ -976,7 +976,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
           ListPushBack(ins_list, (void *)load_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf("%s = load %s, %s,align 4\n", temp_str,
                  NowVarDecStr[load_ins->VTy->TID < 4 ? load_ins->VTy->TID
                                                      : load_ins->VTy->TID - 4],
@@ -1139,7 +1139,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         ((Value *)ins_back)->pdata->no_condition_goto.goto_location =
             else_label_ins;
         ListPushBack(ins_list, (void *)else_label_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
         printf("%s\n", else_label_ins->name);
 #endif
 
@@ -1158,7 +1158,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         StackTop(stack_then_label, (void **)&then_label_ins);
         StackPop(stack_then_label);
         ListPushBack(ins_list, (void *)then_label_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
         printf("%s\n", then_label_ins->name);
 #endif
         return NULL;
@@ -1190,7 +1190,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
         assert(0);
       }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("%s\n", func_label_end);
 #endif
     }
@@ -1217,7 +1217,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
       // 插入
       ListPushBack(ins_list, (void *)func_return_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("%s\n", func_return_ins->name);
 #endif
     }
@@ -1262,7 +1262,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
       StackPop(stack_while_then_label);
       ListPushBack(ins_list, (void *)while_then_label_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("%s\n", while_then_label_ins->name);
 #endif
       return NULL;
@@ -1288,7 +1288,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
       break_ins->pdata->no_condition_goto.goto_location = goto_break_label_ins;
 
       ListPushBack(ins_list, (void *)break_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("break :br %s \n", goto_break_label_ins->name);
 #endif
     }
@@ -1314,7 +1314,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
       break_ins->pdata->no_condition_goto.goto_location = goto_head_label_ins;
 
       ListPushBack(ins_list, (void *)break_ins);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("continue :br %s \n", goto_head_label_ins->name);
 #endif
     }

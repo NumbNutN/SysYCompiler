@@ -26,20 +26,6 @@ unsigned value_getConstant(Value* val)
 }
 
 
-
-unsigned value_get_reg(Value* val)
-{
-    srand((unsigned)time(NULL));
-    return rand()/12;
-}
-
-unsigned value_get_addr(Value* val)
-{
-    srand((unsigned)time(NULL));
-    return rand()/1000;
-}
-
-
 /**
  * @brief 判断一个操作数是不是在指令中的常量
  * @update 20230122 添加了对浮点立即数的支持
