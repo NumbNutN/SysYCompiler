@@ -1,5 +1,6 @@
 #include "Pass.h"
 #include "cds.h"
+#include "container/hash_map.h"
 #include "function.h"
 
 #include "arm.h"
@@ -8,7 +9,11 @@
 #include "variable_map.h"
 
 const int REGISTER_NUM = 8;
-char *location_string[] = {"null", "R4","R5","R6","R8","R9","R10","R11","R12", "M"};
+char *location_string[] = {"null", "R4",  "R5",  "R6",  "R8",
+                           "R9",   "R10", "R11", "R12", "M"};
+
+extern HashMap *global_array_init_hashmap;
+
 void register_replace(Function *handle_func) {
   HashMap *var_location = handle_func->var_localtion;
   ALGraph *self_cfg = handle_func->self_cfg;
@@ -92,12 +97,12 @@ void register_replace(Function *handle_func) {
   //传递参数
   move_parameter_to_recorded_place(VariableInfoMap,param_num);
 
-  Value* var;
-  VarInfo* info;
-  HashMap_foreach(VariableInfoMap, var, info)
-  {
-    printf("%s %p\n",var,info);
-  }
+  // Value* var;
+  // VarInfo* info;
+  // HashMap_foreach(VariableInfoMap, var, info)
+  // {
+  //   printf("%s %p\n",var,info);
+  // }
   //为所有数组分配和传递地址
   //不再有前提 所有的指令都分配了变量信息表
   attribute_and_load_array_base_address(handle_func,VariableInfoMap);
