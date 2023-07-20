@@ -164,23 +164,43 @@ size_t flush_param_number()
 */
 void translate_param_instructions(Instruction* this)
 {
-
     //依据存储位置转换为operand类型
     AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
+    //获取当前传递参数序号
     size_t passed_param_number = get_parameter_idx_by_name(ins_get_assign_left_value(this)->name);
-    
-    int offset;
-    if(passed_param_number <= 3)
+
+    //判断当前传入的变量是否是全局数组或全局数组的解引用
+    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
     {
+        //需要将全局标号的地址取出到寄存器后传递
         //小于等于4个则直接丢R0-R3
-        operand_load_to_specified_register(param_op,r027[passed_param_number]);
-        //寄存器限制
-        add_register_limited(1 << passed_param_number);
+        if(passed_param_number <= 3)
+        {
+            pseudo_ldr("LDR",r027[passed_param_number],param_op);
+            //寄存器限制
+            add_register_limited(1 << passed_param_number);
+        }
+        //多于4个参数，临时寄存器调出后回收
+        else{
+            struct _operand temp = operand_pick_temp_register(ARM);
+            pseudo_ldr("LDR",temp,param_op);
+            movii(param_push_op,temp);
+            operand_recycle_temp_register(temp);
+        }
     }
-    else
-        //申请一个新的参数存放的内存单元
-        movii(param_push_op,param_op);
-        //memory_access_instructions("STR",param_op,param_push_op,NONESUFFIX,false,NONELABEL);
+    //当前传入的变量是其余情况（全局变量 局部数组 局部变量）
+    else{
+        //小于等于4个则直接丢R0-R3
+        if(passed_param_number <= 3)
+        {
+            operand_load_to_specified_register(param_op,r027[passed_param_number]);
+            //寄存器限制
+            add_register_limited(1 << passed_param_number);
+        }
+        else
+            //堆入栈顶
+            movii(param_push_op,param_op);
+    }
 }
 
 /**
@@ -473,9 +493,6 @@ void translate_sub(Instruction* this)
         else
             movii(tarOp,middleOp);
     }
-
-
-
     //释放中间操作数
     operand_recycle_temp_register(middleOp);
 }
@@ -517,18 +534,20 @@ void translate_getelementptr_instruction(Instruction* this)
 
 }
 
-
 /**
  * @brief 翻译将数据回存到一个指针指向的位置的指令
  * @birth: Created by LGD on 2023-5-3
- * @update: 2023-5-29 添加对全局变量的存值操作
+ * @update: 2023-5-29 添加对全局变量的回写操作
+ *          2023-7-20 添加对全局数组的回写操作
 */
 void translate_store_instruction(Instruction* this)
 {
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
-    //当全局变量操作时
-    if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
+
+    //当对全局变量操作时
+    if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
+       (ins_get_operand(this, FIRST_OPERAND)->VTy->TID != ArrayTyID))
     {
         //将需要存储的数据加载到寄存器中
         stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
@@ -546,8 +565,21 @@ void translate_store_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    //当数组操作时
-    else if(ins_get_operand(this, FIRST_OPERAND)->VTy->TID == ArrayTyID){
+    //当对全局数组操作时
+    else if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
+       (value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
+    {
+        //将需要存储的数据加载到寄存器中
+        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
+        //封装间接寻址
+        struct _operand storeMem = operand_Create_indirect_addressing(addr);
+        //执行store
+        reg2mem(stored_elem, storeMem);
+        //归还可能的存储数据的临时寄存器
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
+    }
+    //对当局部数组操作时
+    else if(value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID){
         //将需要存储的数据加载到寄存器中
         stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //将偏移装载到前变址寻址中
@@ -556,6 +588,7 @@ void translate_store_instruction(Instruction* this)
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
         //归还可能的存储偏移量的临时寄存器
+        //TODO
         if(memOffset.offsetType == OFFSET_IN_REGISTER)
             recycle_temp_arm_register(memOffset.addtion);
     }
@@ -589,13 +622,15 @@ void translate_store_instruction(Instruction* this)
 /**
  * @brief 翻译将数据从一个指针的指向位置取出
  * @birth: Created by LGD on 2023-5-4
+ * @update:  2023-7-20 添加对全局数组的加载操作
 */
 void translate_load_instruction(Instruction* this)
 {
     struct _operand loaded_target= toOperand(this,TARGET_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
     //当全局变量操作时
-    if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
+    if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
+       (ins_get_operand(this, FIRST_OPERAND)->VTy->TID != ArrayTyID))
     {
         //申请存放地址的临时寄存器
         struct _operand tempAddrOp = operand_pick_temp_register(ARM);
@@ -608,8 +643,26 @@ void translate_load_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    //当数组操作时
-    else if(ins_get_operand(this, FIRST_OPERAND)->VTy->TID == ArrayTyID){
+    //当对全局数组操作时
+    else if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
+       (value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
+    {
+        //确保加载位置是寄存器
+        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
+        //封装间接寻址
+        struct _operand loadMem = operand_Create_indirect_addressing(addr);
+        //执行store
+        mem2reg(loadMem, middle_loaded_target);
+
+        //如果原加载位置与当前loaded_target不符，需要再次传输
+        if(!operand_is_same(middle_loaded_target,loaded_target))
+            movii(loaded_target,middle_loaded_target);
+
+        //归还可能的存储数据的临时寄存器
+        general_recycle_temp_register_conditional(this,SECOND_OPERAND,middle_loaded_target);
+    }
+    //当对局部数组操作时
+    else if(value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID){
         //确保加载位置是寄存器
         struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
         //将偏移装载到前变址寻址中
@@ -639,27 +692,21 @@ void translate_load_instruction(Instruction* this)
  * @brief 翻译为局部数组分配地址空间的指令
  * @birth:Created by LGD on 2023-5-2
  * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
- * @update: 2023-5-29 考虑了指针在内存的情况
+ *          2023-5-29 考虑了指针在内存的情况
+ *          2023-7-20 全局变量作参数allocate时，无需矫正
 */
 void translate_allocate_instruction(Instruction* this)
 {
     //数组变量是一个指针变量，其变量信息记录了一个栈帧中的偏移值作为基地址
     struct _operand arrayBase = toOperand(this,TARGET_OPERAND);
+    
     //数组的矫正基地址在执行期完成运算
     if(name_is_parameter(ins_get_assign_left_value(this)->name))
     {
         struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
         addiii(arrayBase,arrayBase,offset);
     }
-    //如果数组是局部数组
-    // else{
-    //         VarInfo* info = HashMapGet(this->map,ins_get_assign_left_value(this)->name);
-    //         //获取偏移值
 
-    //         //使用一个指令将数组偏移值填充至对应的变量存储位置
-    //         struct _operand arrOff = operand_create_immediate_op(arrayOffset);
-    //         movii(info->ori,arrOff);
-    // }
 }
 
 /**

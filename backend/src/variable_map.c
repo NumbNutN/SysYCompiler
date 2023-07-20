@@ -625,16 +625,14 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
         //新建变量信息项
             var_info = (VarInfo*)malloc(sizeof(VarInfo));
             memset(var_info,0,sizeof(VarInfo));
-#ifdef DEBUG_MODE
-            printf("插入新的实参名：%s \n",name);
-#endif
             HashMapPut(*myMap,name,var_info);
 
         //当变量为全局变量应该是什么也不做的
+        //在此之前已经为全局变量分配好空间
         if(name_is_global(name))
             continue;
 
-        //分配寄存器或内存单元
+        //分配内存单元
         if((enum _LOCATION)(intptr_t)HashMapGet(zzqMap,name) == MEMORY)
         { 
             //如果当前为编号大于3的参数且分配的内存空间为内存，则不需要规划新的内存，直接使用栈即可
@@ -650,7 +648,7 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
                     VarInfo* varInfo = HashMapGet(*myMap, name);
                     set_var_curStkOff(varInfo,offset);
 #ifdef DEBUG_MODE
-                printf("%s分配了地址%d\n",name,offset);
+                printf("参数%s分配了栈帧偏移%d\n",name,offset);
 #endif
                 }
             }
@@ -658,10 +656,11 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
                 int offset = request_new_local_variable_memory_unit(IntegerTyID);
                 set_variable_stack_offset_by_name(*myMap,name,offset);
 #ifdef DEBUG_MODE
-                printf("%s分配了地址%d\n",name,offset);
+                printf("变量%s分配了栈帧偏移%d\n",name,offset);
 #endif
             }
         }
+        //分配寄存器
         else
         {
             int idx = ((enum _LOCATION)(intptr_t)HashMapGet(zzqMap,name));
@@ -672,18 +671,21 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
             {
                 VarInfo* varInfo = HashMapGet(*myMap, name);
                 set_var_curReg(varInfo, reg_order);
+#ifdef DEBUG_MODE
+            //打印分配结果
+            printf("参数%s分配了寄存器%d\n",name,reg_order);    
+#endif      
             }
             else
                 //为该变量(名)创建寄存器映射
                 set_variable_register_order_by_name(*myMap,name,reg_order);
 #ifdef DEBUG_MODE
             //打印分配结果
-            printf("%s分配了寄存器%d\n",name,reg_order);    
+            printf("变量%s分配了寄存器%d\n",name,reg_order);    
 #endif                
         }    
     }
     
-
     /* allocate 和 未作寄存器分配的变量 */
     do
     {
@@ -719,18 +721,6 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
                 }
             }
             break;
-            //为数组也分配空间
-            // case AllocateOP:
-            // {
-            //     Value* val = ins_get_assign_left_value(p);
-            //     VarInfo* varInfo = HashMapGet(p->map,val->name);
-            //     //为数组也分配空间
-            //     arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
-            //     //使用一个指令将数组偏移值填充至对应的变量存储位置
-            //     struct _operand arrOff = operand_create_immediate_op(arrayOffset);
-            //     movii(varInfo->ori,arrOff);
-            //     printf("数组%s分配了地址%d\n",val->name,arrayOffset);
-            // }
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
      

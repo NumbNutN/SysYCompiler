@@ -5,15 +5,6 @@
 #include "memory_manager.h"
 #include <math.h>
 
-// Value* tempReg; //算数运算暂存寄存器
-// Value* tempReg_forTar; //目标寄存器
-
-
-// PLACE value_get_type(Value* val)
-// {
-//     srand((unsigned)time(NULL));
-//     return rand()/2;
-// }
 
 unsigned value_getConstant(Value* val)
 {

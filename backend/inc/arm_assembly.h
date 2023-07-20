@@ -71,11 +71,6 @@ void add_register_limited(enum _Pick_Arm_Register_Limited limited);
 void remove_register_limited(enum _Pick_Arm_Register_Limited limited);
 
 /**
- * @brief 判断一个变量是否是浮点数
- * @author Created by LGD on 20230113
-*/
-bool variable_is_float(Value* var);
-/**
  * @brief 判断一个指令的操作数是否是浮点数
 */
 bool ins_operand_is_float(Instruction* this,int opType);

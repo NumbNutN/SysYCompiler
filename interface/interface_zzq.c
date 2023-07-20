@@ -479,6 +479,30 @@ bool label_is_entry(Instruction* label_ins)
 
 
 /**
+ * @brief 判断一个Value是否是全局的
+ * @birth: Created by LGD on 2023-7-20
+*/
+bool value_is_global(Value* var)
+{
+    return (bool)var->IsGlobalVar;
+}
+
+/**
+ * @brief 判断一个变量是否是浮点数
+ * @author Created by LGD on 20230113
+ * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
+*/
+bool variable_is_float(Value* var)
+{
+    if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
+    else if(value_get_type(var) == ArrayTyID){
+        if(var->pdata->array_pdata.array_type == FloatTyID) return true;
+        else return false;
+    }
+    else return false;
+}
+
+/**
  * @brief 遍历列表到指定编号的函数的FuncLabel位置
  * @return 返回当前遍历到的函数入口的指令地址
  * @author LGD
