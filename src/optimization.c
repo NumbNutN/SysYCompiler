@@ -19,9 +19,9 @@ typedef struct _node_pair {
   HeadNode *value;
 } node_pair;
 
-static const int REGISTER_NUM = 3;
-
-typedef enum _LOCATION { R1 = 1, R2, R3, MEMORY } LOCATION;
+extern const int REGISTER_NUM;
+typedef enum _LOCATION { ALLOC_R4 = 1, ALLOC_R5,ALLOC_R6,ALLOC_R8,ALLOC_R9,ALLOC_R10,ALLOC_R11,ALLOC_R12,MEMORY } LOCATION;
+extern char *location_string[];
 
 void calculate_live_use_def_by_graph(ALGraph *self) {
   for (int i = 0; i < self->node_num; i++) {
@@ -37,7 +37,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
                    ImmediateIntTyID &&
                user_get_operand_use((User *)element, j)->Val->VTy->TID !=
                    ImmediateFloatTyID)) {
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
             printf("%s live use add %s\n",
                    (self->node_set)[i]->bblock_head->label->name,
                    user_get_operand_use((User *)element, j)->Val->name);
@@ -48,7 +48,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
           }
         }
         if (((Instruction *)element)->opcode < RETURN_USED) {
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
           printf("%s live def add %s\n",
                  (self->node_set)[i]->bblock_head->label->name,
                  ((Value *)element)->name);
@@ -59,7 +59,7 @@ void calculate_live_use_def_by_graph(ALGraph *self) {
       }
     }
   }
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf("\n\n\n");
 #endif
 }
@@ -174,7 +174,7 @@ void calculate_live_interval(ALGraph *self_cfg, Function *self_func) {
       element->ins_id = ins_id_seed++;
   }
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf_cur_func_ins(self_func);
 #endif
 
@@ -344,7 +344,7 @@ void line_scan_register_allocation(Function *handle_func) {
   HashMap *var_location = handle_func->var_localtion;
   var_live_interval *element;
   ListFirst(handle_func->all_var_live_interval, false);
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   while (ListNext(handle_func->all_var_live_interval, (void **)&element)) {
     printf("\tval:%s \tbegin:%d \tend:%d \n", element->self,
            element->this_var_total_live_interval->begin,

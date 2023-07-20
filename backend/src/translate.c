@@ -527,6 +527,7 @@ void translate_store_instruction(Instruction* this)
 {
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
+    //当全局变量操作时
     if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
         //将需要存储的数据加载到寄存器中
@@ -545,7 +546,8 @@ void translate_store_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    else {
+    //当数组操作时
+    else if(ins_get_operand(this, FIRST_OPERAND)->VTy->TID == ArrayTyID){
         //将需要存储的数据加载到寄存器中
         stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //将偏移装载到前变址寻址中
@@ -557,6 +559,31 @@ void translate_store_instruction(Instruction* this)
         if(memOffset.offsetType == OFFSET_IN_REGISTER)
             recycle_temp_arm_register(memOffset.addtion);
     }
+    //其他情况为对局部变量的操作
+    //退化为赋值操作
+    else
+    {
+        /* 这个列表记录生成的单目表达式里两个个操作数的 寻址方式*/
+        AssembleOperand opList[2];
+
+        opList[TARGET_OPERAND] = toOperand(this,FIRST_OPERAND);
+        opList[FIRST_OPERAND] = toOperand(this,SECOND_OPERAND);
+        if(ins_operand_is_float(this,FIRST_OPERAND))
+        {
+            if(!ins_operand_is_float(this,TARGET_OPERAND))
+                movif(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+            else
+                movff(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+        }
+        else
+        {
+            if(ins_operand_is_float(this,TARGET_OPERAND))
+                movfi(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+            else
+                movii(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+        }
+    }
+
 }
 
 /**
@@ -567,6 +594,7 @@ void translate_load_instruction(Instruction* this)
 {
     struct _operand loaded_target= toOperand(this,TARGET_OPERAND);
     struct _operand addr = toOperand(this,FIRST_OPERAND);
+    //当全局变量操作时
     if(name_is_global(ins_get_operand(this, FIRST_OPERAND)->name))
     {
         //申请存放地址的临时寄存器
@@ -580,7 +608,8 @@ void translate_load_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    else{
+    //当数组操作时
+    else if(ins_get_operand(this, FIRST_OPERAND)->VTy->TID == ArrayTyID){
         //确保加载位置是寄存器
         struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
         //将偏移装载到前变址寻址中
@@ -596,6 +625,12 @@ void translate_load_instruction(Instruction* this)
         //归还可能的存储偏移量的临时寄存器
         if(memOffset.offsetType == OFFSET_IN_REGISTER)
             recycle_temp_arm_register(memOffset.addtion);
+    }
+    //其他情况为对局部变量的操作
+    //退化为赋值操作
+    else
+    {
+        translate_assign_instructions(this);
     }
     
 }

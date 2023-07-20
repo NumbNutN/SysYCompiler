@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include "print_format.h"
+#include "interface_zzq.h"
 
 extern List *ins_list;
 extern List *global_func_list;
@@ -188,22 +189,20 @@ int main(int argc, char **argv) {
 
   AllInit();
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
   printf("%%begin the pass\n");
 #endif
   char *choose_case = NULL;
   if (argc == 5) {
-    is_functional_test = true;
+    is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
   } else if (argc == 6) {
     is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
   } else {
-    // choose_case = read_code_from_file(test_cases[81]);
     is_functional_test = true;
     choose_case = read_code_from_file(hidden_cases[4]);
     assert("invalid parameters");
-    // choose_case = read_code_from_file("./my_cases/test_case.c");
   }
   if (choose_case == NULL)
     return 1;
@@ -253,7 +252,6 @@ int main(int argc, char **argv) {
     bblock_to_dom_graph_pass((Function *)element);
     register_replace((Function *)element);
   }
-
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);

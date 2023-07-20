@@ -3,7 +3,7 @@
 
 #include "cds.h"
 
-// #define PRINT_OK
+#define DEBUG_MODE
 
 #define SEQ(x, y) ((x) && (y) && (!strcmp(x, y)))
 

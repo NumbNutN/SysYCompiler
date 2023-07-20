@@ -515,6 +515,16 @@ bool name_is_global(char* name)
 }
 
 /**
+ * @brief 通过名字判断一个变量是否是指针
+ * @birth: Created by LGD on 2023-7-19
+*/
+// bool name_is_pointer(char* name)
+// {
+//     bool result = !memcmp
+// }
+
+
+/**
  * @brief 通过名字获取一个参数的序号
  * @birth: Created by LGD on 2023-6-6
 */
@@ -710,6 +720,17 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
             }
             break;
             //为数组也分配空间
+            // case AllocateOP:
+            // {
+            //     Value* val = ins_get_assign_left_value(p);
+            //     VarInfo* varInfo = HashMapGet(p->map,val->name);
+            //     //为数组也分配空间
+            //     arrayOffset = request_new_local_variable_memory_units(p->user.value.pdata->array_pdata.total_member*4);
+            //     //使用一个指令将数组偏移值填充至对应的变量存储位置
+            //     struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+            //     movii(varInfo->ori,arrOff);
+            //     printf("数组%s分配了地址%d\n",val->name,arrayOffset);
+            // }
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
      
@@ -778,6 +799,7 @@ size_t count_register_change_from_R42R12(HashMap* register_attribute_map)
     }
     reg_list[idx] = nullop;
     list_size = idx*4;
+    return list_size;
 }
 
 /**
