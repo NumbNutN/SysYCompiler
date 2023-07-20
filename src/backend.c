@@ -4,18 +4,8 @@
 
 #include "arm.h"
 #include "memory_manager.h"
-
-typedef enum _LOCATION {
-  ALLOC_R4 = 1,
-  ALLOC_R5,
-  ALLOC_R6,
-  ALLOC_R8,
-  ALLOC_R9,
-  ALLOC_R10,
-  ALLOC_R11,
-  ALLOC_R12,
-  MEMORY
-} LOCATION;
+#include "interface_zzq.h"
+#include "variable_map.h"
 
 const int REGISTER_NUM = 8;
 char *location_string[] = {"null", "R4","R5","R6","R8","R9","R10","R11","R12", "M"};
@@ -37,7 +27,6 @@ void register_replace(Function *handle_func) {
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
   //遍历每一个block的list
   size_t totalLocalVariableSize = 0;
-  HashMap* VariableInfoMap = NULL;
 
   //翻译前初始化
   //2023-5-3 初始化前移到这个位置，因为分配内存时有可能需要为数组首地址提供存放的寄存器
@@ -68,7 +57,7 @@ void register_replace(Function *handle_func) {
   if(param_num > 4)
     currentPF.fp_offset -= (param_num-4)*4;
   
-  
+  HashMap* VariableInfoMap = NULL;
   variable_map_init(&VariableInfoMap);
 
   //变量信息表转换  
@@ -93,15 +82,6 @@ void register_replace(Function *handle_func) {
 
   //为所有参数设置初始位置
   set_param_origin_place(VariableInfoMap,param_num);
-  
-  Instruction* element = NULL;
-  //第二次function遍历，为每一句Instruction安插一个map
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&element))
-    ins_deepSet_varMap(element,VariableInfoMap);
-  }
 
   //执行期间使指针变动生效
   update_sp_value();
@@ -112,14 +92,18 @@ void register_replace(Function *handle_func) {
   //传递参数
   move_parameter_to_recorded_place(VariableInfoMap,param_num);
 
-  //为数组分配空间并装载到基址存储位置
-  //前提 所有的指令都分配了变量信息表
-  for (int i = 0; i < self_cfg->node_num; i++) {
-    int iter_num = 0;
-    ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
-    traverse_and_load_arrayBase_to_recorded_place((self_cfg->node_set)[i]->bblock_head->inst_list); 
+  Value* var;
+  VarInfo* info;
+  HashMap_foreach(VariableInfoMap, var, info)
+  {
+    printf("%s %p\n",var,info);
   }
+  //为所有数组分配和传递地址
+  //不再有前提 所有的指令都分配了变量信息表
+  attribute_and_load_array_base_address(handle_func,VariableInfoMap);
 
+  //为所有指令插入变量信息表
+  insert_variable_map(handle_func,VariableInfoMap);
 
   //第三次function遍历，翻译每一个list
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -133,6 +117,5 @@ void register_replace(Function *handle_func) {
   bash_push_pop_instruction_list("POP",currentPF.used_reg);
   //退出函数
   bash_push_pop_instruction("POP",&fp,&pc,END);
-
   
 }

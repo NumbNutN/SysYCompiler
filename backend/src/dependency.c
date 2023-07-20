@@ -211,22 +211,6 @@ void TranslateInit()
 }
 
 /**
- * @brief 每次翻译新函数前要执行的初始化
- * @birth:Created by LGD on 2023-5-9
-*/
-void InitBeforeFunction()
-{
-    //初始化用于整型的临时寄存器
-    Init_arm_tempReg();
-    //初始化浮点临时寄存器
-    Free_Vps_Register_Init();
-    //初始化栈帧状态字
-    memset(&currentPF,0,sizeof(struct _Produce_Frame));
-    //重置当前Symbal_table
-
-}
-
-/**
  * @brief 检查相对寻址范围合法性
  * @birth: Created by LGD on 2023-7-17
 */

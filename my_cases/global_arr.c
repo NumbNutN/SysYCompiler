@@ -13,7 +13,9 @@ int getstr(int get[]) {
 
 int main()
 {
-    int lengets = getstr(get);
+    int get2[6];
+    getstr(get);
+    int lengets = getstr(get2);
     int i = 0;
     while(i < lengets)
     {

@@ -12,7 +12,6 @@ void detect_temp_register_status()
 {
     for(int i=0;i<TEMP_REG_NUM;i++)
     {
-        if(TempVFPRegList[i].isAviliable == false)
-            printf("current Instruction use temp register but didn't recycle\n");
+        assert(TempARMRegList[i].isAviliable && "current Instruction use temp register but didn't recycle\n");
     }
 }

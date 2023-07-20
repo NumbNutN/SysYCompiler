@@ -611,7 +611,6 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
     int arrayOffset;
     if(*myMap == NULL)
         variable_map_init(myMap);
-    //p = traverse_to_specified_function(this,order);
     //@birth: 2023-5-9  为形式参数分配寄存器
     char* name;
     enum _LOCATION loc;
@@ -652,6 +651,8 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
 #endif
                 }
             }
+            //如果当前变量为数组，传递一个立即数给ori
+            //TODO !!!
             else {
                 int offset = request_new_local_variable_memory_unit(IntegerTyID);
                 set_variable_stack_offset_by_name(*myMap,name,offset);
@@ -685,7 +686,6 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
 #endif                
         }    
     }
-    
     /* allocate 和 未作寄存器分配的变量 */
     do
     {
@@ -724,15 +724,6 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
         }
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
      
-}
-
-/**
- * @brief 依据静态寄存器分配表进行寄存器分配
- * @birth: Created by LGD on 2023-5-14
-*/
-void traverse_list_and_do_static_register_distribute(List* insList,HashMap* zzqMap)
-{
-
 }
 
 /**

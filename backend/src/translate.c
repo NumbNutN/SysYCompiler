@@ -30,6 +30,7 @@ Instruction* currentInstruction = NULL;
 * @brief 翻译前的钩子，false表面当前指令的翻译应当终止
 * @birth: Created by LGD on 2023-7-9
 * @update: 2023-7-16 修正了store语句检查目标操作数失败的BUG
+*           2023-7-20 添加对CallWithReturnOp的考虑
 */
 bool check_before_translate(Instruction* this)
 {
@@ -63,6 +64,12 @@ bool check_before_translate(Instruction* this)
             if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
                 ins_type = INVALID_INSTRUCTION;
     }
+    // if(ins_get_operand_num(this) == 0)
+    // {
+    //     if(ins_get_opCode(this) == CallWithReturnValueOP)
+    //         if(operand_is_unallocated(toOperand(this, TARGET_OPERAND)))
+    //             ins_type = INVALID_INSTRUCTION;
+    // }
     if(ins_type == INVALID_INSTRUCTION)
     {
 #ifdef GEN_UNDEF
@@ -169,7 +176,7 @@ void translate_param_instructions(Instruction* this)
     //获取当前传递参数序号
     size_t passed_param_number = get_parameter_idx_by_name(ins_get_assign_left_value(this)->name);
 
-    //判断当前传入的变量是否是全局数组或全局数组的解引用
+    //判断当前传入的变量是否是全局数组
     if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
     {
         //需要将全局标号的地址取出到寄存器后传递
@@ -188,7 +195,7 @@ void translate_param_instructions(Instruction* this)
             operand_recycle_temp_register(temp);
         }
     }
-    //当前传入的变量是其余情况（全局变量 局部数组 局部变量）
+    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
     else{
         //小于等于4个则直接丢R0-R3
         if(passed_param_number <= 3)
@@ -264,17 +271,15 @@ void translate_call_with_return_value_instructions(Instruction* this)
     //第三步 回程将R0赋给指定变量
     //根据 The Base Procedure Call Standard
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
-    AssembleOperand op;
 
     struct _operand returnVal = toOperand(this,TARGET_OPERAND);
-    movii(returnVal,r0);
 
-    //暂存寄存器回收
-    general_recycle_temp_register_conditional(this,TARGET_OPERAND,op);
+    //如果返回值无效，则无需翻译
+    if(!operand_is_unallocated(returnVal))
+        movii(returnVal,r0);
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
-
 }
 
 
@@ -504,15 +509,24 @@ void translate_sub(Instruction* this)
 void translate_getelementptr_instruction(Instruction* this)
 {
     struct _operand tarOp = toOperand(this,TARGET_OPERAND);
-    struct _operand arrBase = toOperand(this,FIRST_OPERAND);
+    struct _operand arrBaseOri = toOperand(this,FIRST_OPERAND);
     struct _operand idx = toOperand(this,SECOND_OPERAND);
     struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this));
+    struct _operand arrBase = arrBaseOri;
+    //如果解引用的对象是全局数组
+    if(value_is_global(ins_get_operand(this, FIRST_OPERAND))){
+        //采用临时寄存器作为全局数组的基地址
+        arrBase = operand_pick_temp_register(ARM);
+        pseudo_ldr("LDR",arrBase,arrBaseOri);
+    }
+    //解引用的对象是局部数组或者全局数组的解引用
+    else
+        arrBase = operand_load_to_register(arrBaseOri,nullop,ARM);
 
+
+    idx = operand_load_to_register(idx,nullop,ARM);
     //使用乘加指令
     step_long = operand_load_to_register(step_long,nullop,ARM);
-    arrBase = operand_load_to_register(arrBase,nullop,ARM);
-    idx = operand_load_to_register(idx,nullop,ARM);
-
     struct _operand middleOp = operand_pick_temp_register(ARM);
     //乘加指令，且tarOp不会作为立即数，没必要从内存加载
     //middleOp = operand_load_to_register(tarOp,nullop);
@@ -531,6 +545,7 @@ void translate_getelementptr_instruction(Instruction* this)
         movii(tarOp,middleOp);
         general_recycle_temp_register_conditional(this,TARGET_OPERAND,middleOp);
     }
+    
 
 }
 
@@ -565,9 +580,8 @@ void translate_store_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    //当对全局数组操作时
-    else if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
-       (value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
+    //当对局部数组 或 全局数组的解引用指针（最后一层引用） 操作时
+    else if((value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
     {
         //将需要存储的数据加载到寄存器中
         stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
@@ -577,20 +591,6 @@ void translate_store_instruction(Instruction* this)
         reg2mem(stored_elem, storeMem);
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
-    }
-    //对当局部数组操作时
-    else if(value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID){
-        //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
-        //将偏移装载到前变址寻址中
-        struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-        reg2mem(stored_elem, memOffset);
-        //归还可能的存储数据的临时寄存器
-        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
-        //归还可能的存储偏移量的临时寄存器
-        //TODO
-        if(memOffset.offsetType == OFFSET_IN_REGISTER)
-            recycle_temp_arm_register(memOffset.addtion);
     }
     //其他情况为对局部变量的操作
     //退化为赋值操作
@@ -643,41 +643,14 @@ void translate_load_instruction(Instruction* this)
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
-    //当对全局数组操作时
-    else if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
-       (value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
+    //当对局部数组 或 全局数组的解引用指针（最后一层引用） 操作时
+    else if((value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
     {
-        //确保加载位置是寄存器
-        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
         //封装间接寻址
         struct _operand loadMem = operand_Create_indirect_addressing(addr);
-        //执行store
-        mem2reg(loadMem, middle_loaded_target);
+        //执行load
+        movii(loaded_target,loadMem);
 
-        //如果原加载位置与当前loaded_target不符，需要再次传输
-        if(!operand_is_same(middle_loaded_target,loaded_target))
-            movii(loaded_target,middle_loaded_target);
-
-        //归还可能的存储数据的临时寄存器
-        general_recycle_temp_register_conditional(this,SECOND_OPERAND,middle_loaded_target);
-    }
-    //当对局部数组操作时
-    else if(value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID){
-        //确保加载位置是寄存器
-        struct _operand middle_loaded_target = operand_load_to_register(loaded_target,nullop,ARM);
-        //将偏移装载到前变址寻址中
-        struct _operand memOffset = operand_create2_relative_adressing(FP,addr);
-        mem2reg(middle_loaded_target, memOffset);
-
-        //如果原加载位置与当前loaded_target不符，需要再次传输
-        if(!operand_is_same(middle_loaded_target,loaded_target))
-            movii(loaded_target,middle_loaded_target);
-        
-        //归还加载数据的临时寄存器
-        general_recycle_temp_register_conditional(this,TARGET_OPERAND,middle_loaded_target);
-        //归还可能的存储偏移量的临时寄存器
-        if(memOffset.offsetType == OFFSET_IN_REGISTER)
-            recycle_temp_arm_register(memOffset.addtion);
     }
     //其他情况为对局部变量的操作
     //退化为赋值操作
@@ -686,27 +659,6 @@ void translate_load_instruction(Instruction* this)
         translate_assign_instructions(this);
     }
     
-}
-
-/**
- * @brief 翻译为局部数组分配地址空间的指令
- * @birth:Created by LGD on 2023-5-2
- * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
- *          2023-5-29 考虑了指针在内存的情况
- *          2023-7-20 全局变量作参数allocate时，无需矫正
-*/
-void translate_allocate_instruction(Instruction* this)
-{
-    //数组变量是一个指针变量，其变量信息记录了一个栈帧中的偏移值作为基地址
-    struct _operand arrayBase = toOperand(this,TARGET_OPERAND);
-    
-    //数组的矫正基地址在执行期完成运算
-    if(name_is_parameter(ins_get_assign_left_value(this)->name))
-    {
-        struct _operand offset = operand_create_immediate_op(-currentPF.fp_offset);
-        addiii(arrayBase,arrayBase,offset);
-    }
-
 }
 
 /**
