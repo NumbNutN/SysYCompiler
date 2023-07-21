@@ -188,16 +188,16 @@ void print_single_assembleNode(assmNode *p) {
 }
 
 /**
- *@brief 打印单个数据段节点
- *@brith: Created by LGD on 2023-5-30
+ * @brief 打印单个数据段节点
+ * @brith: Created by LGD on 2023-5-30
+ * @update: 2023-7-20 跳过对NONE_CNT的内容的打印
  */
 void print_single_data(struct _dataNode *node) {
   if (node->label != NULL)
     printf("%s:\n", node->label);
-  else
-    printf("\t\t");
 
-  printf("%s\t%d\n", enum_as_expression_2_str(node->dExp), node->content);
+  if(node->dExp != NONE_CNT)
+    printf("%s\t%d\n", enum_as_expression_2_str(node->dExp), node->content);
 }
 
 /**

@@ -7,18 +7,14 @@
 #include "interface_zzq.h"
 //opType2Size
 #include "memory_manager.h"
+//value_get_type
+#include "dependency.h"
+//global_array_init_item
+#include "value.h"
+//hashmap_foreach
+#include "variable_map.h"
 
-/**
-@brief:翻译全局变量存储
-@update:2023-5-29
-*/
-void translate_global_store_instruction(Instruction* this)
-{
-    char* name = ins_get_operand(this,FIRST_OPERAND)->name;
-    struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
-    
-    dot_long_expression(name,stored_elem,true);
-}
+extern HashMap *global_array_init_hashmap;
 
 /**
  * @brief 翻译allocate语句
@@ -26,10 +22,23 @@ void translate_global_store_instruction(Instruction* this)
 **/
 void translate_global_allocate_instruction(Instruction* this)
 {
-    char* name = ins_get_operand(this, TARGET_OPERAND)->name;
-    size_t size = opTye2size(ins_get_operand(this,TARGET_OPERAND)->VTy->TID);
+    char* name = ins_get_operand(this,TARGET_OPERAND)->name;
+    //翻译全局或局部数组
+    if(value_get_type(ins_get_operand(this, TARGET_OPERAND)) == ArrayTyID)
+    {
+        List* list;
+        // HashMap_foreach(global_array_init_hashmap, name, list)
+        // {
+        //     printf("%s %p\n",name,list);
+        // }
+        array_init_literal(name,(List*)HashMapGet(global_array_init_hashmap, (void*)name));
+    }
+    //翻译全局变量
+    else{
+        size_t size = opTye2size(ins_get_operand(this,TARGET_OPERAND)->VTy->TID);
+        dot_zero_expression(name,4);
+    }
 
-    dot_zero_expression(name);
 }
 
 /**

@@ -6,7 +6,7 @@
 #include "type.h"
 #include "value.h"
 
-#include <malloc/_malloc.h>
+
 #include <math.h>
 #include <stdarg.h> //变长参数函数所需的头文件
 #include <stdbool.h>

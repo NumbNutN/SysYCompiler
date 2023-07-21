@@ -1,4 +1,5 @@
-int get[6] ;
+int get[6];
+int get3[5][5] = {{},{1,2}};
 
 int getstr(int get[]) {
     int x = getch();
@@ -13,9 +14,9 @@ int getstr(int get[]) {
 
 int main()
 {
-    int get2[6];
+    int get2[5][5] = {{},{1,2}};
     getstr(get);
-    int lengets = getstr(get2);
+    int lengets = getstr(get2[2]);
     int i = 0;
     while(i < lengets)
     {

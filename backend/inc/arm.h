@@ -202,6 +202,7 @@ extern struct _dataNode* dataPrev;
 extern struct _dataNode* bssPrev;
 
 enum _Data_Expression{
+    NONE_CNT,
     DOT_LONG,
     DOT_ZERO
 };
@@ -218,12 +219,28 @@ typedef struct _dataNode{
 } DataNode;
 
 /**
+ * @brief 只在数据段打印标签
+ * @birth: Created by LGD on 2023-7-20
+*/
+void data_label(char* name);
+
+/**
  * @brief: .long表达式
  * @birth:Created by LGD on 2023-5-29
  * @update: long指令被设计为可替换的
 */
 void dot_long_expression(char* name,struct _operand expr,bool replacale);
-void dot_zero_expression(char* name);
+/**
+ * @brief: .zero表达式
+ * @birth:Created by LGD on 2023-5-29
+ * @update: 2023-7-20 必须指定空间大小
+*/
+void dot_zero_expression(char* name,size_t space);
+/**
+ * @brief 翻译数组字面量
+ * @birth: Created by LGD on 2023-7-20
+*/
+void array_init_literal(char* name,List* literalList);
 
 /****************************************************************/
 /*                           Other                             */
