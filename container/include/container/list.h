@@ -16,8 +16,8 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
  *   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  *   IN THE SOFTWARE.
  */
 
@@ -34,92 +34,101 @@
 extern "C" {
 #endif
 
-/** ListData is the data type for the container private information. */
-typedef struct _ListData ListData;
-
 /** Element clean function called when an element is removed. */
-typedef void (*ListClean) (void*);
+typedef void (*ListClean)(void *);
 
+typedef struct _ListNode {
+  void *element_;
+  struct _ListNode *pred_;
+  struct _ListNode *succ_;
+} ListNode;
+
+typedef struct _ListData {
+  unsigned size_;
+  unsigned iter_round_;
+  ListNode *head_;
+  ListNode *iter_node_;
+  ListClean func_clean_;
+} ListData;
 
 /** The implementation for doubly linked list. */
 typedef struct _List {
-    /** The container private information */
-    ListData *data;
+  /** The container private information */
+  ListData *data;
 
-    /** Push an element to the head of the list.
-        @see ListPushFront */
-    bool (*push_front) (struct _List*, void*);
+  /** Push an element to the head of the list.
+      @see ListPushFront */
+  bool (*push_front)(struct _List *, void *);
 
-    /** Push an element to the tail of the list.
-        @see ListPushBack */
-    bool (*push_back) (struct _List*, void*);
+  /** Push an element to the tail of the list.
+      @see ListPushBack */
+  bool (*push_back)(struct _List *, void *);
 
-    /** Insert an element to the specified index of the list.
-        @see ListInsert */
-    bool (*insert) (struct _List*, unsigned, void*);
+  /** Insert an element to the specified index of the list.
+      @see ListInsert */
+  bool (*insert)(struct _List *, unsigned, void *);
 
-    /** Pop an element from the head of the list.
-        @see ListPopFront */
-    bool (*pop_front) (struct _List*);
+  /** Pop an element from the head of the list.
+      @see ListPopFront */
+  bool (*pop_front)(struct _List *);
 
-    /** Pop an element from the tail of the list.
-        @see ListPopBack */
-    bool (*pop_back) (struct _List*);
+  /** Pop an element from the tail of the list.
+      @see ListPopBack */
+  bool (*pop_back)(struct _List *);
 
-    /** Remove an element from the specified index of the list
-        @see ListRemove */
-    bool (*remove) (struct _List*, unsigned);
+  /** Remove an element from the specified index of the list
+      @see ListRemove */
+  bool (*remove)(struct _List *, unsigned);
 
-    /** Replace an element at the head of the list.
-        @see ListSetFront */
-    bool (*set_front) (struct _List*, void*);
+  /** Replace an element at the head of the list.
+      @see ListSetFront */
+  bool (*set_front)(struct _List *, void *);
 
-    /** Replace an element at the tail of the list.
-        @see ListSetBack */
-    bool (*set_back) (struct _List*, void*);
+  /** Replace an element at the tail of the list.
+      @see ListSetBack */
+  bool (*set_back)(struct _List *, void *);
 
-    /** Replace an element at the specified index of the list.
-        @see ListSetAt */
-    bool (*set_at) (struct _List*, unsigned, void*);
+  /** Replace an element at the specified index of the list.
+      @see ListSetAt */
+  bool (*set_at)(struct _List *, unsigned, void *);
 
-    /** Get an element from the head of the list.
-        @see ListGetFront */
-    bool (*get_front) (struct _List*, void**);
+  /** Get an element from the head of the list.
+      @see ListGetFront */
+  bool (*get_front)(struct _List *, void **);
 
-    /** Get an element from the tail of the list.
-        @see ListGetBack */
-    bool (*get_back) (struct _List*, void**);
+  /** Get an element from the tail of the list.
+      @see ListGetBack */
+  bool (*get_back)(struct _List *, void **);
 
-    /** Get an element from the specified index of the list.
-        @see ListGetAt */
-    bool (*get_at) (struct _List*, unsigned, void**);
+  /** Get an element from the specified index of the list.
+      @see ListGetAt */
+  bool (*get_at)(struct _List *, unsigned, void **);
 
-    /** Return the number of stored elements.
-        @see ListSize */
-    unsigned (*size) (struct _List*);
+  /** Return the number of stored elements.
+      @see ListSize */
+  unsigned (*size)(struct _List *);
 
-    /** Reverse the list.
-        @see ListReverse */
-    void (*reverse) (struct _List*);
+  /** Reverse the list.
+      @see ListReverse */
+  void (*reverse)(struct _List *);
 
-    /** Initialize the list iterator.
-        @see ListFirst */
-    void (*first) (struct _List*, bool);
+  /** Initialize the list iterator.
+      @see ListFirst */
+  void (*first)(struct _List *, bool);
 
-    /** Get the element pointed by the iterator and advance the iterator.
-        @see ListNext */
-    bool (*next) (struct _List*, void**);
+  /** Get the element pointed by the iterator and advance the iterator.
+      @see ListNext */
+  bool (*next)(struct _List *, void **);
 
-    /** Get the element pointed by the iterator and advance the iterator
-        in the reverse order.
-        @see ListReverseNext */
-    bool (*reverse_next) (struct _List*, void**);
+  /** Get the element pointed by the iterator and advance the iterator
+      in the reverse order.
+      @see ListReverseNext */
+  bool (*reverse_next)(struct _List *, void **);
 
-    /** Set the custom element cleanup function.
-        @see ListSetClean */
-    void (*set_clean) (struct _List*, ListClean);
+  /** Set the custom element cleanup function.
+      @see ListSetClean */
+  void (*set_clean)(struct _List *, ListClean);
 } List;
-
 
 /*===========================================================================*
  *             Definition for the exported member operations                 *
@@ -130,15 +139,14 @@ typedef struct _List {
  * @retval obj          The successfully constructed list
  * @retval NULL         Insufficient memory for list construction
  */
-List* ListInit();
+List *ListInit();
 
 /**
  * @brief The destructor for List.
  *
  * @param obj           The pointer to the to be destructed list
  */
-void ListDeinit(List* obj);
-
+void ListDeinit(List *obj);
 
 /**
  * @brief Push an element to the head of the list.
@@ -149,7 +157,7 @@ void ListDeinit(List* obj);
  * @retval true         The element is successfully pushed
  * @retval false        The element cannot be pushed due to insufficient memory
  */
-bool ListPushFront(List* self, void* element);
+bool ListPushFront(List *self, void *element);
 
 /**
  * @brief Push an element to the tail of the list.
@@ -160,7 +168,7 @@ bool ListPushFront(List* self, void* element);
  * @retval true         The element is successfully pushed
  * @retval false        The element cannot be pushed due to insufficient memory
  */
-bool ListPushBack(List* self, void* element);
+bool ListPushBack(List *self, void *element);
 
 /**
  * @brief Insert an element to the specified index of the list.
@@ -176,7 +184,7 @@ bool ListPushBack(List* self, void* element);
  * @retval false        The element cannot be inserted due to invalid index
  *                      (> list size) or insufficient memory
  */
-bool ListInsert(List* self, unsigned idx, void* element);
+bool ListInsert(List *self, unsigned idx, void *element);
 
 /**
  * @brief Pop an element from the head of the list.
@@ -189,7 +197,7 @@ bool ListInsert(List* self, unsigned idx, void* element);
  * @retval true         The head element is successfully popped
  * @retval false        The list is empty
  */
-bool ListPopFront(List* self);
+bool ListPopFront(List *self);
 
 /**
  * @brief Pop an element from the tail of the list.
@@ -202,7 +210,7 @@ bool ListPopFront(List* self);
  * @retval true         The tail element is successfully popped
  * @retval false        The list is empty
  */
-bool ListPopBack(List* self);
+bool ListPopBack(List *self);
 
 /**
  * @brief Remove an element from the specified index of the list.
@@ -217,7 +225,7 @@ bool ListPopBack(List* self);
  * @retval true         The specified element is successfully removed.
  * @retval false        Invalid index (>= list size) or empty list
  */
-bool ListRemove(List* self, unsigned idx);
+bool ListRemove(List *self, unsigned idx);
 
 /**
  * @brief Replace an element at the head of the list.
@@ -231,7 +239,7 @@ bool ListRemove(List* self, unsigned idx);
  * @retval true         The specified element is successfully set.
  * @retval false        The list is empty
  */
-bool ListSetFront(List* self, void* element);
+bool ListSetFront(List *self, void *element);
 
 /**
  * @brief Replace an element at the tail of the list.
@@ -245,7 +253,7 @@ bool ListSetFront(List* self, void* element);
  * @retval true         The specified element is successfully set.
  * @retval false        The list is empty
  */
-bool ListSetBack(List* self, void* element);
+bool ListSetBack(List *self, void *element);
 
 /**
  * @brief Replace an element at the specified index of the list.
@@ -260,7 +268,7 @@ bool ListSetBack(List* self, void* element);
  * @retval true         The specified element is successfully set.
  * @retval false        Invalid index (>= list size)
  */
-bool ListSetAt(List* self, unsigned idx, void* element);
+bool ListSetAt(List *self, unsigned idx, void *element);
 
 /**
  * @brief Get an element from the head of the list.
@@ -271,7 +279,7 @@ bool ListSetAt(List* self, unsigned idx, void* element);
  * @retval true         The specified element is successfully retrieved
  * @retval false        The list is empty
  */
-bool ListGetFront(List* self, void** p_element);
+bool ListGetFront(List *self, void **p_element);
 
 /**
  * @brief Get an element from the tail of the list.
@@ -282,7 +290,7 @@ bool ListGetFront(List* self, void** p_element);
  * @retval true         The specified element is successfully retrieved
  * @retval false        The list is empty
  */
-bool ListGetBack(List* self, void** p_element);
+bool ListGetBack(List *self, void **p_element);
 
 /**
  * @brief Get an element from the specified index of the list.
@@ -294,7 +302,7 @@ bool ListGetBack(List* self, void** p_element);
  * @retval true         The specified element is successfully retrieved
  * @retval false        Invalid index (>= list size)
  */
-bool ListGetAt(List* self, unsigned idx, void** p_element);
+bool ListGetAt(List *self, unsigned idx, void **p_element);
 
 /**
  * @brief Return the number of stored elements.
@@ -303,7 +311,7 @@ bool ListGetAt(List* self, unsigned idx, void** p_element);
  *
  * @retval size         The number of stored elements
  */
-unsigned ListSize(List* self);
+unsigned ListSize(List *self);
 
 /**
  * @brief Reverse the list.
@@ -313,7 +321,7 @@ unsigned ListSize(List* self);
  * @retval SUCC
  * @retval ERR_NOINIT   Uninitialized container
  */
-void ListReverse(List* self);
+void ListReverse(List *self);
 
 /**
  * @brief Initialize the vector iterator.
@@ -321,7 +329,7 @@ void ListReverse(List* self);
  * @param self          The pointer to List structure
  * @param is_reverse    Whether to apply the reversed traversal
  */
-void ListFirst(List* self, bool is_reverse);
+void ListFirst(List *self, bool is_reverse);
 
 /**
  * @brief Get the element pointed by the iterator and advance the iterator.
@@ -332,7 +340,7 @@ void ListFirst(List* self, bool is_reverse);
  * @retval true         The tail end is not reached
  * @retval false        The tail end is reached
  */
-bool ListNext(List* self, void** p_element);
+bool ListNext(List *self, void **p_element);
 
 /**
  * @brief Get the element pointed by the iterator and advance the iterator
@@ -344,7 +352,7 @@ bool ListNext(List* self, void** p_element);
  * @retval true         The head end is not reached
  * @retval false        The head end is reached
  */
-bool ListReverseNext(List* self, void** p_element);
+bool ListReverseNext(List *self, void **p_element);
 
 /**
  * @brief Set the custom element cleanup function
@@ -352,7 +360,7 @@ bool ListReverseNext(List* self, void** p_element);
  * @param self          The pointer to List structure
  * @param func          The custom function
  */
-void ListSetClean(List* self, ListClean func);
+void ListSetClean(List *self, ListClean func);
 
 #ifdef __cplusplus
 }
