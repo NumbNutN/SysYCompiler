@@ -20,6 +20,12 @@ extern bool Open_Register_Allocation;
 extern HashMap* func_hashMap;
 /* Extern Global Variable End*/
 
+/**
+ * @brief 数组字面量初始化表
+ * @birth: Created by ZZQ on 2023-7-20
+*/
+extern HashMap *global_array_init_hashmap;
+
 
 int ins_get_opCode(Instruction* this)
 {
@@ -416,9 +422,6 @@ void translate_global_variable_list(List* this)
     {
         switch(p->opcode)
         {
-            case StoreOP:
-                translate_global_store_instruction(p);
-            break;
             case AllocateOP:
                 translate_global_allocate_instruction(p);
             break;
@@ -633,22 +636,56 @@ size_t getLocalVariableSize(HashMap* varMap)
 void translate_allocate_instruction(Instruction* this,HashMap* map)
 {
     Value* var = ins_get_assign_left_value(this);
+    char* name = var->name;
     //如果是作为参数的数组，什么都不用做
-    if(name_is_parameter(var->name))
+    if(name_is_parameter(name))
         return;
     //如果是全局数组，什么都不用做
     if(value_get_type(var) == ArrayTyID && value_is_global(var))
         return;
     //如果当前是局部数组，在这里分配单元
     else if(value_get_type(ins_get_assign_left_value(this)) == ArrayTyID){
+        bool has_init_literal;
         VarInfo* info = HashMapGet(map,var->name);
+        size_t totalSpace = var->pdata->array_pdata.total_member * 4;
+        if((has_init_literal = array_init_literal(name,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name))) == true)
+        {
+            //构造其初始位置
+            struct _operand arrayOri = {.addrMode = LABEL_MARKED_LOCATION,.oprendVal = (int64_t)(void*)name};
+            set_var_oriLoc(info,arrayOri);
+        }
         //为数组也分配空间
         int arrayOffset = request_new_local_variable_memory_units(this->user.value.pdata->array_pdata.total_member*4);
+        printf("数组%s分配了地址%d\n",var->name,arrayOffset);
         //构造立即数操作数
         struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+        //获取局部数组当前地址指针（是寄存器或内存，在之前分配）
+        struct _operand addrPtr = info->current;
         //和FP相加构成绝对地址
-        addiii(info->ori, fp, arrOff);
-        printf("数组%s分配了地址%d\n",var->name,arrayOffset);
+        addiii(addrPtr, fp, arrOff);
+
+        //在数据段构造字面量
+        if(has_init_literal)
+        {
+            //传递目的地址
+            movii(r0, info->current);
+            add_register_limited(PARAMETER1_LIMITED);
+            //传递源地址 //伪指令获得
+            pseudo_ldr("LDR",r1,info->ori);
+            add_register_limited(PARAMETER2_LIMITED);
+            //传递尺寸
+            struct _operand size = operand_create_immediate_op(totalSpace);
+            movii(r2,size);
+            add_register_limited(PARAMETER3_LIMITED);
+            
+            //若存在字面量，将当前字面量首地址拷贝到当前地址处
+            branch_instructions("memcpy", "L", false, NONELABEL);
+
+            //接触寄存器限制
+            remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED | PARAMETER3_LIMITED);
+
+            info->ori = info->current;
+        }
     }
 }
 

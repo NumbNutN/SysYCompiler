@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "operand.h"
+//global_array_init_item
+#include <value.h>
 
 List* dataList = NULL;
 
@@ -8,6 +10,8 @@ struct _dataNode* bssPrev = NULL;
 
 struct _AsDirective* asList = NULL;
 struct _AsDirective* asPrev = NULL;
+
+
 
 /**
  * @brief 初始化数据链表
@@ -78,12 +82,23 @@ void asDirective_link_node(struct _AsDirective* node)
 }
 
 /**
- * @brief: .long表达式
- * @birth:Created by LGD on 2023-5-29
- * @update: long指令被设计为可替换的
+ * @brief 只在数据段打印标签
+ * @birth: Created by LGD on 2023-7-20
 */
-void dot_long_expression(char* name,struct _operand expr,bool replacale)
+void data_label(char* name)
 {
+    struct _dataNode* node = (struct _dataNode*)malloc(sizeof(struct _dataNode));
+    memset(node, 0, sizeof(struct _dataNode));
+    node->label = name;
+    node->dExp = NONE_CNT;
+    data_link_node(node);
+}
+
+/**
+ * @brief: .long表达式 直接指定常数
+ * @birth:Created by LGD on 2023-7-20
+*/
+void dot_long_expression_literal(char* name,int num,bool replacale){
     //检索已经存在的long或zero
     if(replacale)
     {
@@ -106,26 +121,39 @@ void dot_long_expression(char* name,struct _operand expr,bool replacale)
     }
 
     //创建新的节点
-    assert(expr.addrMode == IMMEDIATE && ".long expression could only be integer literal");
     struct _dataNode* node = (struct _dataNode*)malloc(sizeof(struct _dataNode));
     memset(node, 0, sizeof(struct _dataNode));
     node->label = name;
     node->dExp = DOT_LONG;
-    node->content = expr.oprendVal;
-    data_link_node(node);
+    node->content = num;
+    data_link_node(node);    
 }
 
 /**
-@brief: .zero表达式
-@birth:Created by LGD on 2023-5-29
+ * @brief: .long表达式
+ * @birth:Created by LGD on 2023-5-29
+ * @update: long指令被设计为可替换的
+ *          2023-7-20 简化逻辑
 */
-void dot_zero_expression(char* name)
+void dot_long_expression(char* name,struct _operand expr,bool replacale)
+{
+    //创建新的节点
+    assert(expr.addrMode == IMMEDIATE && ".long expression could only be integer literal");
+    dot_long_expression_literal(name,expr.oprendVal,replacale);
+}
+
+/**
+ * @brief: .zero表达式
+ * @birth:Created by LGD on 2023-5-29
+ * @update: 2023-7-20 必须指定空间大小
+*/
+void dot_zero_expression(char* name,size_t space)
 {
     struct _dataNode* node = (struct _dataNode*)malloc(sizeof(struct _dataNode));
     memset(node, 0, sizeof(struct _dataNode));
     node->label = name;
     node->dExp = DOT_ZERO;
-    node->content = 4;
+    node->content = space;
     data_link_node(node);
 }
 
@@ -142,6 +170,44 @@ void as_set_function_type(char* name)
     asDirective_link_node(node);
 }
 
+/**
+ * @brief 翻译数组字面量
+ * @return 为1代表当前数组有初始化，为0则否
+ * @birth: Created by LGD on 2023-7-20
+ * @update: 2023-7-21 返回布尔值判断是否有字面量
+ *          2023-7-21 数组的最后空白部分也要补齐
+*/
+bool array_init_literal(char* name,size_t total_space,List* literalList)
+{
+    //判断当前数组是否有字面量
+    if(literalList == NULL)return false;
+    //判断当前数组是否需要字面量初始化
+    if(ListSize(literalList) == 0)
+        return false;
+
+    ListFirst(literalList, false);
+    global_array_init_item* item;
+    while(ListNext(literalList, (void*)&item) != false){
+        printf("%d %f\n",item->offset,item->value);
+    }
+
+    ListFirst(literalList, false);
+    data_label(name);
+    //当前下标计数器
+    size_t idx = 0;
+    while(ListNext(literalList, (void*)&item) != false){
+        if(item->offset != idx)
+        {
+            dot_zero_expression(NULL,4*(item->offset-idx));
+            idx = item->offset;
+        }
+        dot_long_expression_literal(NULL, (int)item->value, false);
+        ++idx;
+    }
+    //补齐数组末端
+    dot_zero_expression(NULL, total_space - idx * 4);
+    return true;
+}
 
 
 

@@ -163,11 +163,6 @@ void translate_store_instruction(Instruction* this);
 /**************************************************************/
 /*                          子程序调用                          */
 /***************************************************************/
-/**
-@brief:翻译全局变量存储
-@update:2023-5-29
-*/
-void translate_global_store_instruction(Instruction* this);
 
 /**
  * @brief 翻译allocate语句

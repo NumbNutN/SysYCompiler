@@ -371,6 +371,9 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
     size_t recycle_status = NO_NEED_TO_RECYCLE;
     if(variable_is_in_memory(this,ins_get_operand(this,specificOperand)))
         recycle_status |= VARIABLE_IN_MEMORY;
+
+     if(value_is_global(ins_get_operand(this,specificOperand)))
+        recycle_status |= VARIABLE_IN_MEMORY;
     
     if(variable_is_in_instruction(this,ins_get_operand(this,specificOperand)))
         recycle_status |= VARIABLE_LDR_FROM_IMMEDIATE;
