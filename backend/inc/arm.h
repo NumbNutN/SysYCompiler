@@ -54,6 +54,7 @@ typedef enum
     BI,      //Branch Instructions
     UNDEF,  /*Undefined Instruction 2023-7-9*/
     LDR_PSEUDO_INSTRUCTION,
+    POOL /*2023-7-21 文字池*/
     
 } ASSEMBLE_TYPE;
 
@@ -479,6 +480,12 @@ void pseudo_fld(char* opCode,AssembleOperand reg,AssembleOperand immedi,TypeID t
  * @birth: Created by LGD on 20230202
 */
 void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi);
+
+/**
+ * @brief 生成一个文字池伪指令
+ * @birth: Created by LGD on 2023-7-21
+*/
+void pool();
 
 void linkNode(assmNode* now);
 

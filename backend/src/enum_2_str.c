@@ -37,6 +37,8 @@ char* instructionMnemonic2Str(enum _ARM_Instruction_Mnemonic aim)
             return "MLA";
         case MOV:
             return "MOV";
+        case MVN:
+            return "MVN";
         case CMP:
             return "CMP";
         case FADD:

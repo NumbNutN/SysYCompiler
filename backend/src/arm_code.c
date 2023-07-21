@@ -552,6 +552,17 @@ void undefined()
 }
 
 /**
+ * @brief 生成一个文字池伪指令
+ * @birth: Created by LGD on 2023-7-21
+*/
+void pool()
+{
+    assmNode* node = arm_instruction_node_init();
+    node->assemType = POOL;
+    linkNode(node);
+}
+
+/**
  * @brief LDR伪指令
  * @param opCode LDR
  * @birth: Created by LGD on 20230202
