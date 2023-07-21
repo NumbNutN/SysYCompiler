@@ -238,9 +238,12 @@ void dot_long_expression(char* name,struct _operand expr,bool replacale);
 void dot_zero_expression(char* name,size_t space);
 /**
  * @brief 翻译数组字面量
+ * @return 为1代表当前数组有初始化，为0则否
  * @birth: Created by LGD on 2023-7-20
+ * @update: 2023-7-21 返回布尔值判断是否有字面量
+ *          2023-7-21 数组的最后空白部分也要补齐
 */
-void array_init_literal(char* name,List* literalList);
+bool array_init_literal(char* name,size_t total_space,List* literalList);
 
 /****************************************************************/
 /*                           Other                             */
@@ -314,6 +317,7 @@ extern struct _operand immedOp;
 extern struct _operand r027[8];
 extern struct _operand r0;
 extern struct _operand r1;
+extern struct _operand r2;
 
 extern struct _operand sp;
 extern struct _operand lr;

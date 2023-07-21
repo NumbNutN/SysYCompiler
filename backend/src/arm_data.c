@@ -172,15 +172,18 @@ void as_set_function_type(char* name)
 
 /**
  * @brief 翻译数组字面量
+ * @return 为1代表当前数组有初始化，为0则否
  * @birth: Created by LGD on 2023-7-20
+ * @update: 2023-7-21 返回布尔值判断是否有字面量
+ *          2023-7-21 数组的最后空白部分也要补齐
 */
-void array_init_literal(char* name,List* literalList)
+bool array_init_literal(char* name,size_t total_space,List* literalList)
 {
     //判断当前数组是否有字面量
-    if(literalList == NULL)return;
+    if(literalList == NULL)return false;
     //判断当前数组是否需要字面量初始化
     if(ListSize(literalList) == 0)
-        return;
+        return false;
 
     ListFirst(literalList, false);
     global_array_init_item* item;
@@ -201,6 +204,9 @@ void array_init_literal(char* name,List* literalList)
         dot_long_expression_literal(NULL, (int)item->value, false);
         ++idx;
     }
+    //补齐数组末端
+    dot_zero_expression(NULL, total_space - idx * 4);
+    return true;
 }
 
 

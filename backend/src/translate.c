@@ -25,7 +25,6 @@ extern HashMap* func_hashMap;
 */
 Instruction* currentInstruction = NULL;
 
-
 /**
 * @brief 翻译前的钩子，false表面当前指令的翻译应当终止
 * @birth: Created by LGD on 2023-7-9

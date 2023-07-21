@@ -23,6 +23,7 @@ extern HashMap *global_array_init_hashmap;
 void translate_global_allocate_instruction(Instruction* this)
 {
     char* name = ins_get_operand(this,TARGET_OPERAND)->name;
+    Value* var = ins_get_operand(this,TARGET_OPERAND);
     //翻译全局或局部数组
     if(value_get_type(ins_get_operand(this, TARGET_OPERAND)) == ArrayTyID)
     {
@@ -31,7 +32,14 @@ void translate_global_allocate_instruction(Instruction* this)
         // {
         //     printf("%s %p\n",name,list);
         // }
-        array_init_literal(name,(List*)HashMapGet(global_array_init_hashmap, (void*)name));
+        size_t totalSpace = var->pdata->array_pdata.total_member * 4;
+        if(!array_init_literal(name,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name)))
+        {
+            //即使全局数组不存在字面量，其也应当被声明空间
+            dot_zero_expression(name, var->pdata->array_pdata.total_member * 4);
+        }
+
+
     }
     //翻译全局变量
     else{

@@ -8,6 +8,7 @@
 
 struct _operand r0 = {REGISTER_DIRECT,R0,0};
 struct _operand r1 = {REGISTER_DIRECT,R1,0};
+struct _operand r2 = {REGISTER_DIRECT,R2,0};
 struct _operand immedOp = {IMMEDIATE,0,0};
 struct _operand sp = {REGISTER_DIRECT,SP,0};
 struct _operand lr = {REGISTER_DIRECT,LR,0};
