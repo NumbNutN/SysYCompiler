@@ -117,7 +117,7 @@ void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset)
     vi->current.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     vi->current.oprendVal = FP;
     vi->current.addtion = offset;
-    vi->ori.offsetType = OFFSET_IMMED;
+    vi->current.offsetType = OFFSET_IMMED;
 }
 
 /**
@@ -739,6 +739,10 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
     for(int i=0;i<paramNum;++i)
     {
         sprintf(name,"param%d",i);
+        if(!HashMapContain(varMap, name)){
+            //当前参数没有分配寄存器 不需要移动位置
+            continue;
+        }
         varInfo = HashMapGet(varMap,name);
         update_variable_location(varInfo,true);
     }

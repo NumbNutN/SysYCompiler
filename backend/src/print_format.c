@@ -142,7 +142,9 @@ void print_single_assembleNode(assmNode *p) {
       /***********************CMP指令****************************/
       if (!strcmp(p->opCode, "CMP") && i == Rn)
         continue;
-      /**********************************************************/
+      /***********************MVN指令*****************************/
+      if (!strcmp(p->opCode, "MVN") && i == Rn)
+        continue;
       print_operand(p->op[i], i);
       if (i != p->op_len - 1)
         printf(", ");
@@ -184,7 +186,11 @@ void print_single_assembleNode(assmNode *p) {
     if (p->op[1].addrMode == LABEL_MARKED_LOCATION)
       printf("=%s\n", (char *)p->op[1].oprendVal);
     break;
+  case POOL:
+    printf(".pool\n");
+    break;
   }
+  
 }
 
 /**

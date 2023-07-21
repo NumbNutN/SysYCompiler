@@ -564,11 +564,14 @@ void movini(AssembleOperand tar,AssembleOperand op1)
         else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
         {
             op1.oprendVal = - op1.oprendVal;
-            op1 = operand_load_immediate_to_specified_register(op1,tar);
+            operand_load_immediate_to_specified_register(op1,tar);
         }
-        //寄存器 使用MVN
-        if(!operand_is_same(tar,op1))
+        //如果在寄存器
+        else if(operand_is_in_register(op1))
+        {
             general_data_processing_instructions(MVN,tar,nullop,op1,NONESUFFIX,false);
+        }
+
     }
     else
     {
@@ -767,25 +770,34 @@ BinaryOperand binaryOpff(AssembleOperand op1,AssembleOperand op2)
  * @brief:完成一次整数的相加
  * @birth:Created by LGD on 2023-5-29
  * @update:2023-7-18 消去一条无用的VFP寄存器分配指令
+ *         2023-7-21 添加对超过相对寻址范围的检查
+ *         2023-7-21 完全重构
 */
 void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
 {
     AssembleOperand middleOp;
-    BinaryOperand binaryOp;
 
-    binaryOp = binaryOpii(op1,op2);
+    struct _operand srcOp1 = op1;
+    struct _operand srcOp2 = op2;
+
+    if(!operand_is_in_register(srcOp1))
+        op1 = operand_load_to_register(srcOp1, nullop, ARM);
+    if(!operand_is_in_register(srcOp2))
+        op2 = operand_load_to_register(srcOp2, nullop, ARM);
     
+
     middleOp = operand_pick_temp_register(ARM);
     general_data_processing_instructions(ADD,
-        middleOp,binaryOp.op1,binaryOp.op2,NONESUFFIX,false);
+        middleOp,op1,op2,NONESUFFIX,false);
+            
     
-    movii(tarOp,middleOp);
+    //释放第一、二操作数
+    if(!operand_is_same(op1, srcOp1))
+        operand_recycle_temp_register(op1);
+    if(!operand_is_same(op2, srcOp2))
+        operand_recycle_temp_register(op2);
 
-    if(!operand_is_same(op1,binaryOp.op1))
-        operand_recycle_temp_register(binaryOp.op1);
-    
-    if(!operand_is_same(op2,binaryOp.op2))
-        operand_recycle_temp_register(binaryOp.op2);
+    movii(tarOp,middleOp);
 
     //释放中间操作数
     operand_recycle_temp_register(middleOp);
