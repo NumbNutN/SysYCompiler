@@ -2,6 +2,7 @@
 #define C_CONTAINER_AUXILIARY
 
 #include "cds.h"
+#include "container/list.h"
 
 #define DEBUG_MODE
 

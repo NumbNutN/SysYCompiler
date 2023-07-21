@@ -10,13 +10,14 @@ include_directories(.)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/backend/inc)
 include_directories(${CMAKE_SOURCE_DIR}/interface)
-include_directories(${local}/include/C-Container)
+include_directories(${CMAKE_SOURCE_DIR}/container/include/)
 
 file(GLOB_RECURSE DIR_SRC "src/*.c")
 file(GLOB_RECURSE DIR_BACKEND_SRC "backend/src/*.c")
 file(GLOB_RECURSE DIR_INTERFACE_SRC "interface/*.c")
-file(GLOB_RECURSE DIR_STRUCT_DEMO "data_struct_demo/*.c")
+file(GLOB_RECURSE DIR_CONTAINER "container/src/*.c")
 #包含的头文件目录
+
 
 find_package(BISON)
 BISON_TARGET(MyParser gramtree.y ${CMAKE_CURRENT_BINARY_DIR}/gramtree.tab.c)
@@ -34,8 +35,8 @@ link_directories(${PROJECT_SOURCE_DIR}/lib)
 add_compile_options(-g)
 
 #生成可执行文件
-add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC} ${DIR_BACKEND_SRC} ${DIR_STRUCT_DEMO} ${DIR_INTERFACE_SRC})
+add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC} ${DIR_CONTAINER} )
   
 
 #链接动态库文件
-target_link_libraries(${PROJECT_NAME} libcds.so libm.so)
+target_link_libraries(${PROJECT_NAME}  libm.so)
