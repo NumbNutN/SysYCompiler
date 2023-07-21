@@ -35,7 +35,7 @@ link_directories(${PROJECT_SOURCE_DIR}/lib)
 add_compile_options(-g)
 
 #生成可执行文件
-add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC} ${DIR_CONTAINER} )
+add_executable(${PROJECT_NAME} main.c  ${BISON_MyParser_OUTPUTS} ${FLEX_MyScanner_OUTPUTS}  ${DIR_SRC}  ${DIR_BACKEND_SRC} ${DIR_INTERFACE_SRC} ${DIR_CONTAINER} )
   
 
 #链接动态库文件
