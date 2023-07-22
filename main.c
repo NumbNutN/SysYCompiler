@@ -327,16 +327,16 @@ int main(int argc, char **argv) {
   print_model();
 
   free(tty_path);
+#ifdef DEBUG_MODE
   printf("%s test All over!\n",
          is_functional_test ? "functional" : "performance");
-#ifdef DEBUG_MODE
   // dup2(saveSTDOUT,STDOUT_FILENO);
 #endif
   return 0;
 }
 
 char *read_code_from_file(const char *file_path) {
-  puts(file_path);
+  puts(file_path); 
   FILE *fd = fopen(file_path, "r");
 
   if (fd == NULL) {
