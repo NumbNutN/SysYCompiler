@@ -4,8 +4,6 @@
 #include "cds.h"
 #include "container/list.h"
 
-#define DEBUG_MODE
-
 #define SEQ(x, y) ((x) && (y) && (!strcmp(x, y)))
 
 void CleanObject(void *element);
