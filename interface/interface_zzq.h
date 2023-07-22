@@ -5,7 +5,7 @@
 #include "config.h"
 
 extern const int REGISTER_NUM;
-typedef enum _LOCATION { ALLOC_R4 =1, ALLOC_R5,ALLOC_R6,ALLOC_R8,ALLOC_R9,ALLOC_R10,ALLOC_R11,ALLOC_R12,MEMORY } LOCATION;
+typedef enum _LOCATION { ALLOC_R4 =1, ALLOC_R5,ALLOC_R6,ALLOC_R8,ALLOC_R9,ALLOC_R10,ALLOC_R11,MEMORY } LOCATION;
 extern char *location_string[];
 
 

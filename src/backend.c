@@ -8,9 +8,9 @@
 #include "interface_zzq.h"
 #include "variable_map.h"
 
-const int REGISTER_NUM = 8;
+const int REGISTER_NUM = 7;
 char *location_string[] = {"null", "R4",  "R5",  "R6",  "R8",
-                           "R9",   "R10", "R11", "R12", "M"};
+                           "R9",   "R10", "R11", "M"};
 
 extern HashMap *global_array_init_hashmap;
 
