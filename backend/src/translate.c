@@ -697,12 +697,27 @@ void translate_assign_instructions(Instruction* this)
  * @birth: Created by LGD on 2023-7-11
 */
 void translate_unary_instructions(Instruction* this){
+
+    struct _operand tarOp = toOperand(this, TARGET_OPERAND);
+    struct _operand srcOp = toOperand(this, FIRST_OPERAND);
+    //取相反数
     if(ins_get_opCode(this) == NegativeOP)
     {   
-        AssembleOperand opList[2];
-        opList[FIRST_OPERAND] = toOperand(this,FIRST_OPERAND);
-        opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
-        movini(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
+        //构建立即数0
+        AssembleOperand opZero = operand_create_immediate_op(0);;
+        subiii(tarOp,opZero,srcOp);
+    }
+    //取逻辑反
+    else if(ins_get_opCode(this) == NotOP)
+    {
+
+        //构建立即数0
+        struct _operand immedFalse = operand_create_immediate_op(0);
+        cmpii(srcOp,immedFalse);
+        //构建立即数1
+        struct _operand immedTrue = operand_create_immediate_op(1);
+        movii(tarOp,immedFalse);
+        movCondition(tarOp, immedTrue, EQ);
     }
 }
 

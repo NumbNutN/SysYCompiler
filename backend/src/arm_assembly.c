@@ -808,7 +808,47 @@ void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
 }
 
 
+/**
+ * @brief 完成一次整数的相减
+ * @birth: Created by LGD on 2023-7-22
+*/
+void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
+{   
+    struct _operand oriOp1,oriOp2;
+    oriOp1 = op1;
+    oriOp2 = op2;
+    AssembleOperand middleOp;
 
+
+    middleOp = operand_pick_temp_register(ARM);
+
+#ifndef ALLOW_TWO_IMMEDIATE
+        assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
+#endif
+    //如果第1个操作数为立即数，第2个不是，使用RSB指令
+    if(opernad_is_immediate(op1) && !opernad_is_immediate(op2))
+    {
+        op2 = operandConvert(op2,ARM,false,IN_MEMORY);
+        general_data_processing_instructions(RSB,
+            middleOp,op2,op1,NONESUFFIX,false);
+    }
+    //第1个操作数不是立即数，第2个操作数可以是任何数，使用SUB指令
+    else{
+        op1 = operandConvert(op1,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+        op2 = operandConvert(op2,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+        general_data_processing_instructions(SUB,
+            middleOp,op1,op2,NONESUFFIX,false);
+    }
+
+    //释放第一、二操作数
+    if(!operand_is_same(op1, oriOp1))operand_recycle_temp_register(op1);
+    if(!operand_is_same(op2, oriOp2))operand_recycle_temp_register(op2);
+
+    //中间量传给目标变量
+    movii(tarOp,middleOp);
+    //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
 
 
 
