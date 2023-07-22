@@ -192,6 +192,7 @@ void translate_IR_test(struct _Instruction* this)
         break;
 #endif
         case NegativeOP:
+        case NotOP:
             translate_unary_instructions(this);
         break;
         case GotoWithConditionOP:
@@ -238,63 +239,6 @@ void translate_IR_test(struct _Instruction* this)
 
     }
 }
-
-#ifdef OPEN_REGISTER_ALLOCATION
-/**
- * @brief 这个方法通过判断Instruction的指令来执行对应的翻译方法
- *        在寄存器分配开启的情况下
- * @author Created by LGD on 20230112
-*/
-void translate_IR_open_register_allocation(struct _Instruction* this,struct _Instruction* last)
-{
-    update_variable_place(last,this);
-    switch(ins_get_opCode(this))
-    {
-        case AddOP:
-        case SubOP:
-        case MulOP:
-        case DivOP:
-#ifdef OPEN_LOAD_AND_STORE_BINARY_OPERATE
-            translate_binary_expression_test(this);
-#endif
-            break;
-        case EqualOP:
-        case NotEqualOP:
-        case GreatEqualOP:
-        case GreatThanOP:
-        case LessEqualOP:
-        case LessThanOP:
-            translate_logical_binary_instruction(this);
-            break;
-        case GotoWithConditionOP:
-            translate_goto_instruction_test_bool(this);
-            break;
-        case FuncLabelOP:
-            translate_function_entrance(this);
-            break;
-#ifdef OPEN_FUNCTION_WITH_RETURN_VALUE
-        case ReturnOP:
-            translate_return_instructions(this);
-        break;
-#endif
-        case FuncEndOP:
-            translate_function_end(this);
-            break;
-        case CallOP:
-            translate_call_instructions(this);
-            break;
-        case CallWithReturnValueOP:
-            translate_call_with_return_value_instructions(this);
-            break;
-        case AssignOP:
-            translate_assign_instructions(this);
-            break;
-        case LabelOP:
-            translate_label(this);
-
-    }
-}
-#endif
 
 
 size_t traverse_list_and_count_total_size_of_value(List* this,int order)

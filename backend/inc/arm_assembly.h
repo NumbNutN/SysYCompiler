@@ -188,6 +188,12 @@ void andiii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2);
 void oriii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2);
 
 /**
+ * @brief 完成一次整数的相减
+ * @birth: Created by LGD on 2023-7-22
+*/
+void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2);
+
+/**
  * @brief 双目运算 双整型
  * @birth: Created by LGD on 20230226
 */
