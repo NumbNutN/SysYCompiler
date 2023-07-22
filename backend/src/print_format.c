@@ -189,6 +189,9 @@ void print_single_assembleNode(assmNode *p) {
   case POOL:
     printf(".pool\n");
     break;
+  case FMSTAT:
+    printf("\tFMSTAT\n");
+  break;
   }
   
 }

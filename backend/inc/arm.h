@@ -51,6 +51,7 @@ typedef enum
     ASSEM_PUSH_POP_INSTRUCTION,
     ASSEM_PSEUDO_INSTRUCTION,
     LABEL,
+    FMSTAT, /* 2023-7-22 MSR FMSCR, CPSR */
     BI,      //Branch Instructions
     UNDEF,  /*Undefined Instruction 2023-7-9*/
     LDR_PSEUDO_INSTRUCTION,
@@ -458,6 +459,12 @@ void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type);
  * @author Created by LGD on 20230114
 */
 void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOperand fm,TypeID type);
+
+/**
+ * @brief 将FMSCR拷贝到CPSR
+ * @birth: Created by LGD on 2023-7-22
+*/
+void fmstat();
 
 //伪指令
 void Label(char* label);

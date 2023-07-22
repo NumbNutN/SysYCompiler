@@ -764,9 +764,23 @@ void translate_logical_binary_instruction_new(Instruction* this)
     opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
-        assert(NULL && "暂时不支持浮点比较");
+        struct _operand tempOp1,tempOp2;
+        tempOp1 = operandConvert(opList[FIRST_OPERAND], VFP, 0, 0);
+        tempOp2 = operandConvert(opList[SECOND_OPERAND], VFP, 0, 0);
+        if(!ins_operand_is_float(this, FIRST_OPERAND))
+            operand_regInt2Float(tempOp1,tempOp1);
+        if(!ins_operand_is_float(this, SECOND_OPERAND))
+            operand_regInt2Float(tempOp2,tempOp2);
+        cmpff(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+        //释放可能的中间寄存器
+        if(!operand_is_same(opList[FIRST_OPERAND], tempOp1))
+            operand_recycle_temp_register(tempOp1);
+        if(!operand_is_same(opList[SECOND_OPERAND], tempOp2))
+            operand_recycle_temp_register(tempOp2);
     }
-    cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+    else
+        cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+    
     movii(opList[TARGET_OPERAND],falseOp);
     switch(ins_get_opCode(this))
     {
@@ -789,7 +803,6 @@ void translate_logical_binary_instruction_new(Instruction* this)
             movCondition(opList[TARGET_OPERAND],trueOp,NE);
         break;
     }
-
 }
 
 /**

@@ -200,9 +200,7 @@ bool goto_is_conditional(TAC_OP op)
         default:
             return false;
     }
-
 }
-
 
 /**
  * @brief 返回当前寄存器的类型
@@ -623,6 +621,30 @@ void cmpii(AssembleOperand tar,AssembleOperand op1)
 
     if(!operand_is_same(tar,original_tar))
         operand_recycle_temp_register(tar);
+    
+}
+
+/**
+ * @brief cmpff 比较两个浮点数
+ * @birth: Created by LGD on 2023-7-22
+*/
+void cmpff(struct _operand op1,struct _operand op2)
+{
+    struct _operand srcOp1 = op1;
+    struct _operand srcOp2 = op2;
+    //确保两数在浮点寄存器
+    op1 = operandConvert(srcOp1,VFP,0,0);
+    op2 = operandConvert(srcOp2,VFP,0,0);
+    //进行比较
+    fcmp_instruction(op1,op2,FloatTyID);
+    //释放可能的临时寄存器
+    if(!operand_is_same(op1, srcOp1))
+        operand_recycle_temp_register(op1);
+    if(!operand_is_same(op2, srcOp2))
+        operand_recycle_temp_register(op2);
+
+    //由于手册提到，浮点FCMP指令执行完后需要通过FMSTAT指令将FPSCR拷贝到CPSR作为条件码的译码依据
+    fmstat();
     
 }
 

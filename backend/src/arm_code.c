@@ -552,6 +552,17 @@ void undefined()
 }
 
 /**
+ * @brief 将FMSCR拷贝到CPSR
+ * @birth: Created by LGD on 2023-7-22
+*/
+void fmstat()
+{
+    assmNode* node = arm_instruction_node_init();
+    node->assemType = FMSTAT;
+    linkNode(node);
+}
+
+/**
  * @brief 生成一个文字池伪指令
  * @birth: Created by LGD on 2023-7-21
 */

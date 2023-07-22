@@ -177,6 +177,12 @@ void movCondition(struct _operand tar,struct _operand op1,enum _Suffix cond);
 void cmpii(struct _operand tar,struct _operand op1);
 
 /**
+ * @brief cmpff 比较两个浮点数
+ * @birth: Created by LGD on 2023-7-22
+*/
+void cmpff(struct _operand op1,struct _operand op2);
+
+/**
  * @brief 取两个数相与的结果
  * @birth: Created by LGD on 2023-7-16
 **/
