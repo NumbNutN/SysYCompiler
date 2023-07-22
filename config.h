@@ -64,7 +64,7 @@
 #ifdef DEBUG_MODE
 
     /* 调试信息打印到终端 */
-    #define PRINT_TO_TERMINAL
+    //#define PRINT_TO_TERMINAL
 
 #endif
 

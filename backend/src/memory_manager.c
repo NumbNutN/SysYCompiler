@@ -194,10 +194,10 @@ void init_parameter_register_list()
 /**********************************************/
 
 //设置可供变量暂时存放的寄存器池的个数
-#define ALLOCABLE_REGISTER_NUM 8
+#define ALLOCABLE_REGISTER_NUM 7
 
 //设置可供变量暂时存放的寄存器池全集
-#define ALLOCABLE_REGISTER R4,R5,R6,R8,R9,R10,R11,R12
+#define ALLOCABLE_REGISTER R4,R5,R6,R8,R9,R10,R11
 RegisterOrder allocable_register_pool[ALLOCABLE_REGISTER_NUM] = {ALLOCABLE_REGISTER};
 
 /**

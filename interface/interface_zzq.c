@@ -681,7 +681,29 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
             //若存在字面量，将当前字面量首地址拷贝到当前地址处
             branch_instructions("memcpy", "L", false, NONELABEL);
 
-            //接触寄存器限制
+            //解除寄存器限制
+            remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED | PARAMETER3_LIMITED);
+
+            info->ori = info->current;
+        }
+        //对于没有字面量的局部数组，应当清空内存
+        else{
+            //传递目的地址
+            movii(r0, info->current);
+            add_register_limited(PARAMETER1_LIMITED);
+            //传递清0值
+            struct _operand setValue = operand_create_immediate_op(0);
+            movii(r1,setValue);
+            add_register_limited(PARAMETER2_LIMITED);
+            //传递尺寸
+            struct _operand size = operand_create_immediate_op(totalSpace);
+            movii(r2,size);
+            add_register_limited(PARAMETER3_LIMITED);
+
+            //不存在字面量，清干净内存
+            branch_instructions("memset", "L", false, NONELABEL);
+
+            //解除寄存器限制
             remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED | PARAMETER3_LIMITED);
 
             info->ori = info->current;

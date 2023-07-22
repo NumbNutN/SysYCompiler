@@ -254,6 +254,7 @@ void reg2mem(struct _operand reg,struct _operand mem)
 /**
  * @brief 将数据从内存加载到寄存器，由于相对寻址范围可能解释成多条指令
  * @birth: Created by LGD on 2023-7-17
+ * @TODO: 2023-7-22 需要重构
 **/
 void mem2reg(struct _operand reg,struct _operand mem)
 {
@@ -264,11 +265,14 @@ void mem2reg(struct _operand reg,struct _operand mem)
             //当立即数偏移超出寻址范围时
             if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
             {
-                RegisterOrder offRegOrder = pick_one_free_temp_arm_register();
-                struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offRegOrder);
+                //创建立即数操作数
+                struct _operand offMemImmed = operand_create_immediate_op(mem.addtion);
+                //将超出寻址范围的数装载到临时寄存器
+                struct _operand offMemReg = operand_load_immediate(offMemImmed, ARM);
+                struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offMemReg.oprendVal);
                 memory_access_instructions("LDR",reg,offMem,NONESUFFIX,false,NONELABEL);
                 //归还寄存器
-                recycle_temp_arm_register(offRegOrder);
+                operand_recycle_temp_register(offMemReg);
             }
             else
                 memory_access_instructions("LDR",reg,mem,NONESUFFIX,false,NONELABEL);

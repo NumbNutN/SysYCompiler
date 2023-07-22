@@ -120,8 +120,8 @@ int main(int argc, char **argv) {
 
   free(tty_path);
 #ifdef DEBUG_MODE
-  printf("%s test All over!\n",
-         is_functional_test ? "functional" : "performance");
+  // printf("%s test All over!\n",
+  //        is_functional_test ? "functional" : "performance");
   // dup2(saveSTDOUT,STDOUT_FILENO);
 #endif
   return 0;
