@@ -1,6 +1,6 @@
-#line 2 "./src/lex.yy.c"
+#line 2 "src/lex.yy.c"
 
-#line 4 "./src/lex.yy.c"
+#line 4 "src/lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -386,12 +386,12 @@ static const flex_int16_t yy_accept[118] =
        50,   44,   45,   37,   16,   29,   17,   42,   38,   18,
        18,   28,   33,   30,   31,   25,   46,   47,   25,   25,
        25,   25,   25,   25,   25,   25,   25,   48,   50,   49,
-        4,   51,    4,   26,   35,   40,   24,    2,    0,   19,
-       20,    0,    0,    0,   18,   18,   34,   36,   32,   25,
+        4,   51,    4,   26,   35,   40,   23,    2,    0,   19,
+       20,   23,    0,    0,   18,   18,   34,   36,   32,   25,
        25,   25,   25,   25,   11,   25,   25,   25,   25,   25,
        41,    3,    0,    0,    1,   19,    0,   23,    0,   21,
        25,   25,   25,   25,    5,   25,   25,   25,   25,    0,
-       24,    0,    0,   25,   25,   25,   12,   25,   25,   25,
+       23,    0,    0,   25,   25,   25,   12,   25,   25,   25,
 
         7,   25,    0,   22,   14,    9,   25,    6,   25,   25,
        13,   25,   10,    8,   25,   15,    0
@@ -573,11 +573,11 @@ char *yytext;
 #include "gramtree.tab.h"
 #include "math.h"
 int yyparse(void);
-#line 577 "./src/lex.yy.c"
+#line 577 "src/lex.yy.c"
 /*
 *会自动在gramtree.tab.h中分配编号 line:41
 */
-#line 581 "./src/lex.yy.c"
+#line 581 "src/lex.yy.c"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -798,7 +798,7 @@ YY_DECL
 #line 71 "gramtree.l"
 
 
-#line 802 "./src/lex.yy.c"
+#line 802 "src/lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -979,12 +979,12 @@ YY_RULE_SETUP
 case 23:
 YY_RULE_SETUP
 #line 96 "gramtree.l"
-{yylval.a=newast("SCI_INT",0,yylineno); return INTEGER;}
+{yylval.a=newast("SCI_FLOAT",0,yylineno); return FLOAT;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 97 "gramtree.l"
-{yylval.a=newast("SCI_FLOAT",0,yylineno); return FLOAT;}
+{yylval.a=newast("SCI_INT",0,yylineno); return INTEGER;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
@@ -1122,7 +1122,7 @@ YY_RULE_SETUP
 #line 126 "gramtree.l"
 ECHO;
 	YY_BREAK
-#line 1126 "./src/lex.yy.c"
+#line 1126 "src/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 	yyterminate();

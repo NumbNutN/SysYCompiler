@@ -100,7 +100,7 @@ union YYSTYPE
 ast* a;
 double d;
 
-#line 104 "./src/gramtree.tab.h"
+#line 104 "src/gramtree.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

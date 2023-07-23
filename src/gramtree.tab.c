@@ -77,7 +77,7 @@
 
 int yylex();
 
-#line 81 "./src/gramtree.tab.c"
+#line 81 "src/gramtree.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -176,7 +176,7 @@ union YYSTYPE
 ast* a;
 double d;
 
-#line 180 "./src/gramtree.tab.c"
+#line 180 "src/gramtree.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -555,15 +555,15 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    42,    42,    42,    53,    54,    67,    68,    69,    73,
-      74,    83,    84,    85,    97,    98,   100,   101,   103,   110,
-     111,   112,   116,   117,   121,   122,   126,   147,   150,   151,
-     154,   158,   159,   168,   169,   170,   171,   172,   173,   174,
-     175,   176,   177,   184,   185,   188,   191,   192,   198,   199,
-     200,   209,   210,   211,   212,   213,   214,   218,   219,   220,
-     221,   222,   223,   224,   225,   226,   227,   228,   229,   230,
-     231,   232,   233,   234,   235,   236,   237,   238,   239,   240,
-     241,   242,   246,   247
+       0,    42,    42,    42,    54,    55,    68,    69,    70,    74,
+      75,    84,    85,    86,    98,    99,   101,   102,   104,   111,
+     112,   113,   117,   118,   122,   123,   127,   148,   151,   152,
+     155,   159,   160,   169,   170,   171,   172,   173,   174,   175,
+     176,   177,   178,   185,   186,   189,   192,   193,   199,   200,
+     201,   210,   211,   212,   213,   214,   215,   219,   220,   221,
+     222,   223,   224,   225,   226,   227,   228,   229,   230,   231,
+     232,   233,   234,   235,   236,   237,   238,   239,   240,   241,
+     242,   243,   247,   248
 };
 #endif
 
@@ -1501,492 +1501,493 @@ yyreduce:
                     {
     (yyval.a)=newast("Program",1,(yyvsp[0].a));
     
-    #ifdef DEBUG_MODE
+#ifdef DEBUG_MODE
+    freopen("./output/printf_ast.txt", "w", stdout);
     eval_print((yyval.a),0);    
-    #endif
+#endif
     fflush(stdout);
 
     eval((yyval.a));
 }
-#line 1512 "./src/gramtree.tab.c"
+#line 1513 "src/gramtree.tab.c"
     break;
 
   case 4:
-#line 53 "gramtree.y"
+#line 54 "gramtree.y"
                              {(yyval.a)=newast("ExtDefList",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1518 "./src/gramtree.tab.c"
+#line 1519 "src/gramtree.tab.c"
     break;
 
   case 5:
-#line 54 "gramtree.y"
+#line 55 "gramtree.y"
           {(yyval.a)=newast("ExtDefList",0,-1);}
-#line 1524 "./src/gramtree.tab.c"
+#line 1525 "src/gramtree.tab.c"
     break;
 
   case 6:
-#line 67 "gramtree.y"
+#line 68 "gramtree.y"
                                     {(yyval.a)=newast("ExtDef",2,(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1530 "./src/gramtree.tab.c"
+#line 1531 "src/gramtree.tab.c"
     break;
 
   case 7:
-#line 68 "gramtree.y"
+#line 69 "gramtree.y"
                         {(yyval.a)=newast("ExtDef",1,(yyvsp[-1].a));}
-#line 1536 "./src/gramtree.tab.c"
+#line 1537 "src/gramtree.tab.c"
     break;
 
   case 8:
-#line 69 "gramtree.y"
+#line 70 "gramtree.y"
                                         {(yyval.a)=newast("ExtDef",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1542 "./src/gramtree.tab.c"
+#line 1543 "src/gramtree.tab.c"
     break;
 
   case 9:
-#line 73 "gramtree.y"
+#line 74 "gramtree.y"
                {(yyval.a)=newast("ExtDecList",1,(yyvsp[0].a));}
-#line 1548 "./src/gramtree.tab.c"
+#line 1549 "src/gramtree.tab.c"
     break;
 
   case 10:
-#line 74 "gramtree.y"
+#line 75 "gramtree.y"
                               {(yyval.a)=newast("ExtDecList",2,(yyvsp[-2].a),(yyvsp[0].a));}
-#line 1554 "./src/gramtree.tab.c"
+#line 1555 "src/gramtree.tab.c"
     break;
 
   case 11:
-#line 83 "gramtree.y"
+#line 84 "gramtree.y"
                {(yyval.a)=newast("Specifire",1,(yyvsp[0].a));}
-#line 1560 "./src/gramtree.tab.c"
+#line 1561 "src/gramtree.tab.c"
     break;
 
   case 12:
-#line 84 "gramtree.y"
+#line 85 "gramtree.y"
                          {(yyval.a)=newast("Specifire",1,(yyvsp[0].a));}
-#line 1566 "./src/gramtree.tab.c"
+#line 1567 "src/gramtree.tab.c"
     break;
 
   case 13:
-#line 85 "gramtree.y"
+#line 86 "gramtree.y"
                 {(yyval.a)=newast("Specifire",2,(yyvsp[0].a),(yyvsp[-1].a));}
-#line 1572 "./src/gramtree.tab.c"
+#line 1573 "src/gramtree.tab.c"
     break;
 
   case 14:
-#line 97 "gramtree.y"
+#line 98 "gramtree.y"
                                             {(yyval.a)=newast("StructSpecifire",5,(yyvsp[-4].a),(yyvsp[-3].a),(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1578 "./src/gramtree.tab.c"
+#line 1579 "src/gramtree.tab.c"
     break;
 
   case 15:
-#line 98 "gramtree.y"
+#line 99 "gramtree.y"
                     {(yyval.a)=newast("StructSpecifire",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1584 "./src/gramtree.tab.c"
+#line 1585 "src/gramtree.tab.c"
     break;
 
   case 16:
-#line 100 "gramtree.y"
+#line 101 "gramtree.y"
           {(yyval.a)=newast("OptTag",1,(yyvsp[0].a));}
-#line 1590 "./src/gramtree.tab.c"
+#line 1591 "src/gramtree.tab.c"
     break;
 
   case 17:
-#line 101 "gramtree.y"
+#line 102 "gramtree.y"
          {(yyval.a)=newast("OptTag",0,-1);}
-#line 1596 "./src/gramtree.tab.c"
+#line 1597 "src/gramtree.tab.c"
     break;
 
   case 18:
-#line 103 "gramtree.y"
+#line 104 "gramtree.y"
        {(yyval.a)=newast("Tag",1,(yyvsp[0].a));}
-#line 1602 "./src/gramtree.tab.c"
+#line 1603 "src/gramtree.tab.c"
     break;
 
   case 19:
-#line 110 "gramtree.y"
+#line 111 "gramtree.y"
           {(yyval.a)=newast("VarDec",1,(yyvsp[0].a));}
-#line 1608 "./src/gramtree.tab.c"
+#line 1609 "src/gramtree.tab.c"
     break;
 
   case 20:
-#line 111 "gramtree.y"
+#line 112 "gramtree.y"
                            {(yyval.a)=newast("VarDec",3,(yyvsp[-3].a),(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1614 "./src/gramtree.tab.c"
+#line 1615 "src/gramtree.tab.c"
     break;
 
   case 21:
-#line 112 "gramtree.y"
+#line 113 "gramtree.y"
                        {(yyval.a)=newast("VarDec",2,(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1620 "./src/gramtree.tab.c"
+#line 1621 "src/gramtree.tab.c"
     break;
 
   case 22:
-#line 116 "gramtree.y"
+#line 117 "gramtree.y"
                         {(yyval.a)=newast("FunDec",4,(yyvsp[-3].a),(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1626 "./src/gramtree.tab.c"
+#line 1627 "src/gramtree.tab.c"
     break;
 
   case 23:
-#line 117 "gramtree.y"
+#line 118 "gramtree.y"
                   {(yyval.a)=newast("FunDec",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1632 "./src/gramtree.tab.c"
+#line 1633 "src/gramtree.tab.c"
     break;
 
   case 24:
-#line 121 "gramtree.y"
+#line 122 "gramtree.y"
                                {(yyval.a)=newast("VarList",2,(yyvsp[-2].a),(yyvsp[0].a));}
-#line 1638 "./src/gramtree.tab.c"
+#line 1639 "src/gramtree.tab.c"
     break;
 
   case 25:
-#line 122 "gramtree.y"
+#line 123 "gramtree.y"
                   {(yyval.a)=newast("VarList",1,(yyvsp[0].a));}
-#line 1644 "./src/gramtree.tab.c"
+#line 1645 "src/gramtree.tab.c"
     break;
 
   case 26:
-#line 126 "gramtree.y"
+#line 127 "gramtree.y"
                           {(yyval.a)=newast("ParamDec",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1650 "./src/gramtree.tab.c"
+#line 1651 "src/gramtree.tab.c"
     break;
 
   case 27:
-#line 147 "gramtree.y"
+#line 148 "gramtree.y"
                      {(yyval.a)=newast("Compst",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1656 "./src/gramtree.tab.c"
+#line 1657 "src/gramtree.tab.c"
     break;
 
   case 28:
-#line 150 "gramtree.y"
+#line 151 "gramtree.y"
                     {(yyval.a)=newast("TACList",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1662 "./src/gramtree.tab.c"
+#line 1663 "src/gramtree.tab.c"
     break;
 
   case 29:
-#line 151 "gramtree.y"
+#line 152 "gramtree.y"
       {(yyval.a)=newast("TACList",0,-1);}
-#line 1668 "./src/gramtree.tab.c"
+#line 1669 "src/gramtree.tab.c"
     break;
 
   case 30:
-#line 154 "gramtree.y"
+#line 155 "gramtree.y"
                      {(yyval.a)=newast("TAC",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1674 "./src/gramtree.tab.c"
+#line 1675 "src/gramtree.tab.c"
     break;
 
   case 31:
-#line 158 "gramtree.y"
+#line 159 "gramtree.y"
                       {(yyval.a)=newast("StmtList",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1680 "./src/gramtree.tab.c"
+#line 1681 "src/gramtree.tab.c"
     break;
 
   case 32:
-#line 159 "gramtree.y"
+#line 160 "gramtree.y"
           {(yyval.a)=newast("StmtList",0,-1);}
-#line 1686 "./src/gramtree.tab.c"
+#line 1687 "src/gramtree.tab.c"
     break;
 
   case 33:
-#line 168 "gramtree.y"
+#line 169 "gramtree.y"
               {(yyval.a)=newast("Stmt",1,(yyvsp[-1].a));}
-#line 1692 "./src/gramtree.tab.c"
+#line 1693 "src/gramtree.tab.c"
     break;
 
   case 35:
-#line 170 "gramtree.y"
+#line 171 "gramtree.y"
             {(yyval.a)=newast("Stmt",1,(yyvsp[0].a));}
-#line 1698 "./src/gramtree.tab.c"
+#line 1699 "src/gramtree.tab.c"
     break;
 
   case 36:
-#line 171 "gramtree.y"
+#line 172 "gramtree.y"
                          {(yyval.a)=newast("Stmt",2,(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1704 "./src/gramtree.tab.c"
+#line 1705 "src/gramtree.tab.c"
     break;
 
   case 37:
-#line 172 "gramtree.y"
+#line 173 "gramtree.y"
                      {(yyval.a)=newast("Stmt",1,(yyvsp[-1].a));}
-#line 1710 "./src/gramtree.tab.c"
+#line 1711 "src/gramtree.tab.c"
     break;
 
   case 38:
-#line 173 "gramtree.y"
+#line 174 "gramtree.y"
                {(yyval.a)=newast("Stmt",1,(yyvsp[-1].a));}
-#line 1716 "./src/gramtree.tab.c"
+#line 1717 "src/gramtree.tab.c"
     break;
 
   case 39:
-#line 174 "gramtree.y"
+#line 175 "gramtree.y"
                   {(yyval.a)=newast("Stmt",1,(yyvsp[-1].a));}
-#line 1722 "./src/gramtree.tab.c"
+#line 1723 "src/gramtree.tab.c"
     break;
 
   case 40:
-#line 175 "gramtree.y"
+#line 176 "gramtree.y"
                        {(yyval.a)=newast("Stmt",5,(yyvsp[-4].a),(yyvsp[-2].a),newast("assistIF",0,-1),(yyvsp[0].a),newast("assistELSE",0,-1));}
-#line 1728 "./src/gramtree.tab.c"
+#line 1729 "src/gramtree.tab.c"
     break;
 
   case 41:
-#line 176 "gramtree.y"
+#line 177 "gramtree.y"
                                  {(yyval.a)=newast("Stmt",7,(yyvsp[-6].a),(yyvsp[-4].a),newast("assistIF",0,-1),(yyvsp[-2].a),newast("assistELSE",0,-1),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1734 "./src/gramtree.tab.c"
+#line 1735 "src/gramtree.tab.c"
     break;
 
   case 42:
-#line 177 "gramtree.y"
+#line 178 "gramtree.y"
                           {(yyval.a)=newast("Stmt",4,(yyvsp[-4].a),(yyvsp[-2].a),newast("assistWHILE",0,-1),(yyvsp[0].a));}
-#line 1740 "./src/gramtree.tab.c"
+#line 1741 "src/gramtree.tab.c"
     break;
 
   case 43:
-#line 184 "gramtree.y"
+#line 185 "gramtree.y"
                    {(yyval.a)=newast("DefList",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1746 "./src/gramtree.tab.c"
+#line 1747 "src/gramtree.tab.c"
     break;
 
   case 44:
-#line 185 "gramtree.y"
+#line 186 "gramtree.y"
           {(yyval.a)=newast("DefList",0,-1);}
-#line 1752 "./src/gramtree.tab.c"
+#line 1753 "src/gramtree.tab.c"
     break;
 
   case 45:
-#line 188 "gramtree.y"
+#line 189 "gramtree.y"
                            {(yyval.a)=newast("Def",2,(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1758 "./src/gramtree.tab.c"
+#line 1759 "src/gramtree.tab.c"
     break;
 
   case 46:
-#line 191 "gramtree.y"
+#line 192 "gramtree.y"
                           {(yyval.a)=newast("DecList",2,(yyvsp[-2].a),(yyvsp[0].a));}
-#line 1764 "./src/gramtree.tab.c"
+#line 1765 "src/gramtree.tab.c"
     break;
 
   case 47:
-#line 192 "gramtree.y"
+#line 193 "gramtree.y"
          {(yyval.a)=newast("DecList",1,(yyvsp[0].a));}
-#line 1770 "./src/gramtree.tab.c"
+#line 1771 "src/gramtree.tab.c"
     break;
 
   case 48:
-#line 198 "gramtree.y"
+#line 199 "gramtree.y"
            {(yyval.a)=newast("Dec",1,(yyvsp[0].a));}
-#line 1776 "./src/gramtree.tab.c"
+#line 1777 "src/gramtree.tab.c"
     break;
 
   case 49:
-#line 199 "gramtree.y"
+#line 200 "gramtree.y"
                              {(yyval.a)=newast("Dec",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1782 "./src/gramtree.tab.c"
+#line 1783 "src/gramtree.tab.c"
     break;
 
   case 50:
-#line 200 "gramtree.y"
+#line 201 "gramtree.y"
                                        {(yyval.a)=newast("Dec",3,(yyvsp[-4].a),(yyvsp[-3].a),(yyvsp[-1].a));}
-#line 1788 "./src/gramtree.tab.c"
+#line 1789 "src/gramtree.tab.c"
     break;
 
   case 51:
-#line 209 "gramtree.y"
+#line 210 "gramtree.y"
                                  {(yyval.a)=newast("InitList",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1794 "./src/gramtree.tab.c"
+#line 1795 "src/gramtree.tab.c"
     break;
 
   case 52:
-#line 210 "gramtree.y"
+#line 211 "gramtree.y"
                                      {(yyval.a)=newast("InitList",3,(yyvsp[-4].a),(yyvsp[-3].a),(yyvsp[-1].a));}
-#line 1800 "./src/gramtree.tab.c"
+#line 1801 "src/gramtree.tab.c"
     break;
 
   case 53:
-#line 211 "gramtree.y"
+#line 212 "gramtree.y"
                      {(yyval.a)=newast("InitList",2,(yyvsp[-2].a),(yyvsp[-1].a));}
-#line 1806 "./src/gramtree.tab.c"
+#line 1807 "src/gramtree.tab.c"
     break;
 
   case 54:
-#line 212 "gramtree.y"
+#line 213 "gramtree.y"
               {(yyval.a)=newast("InitList",1,(yyvsp[-1].a));}
-#line 1812 "./src/gramtree.tab.c"
+#line 1813 "src/gramtree.tab.c"
     break;
 
   case 55:
-#line 213 "gramtree.y"
+#line 214 "gramtree.y"
             {(yyval.a)=newast("InitList",1,(yyvsp[0].a));}
-#line 1818 "./src/gramtree.tab.c"
+#line 1819 "src/gramtree.tab.c"
     break;
 
   case 56:
-#line 214 "gramtree.y"
+#line 215 "gramtree.y"
       {(yyval.a)=newast("InitList",0,-1);}
-#line 1824 "./src/gramtree.tab.c"
+#line 1825 "src/gramtree.tab.c"
     break;
 
   case 57:
-#line 218 "gramtree.y"
+#line 219 "gramtree.y"
                     {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1830 "./src/gramtree.tab.c"
+#line 1831 "src/gramtree.tab.c"
     break;
 
   case 58:
-#line 219 "gramtree.y"
+#line 220 "gramtree.y"
                     {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1836 "./src/gramtree.tab.c"
+#line 1837 "src/gramtree.tab.c"
     break;
 
   case 59:
-#line 220 "gramtree.y"
+#line 221 "gramtree.y"
                    {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1842 "./src/gramtree.tab.c"
+#line 1843 "src/gramtree.tab.c"
     break;
 
   case 60:
-#line 221 "gramtree.y"
+#line 222 "gramtree.y"
                       {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1848 "./src/gramtree.tab.c"
+#line 1849 "src/gramtree.tab.c"
     break;
 
   case 61:
-#line 222 "gramtree.y"
+#line 223 "gramtree.y"
                            {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1854 "./src/gramtree.tab.c"
+#line 1855 "src/gramtree.tab.c"
     break;
 
   case 62:
-#line 223 "gramtree.y"
+#line 224 "gramtree.y"
                      {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1860 "./src/gramtree.tab.c"
+#line 1861 "src/gramtree.tab.c"
     break;
 
   case 63:
-#line 224 "gramtree.y"
+#line 225 "gramtree.y"
                           {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1866 "./src/gramtree.tab.c"
+#line 1867 "src/gramtree.tab.c"
     break;
 
   case 64:
-#line 225 "gramtree.y"
+#line 226 "gramtree.y"
                          {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1872 "./src/gramtree.tab.c"
+#line 1873 "src/gramtree.tab.c"
     break;
 
   case 65:
-#line 226 "gramtree.y"
+#line 227 "gramtree.y"
                       {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1878 "./src/gramtree.tab.c"
+#line 1879 "src/gramtree.tab.c"
     break;
 
   case 66:
-#line 227 "gramtree.y"
+#line 228 "gramtree.y"
                      {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1884 "./src/gramtree.tab.c"
+#line 1885 "src/gramtree.tab.c"
     break;
 
   case 67:
-#line 228 "gramtree.y"
+#line 229 "gramtree.y"
                       {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1890 "./src/gramtree.tab.c"
+#line 1891 "src/gramtree.tab.c"
     break;
 
   case 68:
-#line 229 "gramtree.y"
+#line 230 "gramtree.y"
                      {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1896 "./src/gramtree.tab.c"
+#line 1897 "src/gramtree.tab.c"
     break;
 
   case 69:
-#line 230 "gramtree.y"
+#line 231 "gramtree.y"
                     {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1902 "./src/gramtree.tab.c"
+#line 1903 "src/gramtree.tab.c"
     break;
 
   case 70:
-#line 231 "gramtree.y"
+#line 232 "gramtree.y"
                     {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1908 "./src/gramtree.tab.c"
+#line 1909 "src/gramtree.tab.c"
     break;
 
   case 71:
-#line 232 "gramtree.y"
+#line 233 "gramtree.y"
                   {(yyval.a)=newast("Exp",1,(yyvsp[-1].a));}
-#line 1914 "./src/gramtree.tab.c"
+#line 1915 "src/gramtree.tab.c"
     break;
 
   case 72:
-#line 233 "gramtree.y"
+#line 234 "gramtree.y"
                    {(yyval.a)=newast("Exp",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1920 "./src/gramtree.tab.c"
+#line 1921 "src/gramtree.tab.c"
     break;
 
   case 73:
-#line 234 "gramtree.y"
+#line 235 "gramtree.y"
                   {(yyval.a)=newast("Exp",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1926 "./src/gramtree.tab.c"
+#line 1927 "src/gramtree.tab.c"
     break;
 
   case 74:
-#line 235 "gramtree.y"
+#line 236 "gramtree.y"
                  {(yyval.a)=newast("Exp",2,(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1932 "./src/gramtree.tab.c"
+#line 1933 "src/gramtree.tab.c"
     break;
 
   case 75:
-#line 236 "gramtree.y"
+#line 237 "gramtree.y"
                        {(yyval.a)=newast("Exp",3,newast("assistFuncCall",0,-1),(yyvsp[-3].a),(yyvsp[-1].a));}
-#line 1938 "./src/gramtree.tab.c"
+#line 1939 "src/gramtree.tab.c"
     break;
 
   case 76:
-#line 237 "gramtree.y"
+#line 238 "gramtree.y"
                   {(yyval.a)=newast("Exp",2,newast("assistFuncCall",0,-1),(yyvsp[-2].a));}
-#line 1944 "./src/gramtree.tab.c"
+#line 1945 "src/gramtree.tab.c"
     break;
 
   case 77:
-#line 238 "gramtree.y"
+#line 239 "gramtree.y"
                        {(yyval.a)=newast("Exp",4,(yyvsp[-3].a),(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1950 "./src/gramtree.tab.c"
+#line 1951 "src/gramtree.tab.c"
     break;
 
   case 78:
-#line 239 "gramtree.y"
+#line 240 "gramtree.y"
                     {(yyval.a)=newast("Exp",3,(yyvsp[-2].a),(yyvsp[-1].a),(yyvsp[0].a));}
-#line 1956 "./src/gramtree.tab.c"
+#line 1957 "src/gramtree.tab.c"
     break;
 
   case 79:
-#line 240 "gramtree.y"
+#line 241 "gramtree.y"
             {(yyval.a)=newast("Exp",1,(yyvsp[0].a));}
-#line 1962 "./src/gramtree.tab.c"
+#line 1963 "src/gramtree.tab.c"
     break;
 
   case 80:
-#line 241 "gramtree.y"
+#line 242 "gramtree.y"
                  {(yyval.a)=newast("Exp",1,(yyvsp[0].a));}
-#line 1968 "./src/gramtree.tab.c"
+#line 1969 "src/gramtree.tab.c"
     break;
 
   case 81:
-#line 242 "gramtree.y"
+#line 243 "gramtree.y"
               {(yyval.a)=newast("Exp",1,(yyvsp[0].a));}
-#line 1974 "./src/gramtree.tab.c"
+#line 1975 "src/gramtree.tab.c"
     break;
 
   case 82:
-#line 246 "gramtree.y"
+#line 247 "gramtree.y"
                     {(yyval.a)=newast("Args",3,(yyvsp[-2].a),newast("assistArgs",0,-1),(yyvsp[0].a));}
-#line 1980 "./src/gramtree.tab.c"
+#line 1981 "src/gramtree.tab.c"
     break;
 
   case 83:
-#line 247 "gramtree.y"
+#line 248 "gramtree.y"
              {(yyval.a)=newast("Args",2,(yyvsp[0].a),newast("assistArgs",0,-1));}
-#line 1986 "./src/gramtree.tab.c"
+#line 1987 "src/gramtree.tab.c"
     break;
 
 
-#line 1990 "./src/gramtree.tab.c"
+#line 1991 "src/gramtree.tab.c"
 
       default: break;
     }
@@ -2218,7 +2219,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 249 "gramtree.y"
+#line 250 "gramtree.y"
 
 
 
