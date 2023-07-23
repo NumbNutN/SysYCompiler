@@ -116,13 +116,12 @@ void register_replace(Function *handle_func) {
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
 
-  //恢复SP
-  reset_sp_value(true);
-  //恢复现场
-  bash_push_pop_instruction_list("POP",currentPF.used_reg);
-  //退出函数
-  bash_push_pop_instruction("POP",&fp,&pc,END);
-
+    //恢复SP
+    reset_sp_value(true);
+    //恢复现场
+    bash_push_pop_instruction_list("POP",currentPF.used_reg);
+    //退出函数
+    bash_push_pop_instruction("POP",&fp,&pc,END);
   //在每一个函数的退出位置插入文字池
   pool();
   

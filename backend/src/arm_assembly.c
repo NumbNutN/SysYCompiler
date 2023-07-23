@@ -229,7 +229,7 @@ void reg2mem(struct _operand reg,struct _operand mem)
             if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
             {
                 //将数据传入偏移寄存器
-                struct _operand immed = operand_create_immediate_op(mem.addtion);
+                struct _operand immed = operand_create_immediate_op(mem.addtion,INTERGER_TWOSCOMPLEMENT);
                 struct _operand offReg = operand_load_immediate(immed, ARM);
                 //构造带偏移的寻址操作数
                 struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
@@ -264,7 +264,7 @@ void mem2reg(struct _operand reg,struct _operand mem)
             if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
             {
                 //创建立即数操作数
-                struct _operand offMemImmed = operand_create_immediate_op(mem.addtion);
+                struct _operand offMemImmed = operand_create_immediate_op(mem.addtion,INTERGER_TWOSCOMPLEMENT);
                 //将超出寻址范围的数装载到临时寄存器
                 struct _operand offMemReg = operand_load_immediate(offMemImmed, ARM);
                 struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offMemReg.oprendVal);
@@ -324,13 +324,13 @@ bool ins_operand_is_float(Instruction* this,int opType)
     switch(opType)
     {
         case TARGET_OPERAND:
-            return variable_is_float(ins_get_operand(this,TARGET_OPERAND));
+            return value_is_float(ins_get_operand(this,TARGET_OPERAND));
         case FIRST_OPERAND:
-            return variable_is_float(ins_get_operand(this,FIRST_OPERAND));
+            return value_is_float(ins_get_operand(this,FIRST_OPERAND));
         case SECOND_OPERAND:
-            return variable_is_float(ins_get_operand(this,SECOND_OPERAND));
+            return value_is_float(ins_get_operand(this,SECOND_OPERAND));
         case FIRST_OPERAND | SECOND_OPERAND:
-            return variable_is_float(ins_get_operand(this,FIRST_OPERAND)) | variable_is_float(ins_get_operand(this,SECOND_OPERAND));
+            return value_is_float(ins_get_operand(this,FIRST_OPERAND)) | value_is_float(ins_get_operand(this,SECOND_OPERAND));
     }
 }
 
@@ -404,7 +404,7 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
 */
 enum _DataFormat valueFindFormat(Value* var)
 {
-    if(variable_is_float(var))
+    if(value_is_float(var))
     {
         return IEEE754_32BITS;
     }
@@ -597,31 +597,50 @@ void movini(AssembleOperand tar,AssembleOperand op1)
 }
 
 /**
+ * @brief 数据与数据之间的传递，包含隐式转换，支持所有内存、立即数和寄存器类型
+ * @birth: Created by LGD on 2023-7-23
+*/
+void mov(struct _operand tar,struct _operand src)
+{
+    if(operand_get_format(src) == operand_get_format(tar) == INTERGER_TWOSCOMPLEMENT)
+        movii(tar,src);
+    else if(operand_get_format(src) == operand_get_format(tar) == IEEE754_32BITS)
+        movff(tar,src);
+    else if((operand_get_format(src) == INTERGER_TWOSCOMPLEMENT) && (operand_get_format(tar) == IEEE754_32BITS))
+        movfi(tar,src);
+    else if((operand_get_format(src) == IEEE754_32BITS) && (operand_get_format(tar) == INTERGER_TWOSCOMPLEMENT))
+        movif(tar,src);
+    else
+        assert(false && "unrecognize format convert");
+}
+
+/**
  * @brief cmpii
  * @birth: Created by LGD on 2023-4-4
  * @todo 更改回收寄存器的方式
  * @update: 2023-5-29 考虑了目标操作数是立即数的情况
+ *          2023-7-23 重构代码
 */
-void cmpii(AssembleOperand tar,AssembleOperand op1)
+void cmpii(AssembleOperand op1,AssembleOperand op2)
 {
-    AssembleOperand original_tar = tar;
-    AssembleOperand original_op1 = op1;
-    if(operand_in_regOrmem(op1) == IN_MEMORY)
-        op1 = operand_load_from_memory(op1,ARM);
+    AssembleOperand srcOp1 = op1;
+    AssembleOperand srcOp2 = op2;
 
-    if(operand_in_regOrmem(tar) == IN_MEMORY)
-        tar = operand_load_from_memory(tar,ARM);
-    if(operand_in_regOrmem(tar) == IN_INSTRUCTION)
-        tar = operand_load_immediate(tar, ARM);
+    if(!operand_is_in_register(op1))
+        op1 = operand_load_to_register(srcOp1, nullop, ARM);
+
+    if(!operand_is_in_register(op2))
+        op2 = operand_load_to_register(srcOp2, nullop, ARM);
     
-    general_data_processing_instructions(CMP,tar,nullop,op1,NONESUFFIX,false);
+    general_data_processing_instructions(CMP,op1,nullop,op2,NONESUFFIX,false);
 
-    if(!operand_is_same(op1, original_op1))
+    if(!operand_is_same(srcOp1, op1))
         operand_recycle_temp_register(op1);
 
-    if(!operand_is_same(tar,original_tar))
-        operand_recycle_temp_register(tar);
-    
+    if(!operand_is_same(srcOp2,op2))
+        operand_recycle_temp_register(op2);
+
+    //不涉及回写
 }
 
 /**
@@ -829,21 +848,18 @@ void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
     operand_recycle_temp_register(middleOp);
 }
 
-
 /**
- * @brief 完成一次整数的相减
- * @birth: Created by LGD on 2023-7-22
+ * @brief 完成一次整数相减，并把运算结果返回到一个临时的寄存器中
+ * @birth: Created by LGD on 2023-7-23
 */
-void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
-{   
+struct _operand subii(struct _operand op1,struct _operand op2)
+{
     struct _operand oriOp1,oriOp2;
     oriOp1 = op1;
     oriOp2 = op2;
     AssembleOperand middleOp;
-
-
     middleOp = operand_pick_temp_register(ARM);
-
+    middleOp.format = INTERGER_TWOSCOMPLEMENT;
 #ifndef ALLOW_TWO_IMMEDIATE
         assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
 #endif
@@ -866,9 +882,56 @@ void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
     if(!operand_is_same(op1, oriOp1))operand_recycle_temp_register(op1);
     if(!operand_is_same(op2, oriOp2))operand_recycle_temp_register(op2);
 
+    return middleOp;
+}
+
+/**
+ * @brief 完成一次整数的相减
+ * @birth: Created by LGD on 2023-7-22
+*/
+void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
+{   
+    AssembleOperand middleOp;
+    middleOp = subii(op1,op2);
     //中间量传给目标变量
     movii(tarOp,middleOp);
     //释放中间操作数
+    operand_recycle_temp_register(middleOp);
+}
+
+/**
+ * @brief 完成一次浮点相减，并把运算结果返回到一个生成的寄存器中
+ * @birth: Created by LGD on 2023-7-23
+*/
+struct _operand subff(struct _operand op1,struct _operand op2)
+{
+    struct _operand srcOp1 = op1;
+    struct _operand srcOp2 = op2;
+    struct _operand middleOp;
+    //寄存器 内存 立即数 都转换
+    op1 = operandConvert(srcOp1,VFP,0,0);
+    op2 = operandConvert(srcOp2,VFP,0,0);
+    middleOp = operand_pick_temp_register(VFP);
+    middleOp.format = IEEE754_32BITS;
+    fadd_and_fsub_instruction("FSUB",
+            middleOp,op1,op2,FloatTyID);
+
+    if(!operand_is_same(op1, srcOp1))
+        operand_recycle_temp_register(op1);
+    if(!operand_is_same(op2, srcOp2))
+        operand_recycle_temp_register(op2);
+    return middleOp;
+}
+
+/**
+ * @brief 实现三个IEEE754浮点数的减法，寄存器不需要VFP，不提供格式转换
+ * @update: Created by LGD on 2023-7-23
+*/
+void subfff(struct _operand tarOp,struct _operand op1,struct _operand op2)
+{
+    struct _operand middleOp;
+    middleOp = subff(op1,op2);
+    movff(tarOp,middleOp);
     operand_recycle_temp_register(middleOp);
 }
 
@@ -1132,7 +1195,7 @@ void variable_storage_back_new(Instruction* this,int i,RegisterOrder order)
                 op_avt.addrMode = REGISTER_DIRECT;
                 op_avt.oprendVal = pick_one_free_vfp_register();
 
-                ftost_and_ftout_instruction("FTOST",op_avt,op_bvt,FloatTyID);
+                ftosi_and_ftout_instruction("FTOSI",op_avt,op_bvt,FloatTyID);
                 recycle_vfp_register(op_bvt.oprendVal);
 
                 AssembleOperand mem;
@@ -1208,7 +1271,7 @@ void variable_storage_back_new(Instruction* this,int i,RegisterOrder order)
                 op_avt.addrMode = REGISTER_DIRECT;
                 op_avt.oprendVal = pick_one_free_vfp_register();
 
-                ftost_and_ftout_instruction("FTOST",op_avt,op_bvt,FloatTyID);
+                ftosi_and_ftout_instruction("FTOSI",op_avt,op_bvt,FloatTyID);
                 recycle_vfp_register(op_bvt.oprendVal);
 
                 //将整型变量存回arm寄存器

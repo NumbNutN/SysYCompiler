@@ -102,15 +102,18 @@ void recycle_temp_value_register(Value* reg);
 
 Value* value_create_temp_register(unsigned order);
 Value* random_operand();
-unsigned value_getConstant(Value* val);
+
+/**
+ * @brief 将立即数Value的数值返回，返回结果永远为unsigned 64
+ *          当为32位有/无符号整型时返回数值
+ *          当为IEEE754 32位浮点数时以浮点记法的64位（高32位为0）返回
+ * @birth: Created by LGD on 2023-7-22
+**/
+uint64_t value_getConstant(Value* val);
 
 // @brief:当操作数为常数时，获取指令的操作数的常数值
 // @param: [int i]: 0：第一操作数  1：第二操作数
 // @notice: 不包括目标操作数
-
-
-
-
 bool op_is_in_instruction(Value* val);
 /**
  * @brief 判断一个操作数是否是变量

@@ -158,6 +158,13 @@ void movff(struct _operand tar,struct _operand op1);
  * @birth: Created by LGD on 20230201
 */
 void movii(struct _operand tar,struct _operand op1);
+
+/**
+ * @brief 数据与数据之间的传递，包含隐式转换，支持所有内存、立即数和寄存器类型
+ * @birth: Created by LGD on 2023-7-23
+*/
+void mov(struct _operand tar,struct _operand src);
+
 /**
  * @brief movini
  * @birth: Created by LGD on 2023-7-11
@@ -183,6 +190,12 @@ void cmpii(struct _operand tar,struct _operand op1);
 void cmpff(struct _operand op1,struct _operand op2);
 
 /**
+ * @brief 完成一次整数相减，并把运算结果返回到一个临时的寄存器中
+ * @birth: Created by LGD on 2023-7-23
+*/
+struct _operand subii(struct _operand op1,struct _operand op2);
+
+/**
  * @brief 取两个数相与的结果
  * @birth: Created by LGD on 2023-7-16
 **/
@@ -198,6 +211,18 @@ void oriii(AssembleOperand tar,AssembleOperand op1,AssembleOperand op2);
  * @birth: Created by LGD on 2023-7-22
 */
 void subiii(struct _operand tarOp,struct _operand op1,struct _operand op2);
+
+/**
+ * @brief 完成一次浮点相减，并把运算结果返回到一个生成的寄存器中
+ * @birth: Created by LGD on 2023-7-23
+*/
+struct _operand subff(struct _operand op1,struct _operand op2);
+
+/**
+ * @brief 实现三个IEEE754浮点数的减法，寄存器不需要VFP，不提供格式转换
+ * @update: Created by LGD on 2023-7-23
+*/
+void subfff(struct _operand tarOp,struct _operand op1,struct _operand op2);
 
 /**
  * @brief 双目运算 双整型
