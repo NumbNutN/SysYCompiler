@@ -147,6 +147,12 @@ bool check_immediate_valid(int num);
 */
 void TranslateInit();
 
+/**
+ * @brief f2ieee
+ * @birth: Created by LGD on 2023-7-23
+ */
+uint32_t new_float2IEEE75432BITS(float num);
+
 
 
 

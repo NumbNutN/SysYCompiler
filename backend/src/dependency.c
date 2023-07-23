@@ -13,7 +13,7 @@
 **/
 uint64_t value_getConstant(Value* val)
 {
-    if(value_is_float(val))return float_754_binary_code(val->pdata->var_pdata.fVal,BITS_32);
+    if(value_is_float(val))return new_float2IEEE75432BITS(val->pdata->var_pdata.fVal);
     else return val->pdata->var_pdata.iVal;
 }
 
@@ -103,6 +103,17 @@ TypeID value_get_type(Value* val)
     return val->VTy->TID;
 }
 
+/**
+ * @brief f2ieee
+ * @birth: Created by LGD on 2023-7-23
+ */
+uint32_t new_float2IEEE75432BITS(float num)
+{
+    uint32_t space = 0;
+    for(size_t i=0;i<sizeof(float);++i)
+        *((unsigned char*)&space + i) = *((unsigned char*)&num + i);
+    return space;
+}
 
 /**
  * @brief   浮点数转换为01串并存储在32/64位空间中返回
