@@ -710,13 +710,13 @@ void translate_unary_instructions(Instruction* this){
             //构造立即数0.0
             struct _operand opZero = operand_create_immediate_op(float_754_binary_code(0,BITS_32),IEEE754_32BITS);
             //完成减法运算
-            temp = subii(opZero,srcOp);
+            temp = subff(opZero,srcOp);
         }
         else{ 
             //构建立即数0
             struct _operand opZero = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
             //完成减法运算
-            temp = subff(opZero,srcOp);
+            temp = subii(opZero,srcOp);
         }
         mov(tarOp,temp);
         operand_recycle_temp_register(temp);
