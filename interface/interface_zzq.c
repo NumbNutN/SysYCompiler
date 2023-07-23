@@ -369,7 +369,11 @@ void translate_global_variable_list(List* this)
             case AllocateOP:
                 translate_global_allocate_instruction(p);
             break;
+            case StoreOP:
+                translate_global_store_instruction(p);
+            break;
             default:
+                assert(false && "暂不支持对全局变量的其他操作");
             break;
         }
     };
