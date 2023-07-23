@@ -331,6 +331,7 @@ extern struct _operand param_push_op;
 
 extern struct _operand trueOp;
 extern struct _operand falseOp;
+extern struct _operand floatZeroOp;
 
 
 //arm_assemble
