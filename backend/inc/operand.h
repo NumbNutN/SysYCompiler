@@ -21,8 +21,9 @@ struct _operand toOperand(Instruction* this,int i);
 /**
  * @brief 创建一个立即数操作数
  * @birth: Created by LGD on 2023-5-1
+ * @update: 2023-7-23 支持浮点立即数的创建（IEEE754格式）
 */
-struct _operand operand_create_immediate_op(int immd);
+struct _operand operand_create_immediate_op(uint32_t immd,enum _DataFormat format);
 
 /**
  * @brief 创建一个相对FP/SP偏移的寻址方式操作数
@@ -69,6 +70,13 @@ bool operand_is_none(AssembleOperand op);
  * @birth: Created by LGD on 2023-5-13
 */
 bool operand_is_via_r4212(struct _operand reg);
+
+/**
+ * @brief 获取操作数的编码格式
+ * @birth: Created by LGD on 2023-7-23
+*/
+enum _DataFormat operand_get_format(struct _operand op);
+
 /**
  * @brief struct _operand 将内存中的操作数加载到临时寄存器,这次，你可以自定义用什么寄存器加载了
  * @birth: Created by LGD on 20230130

@@ -51,6 +51,7 @@ typedef enum
     ASSEM_PUSH_POP_INSTRUCTION,
     ASSEM_PSEUDO_INSTRUCTION,
     LABEL,
+    FMSTAT, /* 2023-7-22 MSR FMSCR, CPSR */
     BI,      //Branch Instructions
     UNDEF,  /*Undefined Instruction 2023-7-9*/
     LDR_PSEUDO_INSTRUCTION,
@@ -138,7 +139,7 @@ typedef struct _operand
     //定义了操作数的寻址方式
     enum _AddrMode addrMode;
     //定义了操作数的值
-    int64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
+    uint64_t oprendVal;         //unsigned 的大小不足以存放指针 20221202
     //附加内容
     unsigned addtion;
     //定义了变址类型
@@ -418,11 +419,11 @@ void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* labe
 */
 void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,TypeID type);
 /**
- * @brief 将浮点数转化为有符号或无符号整数  FTOST 转化为有符号整型  FTOUT转化为无符号整型  
+ * @brief 将浮点数转化为有符号或无符号整数  FTOSI 转化为有符号整型  FTOUT转化为无符号整型  
  * @param sd 存放整型结果的单精度浮点寄存器
  * @param fm 存放待转换的浮点数的浮点寄存器，其类型必须满足类型后缀
 */
-void ftost_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand fm,TypeID type);
+void ftosi_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand fm,TypeID type);
 /**
  * @brief 将有符号或无符号整数转化为浮点数, FSITO 将有符号整数转为浮点数  FUITO 将无符号整数转为浮点数
  * @param fd 存放浮点数结果的浮点寄存器，其类型必须满足类型后缀
@@ -458,6 +459,12 @@ void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type);
  * @author Created by LGD on 20230114
 */
 void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOperand fm,TypeID type);
+
+/**
+ * @brief 将FMSCR拷贝到CPSR
+ * @birth: Created by LGD on 2023-7-22
+*/
+void fmstat();
 
 //伪指令
 void Label(char* label);

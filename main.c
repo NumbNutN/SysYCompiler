@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
 
   AllInit();
 
+
 #ifdef DEBUG_MODE
   printf("%%begin the pass\n");
 #endif

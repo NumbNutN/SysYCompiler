@@ -118,7 +118,7 @@ void update_fp_value()
     //     general_data_processing_instructions(ADD,fp,fp,offset," ",false);
     // else
     //     general_data_processing_instructions(SUB,fp,fp,offset," ",false);
-    struct _operand immd = operand_create_immediate_op(currentPF.FPOffset);
+    struct _operand immd = operand_create_immediate_op(currentPF.FPOffset,INTERGER_TWOSCOMPLEMENT);
     struct _operand reg_off = operand_load_immediate(immd,ARM);
     general_data_processing_instructions(ADD,fp,fp,reg_off," ",false);
     operand_recycle_temp_register(reg_off);
@@ -134,7 +134,7 @@ void update_sp_value()
 {
     if(!abs(currentPF.SPOffset))
         return;
-    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
+    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset),INTERGER_TWOSCOMPLEMENT);
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
         offset = operand_load_immediate_to_specified_register(offset, fp);
@@ -156,7 +156,7 @@ void reset_sp_value(bool doClear)
 {
     if(!currentPF.SPOffset)
         return;
-    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset));
+    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset),INTERGER_TWOSCOMPLEMENT);
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
         offset = operand_load_immediate_to_specified_register(offset, fp);

@@ -395,11 +395,11 @@ void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOpe
 }
 
 /**
- * @brief 将浮点数转化为有符号或无符号整数  FTOST 转化为有符号整型  FTOUT转化为无符号整型  
+ * @brief 将浮点数转化为有符号或无符号整数  FTOSI 转化为有符号整型  FTOUT转化为无符号整型  
  * @param sd 存放整型结果的单精度浮点寄存器
  * @param fm 存放待转换的浮点数的浮点寄存器，其类型必须满足类型后缀
 */
-void ftost_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand fm,TypeID type)
+void ftosi_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand fm,TypeID type)
 {
     assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
@@ -503,6 +503,7 @@ void fcmp_instruction(AssembleOperand fd,AssembleOperand fm,TypeID type)
     node->op[0] = fd;
     node->op[1] = fm;
     node->assemType = ASSEM_INSTRUCTION;
+    strcpy(node->suffix,vfp_suffix_from_type(type));
     linkNode(node);
 }
 
@@ -548,6 +549,17 @@ void undefined()
 {
     assmNode* node = arm_instruction_node_init();
     node->assemType = UNDEF;
+    linkNode(node);
+}
+
+/**
+ * @brief 将FMSCR拷贝到CPSR
+ * @birth: Created by LGD on 2023-7-22
+*/
+void fmstat()
+{
+    assmNode* node = arm_instruction_node_init();
+    node->assemType = FMSTAT;
     linkNode(node);
 }
 

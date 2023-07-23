@@ -93,6 +93,12 @@ Instruction* get_next_instruction(List* this);
 */
 void translate_allocate_instruction(Instruction* this,HashMap* map);
 
+/**
+ * @brief 翻译FuncEndOp
+ * @birth: Created by LGD on 2023-7-23
+*/
+void translate_funcEnd_instruction();
+
 
 /**
  * @brief 判断一个标号是不是叫entry 这是为了跳过zzq设置的函数入口entry标号
@@ -111,7 +117,7 @@ bool value_is_global(Value* var);
  * @author Created by LGD on 20230113
  * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
 */
-bool variable_is_float(Value* var);
+bool value_is_float(Value* var);
 
 /**
  * @brief 遍历列表到指定编号的函数的FuncLabel位置

@@ -38,8 +38,6 @@ void translate_global_allocate_instruction(Instruction* this)
             //即使全局数组不存在字面量，其也应当被声明空间
             dot_zero_expression(name, var->pdata->array_pdata.total_member * 4);
         }
-
-
     }
     //翻译全局变量
     else{

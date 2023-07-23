@@ -510,7 +510,7 @@ void translate_getelementptr_instruction(Instruction* this)
     struct _operand tarOp = toOperand(this,TARGET_OPERAND);
     struct _operand arrBaseOri = toOperand(this,FIRST_OPERAND);
     struct _operand idx = toOperand(this,SECOND_OPERAND);
-    struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this));
+    struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this),INTERGER_TWOSCOMPLEMENT);
     struct _operand arrBase = arrBaseOri;
     //如果解引用的对象是全局数组
     if(value_is_global(ins_get_operand(this, FIRST_OPERAND))){
@@ -703,19 +703,34 @@ void translate_unary_instructions(Instruction* this){
     //取相反数
     if(ins_get_opCode(this) == NegativeOP)
     {   
-        //构建立即数0
-        AssembleOperand opZero = operand_create_immediate_op(0);;
-        subiii(tarOp,opZero,srcOp);
+        //判断整数或浮点
+        if(value_get_type(ins_get_operand(this, FIRST_OPERAND)))
+        {
+            //构建立即数0
+            struct _operand opZero = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
+            //完成减法运算
+            struct _operand temp = subff(opZero,srcOp);
+            mov(tarOp,temp);
+            operand_recycle_temp_register(temp);
+        }
+        else{ 
+            //构造立即数0.0
+            struct _operand opZero = operand_create_immediate_op(float_754_binary_code(0,BITS_32),IEEE754_32BITS);
+            //完成减法运算
+            struct _operand temp = subii(opZero,srcOp);
+            mov(tarOp,temp);
+            operand_recycle_temp_register(temp);
+        }
+
     }
     //取逻辑反
     else if(ins_get_opCode(this) == NotOP)
     {
-
         //构建立即数0
-        struct _operand immedFalse = operand_create_immediate_op(0);
+        struct _operand immedFalse = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
         cmpii(srcOp,immedFalse);
         //构建立即数1
-        struct _operand immedTrue = operand_create_immediate_op(1);
+        struct _operand immedTrue = operand_create_immediate_op(1,INTERGER_TWOSCOMPLEMENT);
         movii(tarOp,immedFalse);
         movCondition(tarOp, immedTrue, EQ);
     }
@@ -764,9 +779,23 @@ void translate_logical_binary_instruction_new(Instruction* this)
     opList[TARGET_OPERAND] = toOperand(this,TARGET_OPERAND);
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
     {
-        assert(NULL && "暂时不支持浮点比较");
+        struct _operand tempOp1,tempOp2;
+        tempOp1 = operandConvert(opList[FIRST_OPERAND], VFP, 0, 0);
+        tempOp2 = operandConvert(opList[SECOND_OPERAND], VFP, 0, 0);
+        if(!ins_operand_is_float(this, FIRST_OPERAND))
+            operand_regInt2Float(tempOp1,tempOp1);
+        if(!ins_operand_is_float(this, SECOND_OPERAND))
+            operand_regInt2Float(tempOp2,tempOp2);
+        cmpff(tempOp1,tempOp2);
+        //释放可能的中间寄存器
+        if(!operand_is_same(opList[FIRST_OPERAND], tempOp1))
+            operand_recycle_temp_register(tempOp1);
+        if(!operand_is_same(opList[SECOND_OPERAND], tempOp2))
+            operand_recycle_temp_register(tempOp2);
     }
-    cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+    else
+        cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
+    
     movii(opList[TARGET_OPERAND],falseOp);
     switch(ins_get_opCode(this))
     {
@@ -789,7 +818,6 @@ void translate_logical_binary_instruction_new(Instruction* this)
             movCondition(opList[TARGET_OPERAND],trueOp,NE);
         break;
     }
-
 }
 
 /**

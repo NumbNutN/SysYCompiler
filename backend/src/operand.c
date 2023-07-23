@@ -73,36 +73,36 @@ RegorMem operand_in_regOrmem(AssembleOperand op)
  * @update: 2023-4-4 将栈顶指针改为栈帧
  * @update: 2023-4-20 清空内存
 */
-AssembleOperand ValuetoOperand(Instruction* this,Value* var)
+AssembleOperand ValuetoOperand(Instruction* this,Value* val)
 {
     AssembleOperand op;
     memset(&op,0,sizeof(AssembleOperand));
-    RegorMem rOm = get_variable_place(this,var);
+    RegorMem rOm = get_variable_place(this,val);
     switch(rOm)
     {
         case IN_MEMORY:
             op.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
             op.oprendVal = FP;
-            op.addtion = get_variable_register_order_or_memory_offset_test(this,var);
+            op.addtion = get_variable_register_order_or_memory_offset_test(this,val);
             op.offsetType = OFFSET_IMMED;
         break;
         case IN_DATA_SEC:
             op.addrMode = LABEL_MARKED_LOCATION;
-            op.oprendVal = var->name;
+            op.oprendVal = val->name;
         break;
         case IN_REGISTER:
             op.addrMode = REGISTER_DIRECT;
-            op.oprendVal = get_variable_register_order_or_memory_offset_test(this,var);
+            op.oprendVal = get_variable_register_order_or_memory_offset_test(this,val);
         break;
         case IN_INSTRUCTION:
             op.addrMode = IMMEDIATE;
-            op.oprendVal = value_getConstant(var);
+            op.oprendVal = value_getConstant(val);
         break;
         case UNALLOCATED:
             op.addrMode = NONE_ADDRMODE;
             op.oprendVal = 0;
     }
-    op.format = valueFindFormat(var);
+    op.format = valueFindFormat(val);
     return op;
 }
 
@@ -121,10 +121,11 @@ AssembleOperand toOperand(Instruction* this,int i)
 /**
  * @brief 创建一个立即数操作数
  * @birth: Created by LGD on 2023-5-1
+ * @update: 2023-7-23 支持浮点立即数的创建（IEEE754格式）
 */
-struct _operand operand_create_immediate_op(int immd)
+struct _operand operand_create_immediate_op(uint32_t immd,enum _DataFormat format)
 {
-    struct _operand op = {.addrMode = IMMEDIATE,.oprendVal = immd};
+    struct _operand op = {.addrMode = IMMEDIATE,.oprendVal = immd,.format = format};
     return op;
 }
 
@@ -226,6 +227,15 @@ enum _ARMorVFP operand_get_regType(struct _operand op)
     return register_type(op.oprendVal);
 }
 
+/**
+ * @brief 获取操作数的编码格式
+ * @birth: Created by LGD on 2023-7-23
+*/
+enum _DataFormat operand_get_format(struct _operand op)
+{
+    return op.format;
+}
+
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -297,6 +307,7 @@ AssembleOperand operand_float_load_immediate(AssembleOperand src)
  * @param recycleSrc 是否回收源寄存器
  * @birth: Created by LGD on 20230201
  * @update: 2023-7-19 可以指定目标寄存器
+ * @TODO: 2023-7-22 可以被舍弃
 */
 AssembleOperand operand_float_deliver(AssembleOperand src,struct _operand tar,bool recycleSrc)
 {
@@ -351,13 +362,13 @@ AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar)
         //如果目标为VFP
         if(operand_get_regType(tar) == VFP)
         {
-            ftost_and_ftout_instruction("FTOST",tar,temp,FloatTyID);
+            ftosi_and_ftout_instruction("FTOSI",tar,temp,FloatTyID);
             operand_recycle_temp_register(temp);
         }
         //目标为arm
         else if(operand_get_regType(tar) == ARM)
         {
-            ftost_and_ftout_instruction("FTOST",temp,temp,FloatTyID);
+            ftosi_and_ftout_instruction("FTOSI",temp,temp,FloatTyID);
             operand_float_deliver(temp,tar,true);
         }
     }
@@ -365,12 +376,12 @@ AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar)
     {
         //如果目标为VFP
         if(operand_get_regType(tar) == VFP)
-            ftost_and_ftout_instruction("FTOST",tar,src,FloatTyID);
+            ftosi_and_ftout_instruction("FTOSI",tar,src,FloatTyID);
         //目标为arm
         else if(operand_get_regType(tar) == ARM)
         {
             struct _operand temp = operand_pick_temp_register(VFP);
-            ftost_and_ftout_instruction("FTOST",temp,src,FloatTyID);
+            ftosi_and_ftout_instruction("FTOSI",temp,src,FloatTyID);
             operand_float_deliver(temp,tar,true);
         }
     }
@@ -472,7 +483,7 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
             pseudo_ldr("LDR",dst,src);
         break;
         case VFP:
-            pseudo_fld("FLD",dst,src,FloatTyID);
+            pseudo_fld("FLDS",dst,src,FloatTyID);
         break;
     }
     dst.format = src.format;
@@ -668,7 +679,7 @@ struct _operand operand_create_relative_adressing(RegisterOrder SPorFP,enum _Off
     else
     {
         assert("function hasn't supported out of range");
-        struct _operand immd = operand_create_immediate_op(offset);
+        struct _operand immd = operand_create_immediate_op(offset,INTERGER_TWOSCOMPLEMENT);
         struct _operand regStoreImmd = operand_load_immediate(immd,ARM);
         return regStoreImmd;
     }

@@ -209,11 +209,11 @@ void translate_IR_test(struct _Instruction* this)
             translate_return_instructions(this);
         break;
 #endif
+        case FuncEndOP:
+            translate_funcEnd_instruction();
+        break;
         case ParamOP:
             translate_param_instructions(this);
-        break;
-        case FuncEndOP:
-            //translate_function_end(this);
         break;
         case CallOP:
             translate_call_instructions(this);
@@ -436,7 +436,7 @@ bool value_is_global(Value* var)
  * @author Created by LGD on 20230113
  * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
 */
-bool variable_is_float(Value* var)
+bool value_is_float(Value* var)
 {
     if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
     else if(value_get_type(var) == ArrayTyID){
@@ -602,7 +602,7 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
         int arrayOffset = request_new_local_variable_memory_units(this->user.value.pdata->array_pdata.total_member*4);
         printf("数组%s分配了地址%d\n",var->name,arrayOffset);
         //构造立即数操作数
-        struct _operand arrOff = operand_create_immediate_op(arrayOffset);
+        struct _operand arrOff = operand_create_immediate_op(arrayOffset,INTERGER_TWOSCOMPLEMENT);
         //获取局部数组当前地址指针（是寄存器或内存，在之前分配）
         struct _operand addrPtr = info->current;
         //和FP相加构成绝对地址
@@ -618,7 +618,7 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
             pseudo_ldr("LDR",r1,info->ori);
             add_register_limited(PARAMETER2_LIMITED);
             //传递尺寸
-            struct _operand size = operand_create_immediate_op(totalSpace);
+            struct _operand size = operand_create_immediate_op(totalSpace,INTERGER_TWOSCOMPLEMENT);
             movii(r2,size);
             add_register_limited(PARAMETER3_LIMITED);
             
@@ -636,11 +636,11 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
             movii(r0, info->current);
             add_register_limited(PARAMETER1_LIMITED);
             //传递清0值
-            struct _operand setValue = operand_create_immediate_op(0);
+            struct _operand setValue = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
             movii(r1,setValue);
             add_register_limited(PARAMETER2_LIMITED);
             //传递尺寸
-            struct _operand size = operand_create_immediate_op(totalSpace);
+            struct _operand size = operand_create_immediate_op(totalSpace,INTERGER_TWOSCOMPLEMENT);
             movii(r2,size);
             add_register_limited(PARAMETER3_LIMITED);
 
@@ -653,6 +653,20 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
             info->ori = info->current;
         }
     }
+}
+
+/**
+ * @brief 翻译FuncEndOp
+ * @birth: Created by LGD on 2023-7-23
+*/
+void translate_funcEnd_instruction()
+{
+    //恢复SP
+    reset_sp_value(false);
+    //恢复现场
+    bash_push_pop_instruction_list("POP",currentPF.used_reg);
+    //退出函数
+    bash_push_pop_instruction("POP",&fp,&pc,END);
 }
 
 
