@@ -44,6 +44,8 @@ struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
 
+struct _operand floatZeroOp = {.addrMode=IMMEDIATE,.oprendVal=0,.addtion=0,.format=IEEE754_32BITS};
+
 
 /**
  * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法

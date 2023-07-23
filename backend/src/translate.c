@@ -700,28 +700,26 @@ void translate_unary_instructions(Instruction* this){
 
     struct _operand tarOp = toOperand(this, TARGET_OPERAND);
     struct _operand srcOp = toOperand(this, FIRST_OPERAND);
+    struct _operand temp = nullop;
     //取相反数
     if(ins_get_opCode(this) == NegativeOP)
     {   
         //判断整数或浮点
-        if(value_get_type(ins_get_operand(this, FIRST_OPERAND)))
+        if(value_is_float(ins_get_operand(this, FIRST_OPERAND)))
         {
-            //构建立即数0
-            struct _operand opZero = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
-            //完成减法运算
-            struct _operand temp = subff(opZero,srcOp);
-            mov(tarOp,temp);
-            operand_recycle_temp_register(temp);
-        }
-        else{ 
             //构造立即数0.0
             struct _operand opZero = operand_create_immediate_op(float_754_binary_code(0,BITS_32),IEEE754_32BITS);
             //完成减法运算
-            struct _operand temp = subii(opZero,srcOp);
-            mov(tarOp,temp);
-            operand_recycle_temp_register(temp);
+            temp = subii(opZero,srcOp);
         }
-
+        else{ 
+            //构建立即数0
+            struct _operand opZero = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
+            //完成减法运算
+            temp = subff(opZero,srcOp);
+        }
+        mov(tarOp,temp);
+        operand_recycle_temp_register(temp);
     }
     //取逻辑反
     else if(ins_get_opCode(this) == NotOP)
@@ -825,16 +823,18 @@ void translate_logical_binary_instruction_new(Instruction* this)
  * @author Created by LGD on 20221225
  * @update: 2023-5-29 重写goto_instruction
  *          2023-7-11 区分GotoOp和GotoOp_WithCond
+ *          2023-7-23 支持浮点数作为条件
 */
 void translate_goto_instruction_test_bool(Instruction* this)
 {
-
     if(goto_is_conditional(ins_get_opCode(this)))
     {
+        Value* cond = ins_get_operand(this, FIRST_OPERAND);
         AssembleOperand op = toOperand(this,FIRST_OPERAND);
-        //有条件时   CMP 不需要cond  不需要S(本身会影响)
-        //比较指令
-        cmpii(op,falseOp);
+        if(value_is_float(cond))
+            cmpff(op, floatZeroOp);
+        else
+            cmpii(op,falseOp);
         branch_instructions_test(ins_get_tarLabel_Conditional(this,false),"EQ",false,NONELABEL);
         branch_instructions_test(ins_get_tarLabel_Conditional(this,true),NONESUFFIX,false,NONELABEL);
     }

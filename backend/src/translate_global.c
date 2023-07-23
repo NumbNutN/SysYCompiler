@@ -48,5 +48,13 @@ void translate_global_allocate_instruction(Instruction* this)
 }
 
 /**
- * @brief 由于翻译store永远在allocate后面，这里旨在检查是否有已经翻译的allocate语句
- */
+ * @brief:翻译对全局变量的赋值
+ * @birth:Created by LGD on 2023-5-29
+*/
+void translate_global_store_instruction(Instruction* this)
+{
+    char* name = ins_get_operand(this,FIRST_OPERAND)->name;
+    struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
+    
+    dot_long_expression(name,stored_elem,true);
+}

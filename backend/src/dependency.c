@@ -134,6 +134,7 @@ uint64 float_754_binary_code(double num,int bitType){
     //如果用户传入的小数 整数部分过大，我暂时没有做处理，只能保留用户的整数的低63位
     //而e在64位浮点数中最多只有11位，用uint16表示即可,但是因为在拼凑代码中会最多左移52位，需要有63位容量
 
+    if(num == 0)return 0;
 
     uint64 code=0; //浮点数码
 

@@ -161,7 +161,7 @@ void translate_store_instruction(Instruction* this);
 #endif
 
 /**************************************************************/
-/*                          子程序调用                          */
+/*                          全局变量                         */
 /***************************************************************/
 
 /**
@@ -169,3 +169,9 @@ void translate_store_instruction(Instruction* this);
  * @birth: Created by LGD on 2023-7-16
 **/
 void translate_global_allocate_instruction(Instruction* this);
+
+/**
+ * @brief:翻译对全局变量的赋值
+ * @birth:Created by LGD on 2023-5-29
+*/
+void translate_global_store_instruction(Instruction* this);
