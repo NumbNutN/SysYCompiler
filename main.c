@@ -36,6 +36,7 @@ void register_replace(Function *func_list);
 
 // --------------------------------------------------
 int main(int argc, char **argv) {
+  TIMER_BEGIN;
 
 #ifndef DEBUG_MODE
   freopen("/dev/null", "w", stdout);
@@ -75,10 +76,11 @@ int main(int argc, char **argv) {
 #endif
 
   parser(choose_case);
-
+  TIMER_END("parser over!"); 
 
 #ifdef DEBUG_MODE
 #ifndef PRINT_TO_TERMINAL
+  freopen(tty_path, "w", stdout);
   freopen("./output/out.txt", "w", stdout);
   setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 #endif
@@ -90,12 +92,16 @@ int main(int argc, char **argv) {
   printf("\n\n\n\n");
 #endif
 
-
+  TIMER_BEGIN;
   delete_return_deadcode_pass(ins_list);
+  TIMER_END("delete_return_deadcode_pass over!");
 
   print_ins_pass(ins_list);
 
+
+  TIMER_BEGIN;
   ins_toBBlock_pass(ins_list);
+  TIMER_END("ins_toBBlock_pass over!");
 
 #ifdef DEBUG_MODE
   print_ins_pass(global_var_list);
@@ -120,6 +126,7 @@ int main(int argc, char **argv) {
   print_model();
 
   free(tty_path);
+
 #ifdef DEBUG_MODE
   // printf("%s test All over!\n",
   //        is_functional_test ? "functional" : "performance");

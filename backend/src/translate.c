@@ -300,11 +300,11 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 {   
     TAC_OP opCode = ins_get_opCode(this);
     //乘法左移优化
-    if(ins_mul_2_lsl_trigger(this))
-    {
-        ins_mul_2_lsl(this);
-        return;
-    }
+    // if(ins_mul_2_lsl_trigger(this))
+    // {
+    //     ins_mul_2_lsl(this);
+    //     return;
+    // }
     if(opCode == SubOP)
     {
         translate_sub(this);
@@ -708,7 +708,7 @@ void translate_unary_instructions(Instruction* this){
         if(value_is_float(ins_get_operand(this, FIRST_OPERAND)))
         {
             //构造立即数0.0
-            struct _operand opZero = operand_create_immediate_op(float_754_binary_code(0,BITS_32),IEEE754_32BITS);
+            struct _operand opZero = operand_create_immediate_op(new_float2IEEE75432BITS(0),IEEE754_32BITS);
             //完成减法运算
             temp = subff(opZero,srcOp);
         }

@@ -75,6 +75,8 @@ extern List *global_func_list;
 
 extern HashMap *bblock_hashmap;
 
+extern HashMap *constant_single_value_hashmap;
+
 extern HashSet *bblock_pass_hashset;
 
 extern HashMap *bblock_to_dom_graph_hashmap;
@@ -223,11 +225,9 @@ void dom_relation_pass_help(HeadNode *self) {
   self->is_visited = true;
   node_pair *element;
   HashMapFirst(self->edge_list);
-  while ((element = (node_pair *)HashMapNext(self->edge_list)) &&
-         !(element->value)->is_visited) {
-    // printf("cur node %s next node %s\n", self->bblock_head->label->name,
-    //        ((HeadNode *)element)->bblock_head->label->name);
-    dom_relation_pass_help(element->value);
+  while ((element = (node_pair *)HashMapNext(self->edge_list))) {
+    if (!(element->value)->is_visited)
+      dom_relation_pass_help(element->value);
   }
 }
 
@@ -270,24 +270,27 @@ void dom_relation_pass() {
       }
     }
 
+#ifdef DEBUG_MODE
+    printf("%s dom node is ",
+           graph_for_dom_tree->node_set[i]->bblock_head->label->name);
+#endif
     // 把没有被访问的节点添加到当前节点的支配节点
     for (int j = 0; j < node_num; j++) {
       if (!graph_for_dom_tree->node_set[j]->is_visited) {
-        // printf("%s\n",graph_for_dom_tree->node_set[j]->bblock_head->label->name);
         // 添加支配节点
         HashMapPut(
             graph_for_dom_tree->node_set[i]->dom_set,
             strdup(graph_for_dom_tree->node_set[j]->bblock_head->label->name),
             graph_for_dom_tree->node_set[j]->bblock_head);
 #ifdef DEBUG_MODE
-        printf("%s,",
+        printf("\t%s,",
                graph_for_dom_tree->node_set[j]->bblock_head->label->name);
 #endif
       } else {
         graph_for_dom_tree->node_set[j]->is_visited = false;
       }
     }
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("\n");
 #endif
   }
@@ -359,7 +362,7 @@ void dom_relation_pass() {
         StackPush(dom_tree_stack, cur);
       }
     }
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("\n");
 #endif
   }
@@ -653,16 +656,10 @@ void rename_pass_help_new(HashMap *rename_var_stack_hashmap,
                                   ->pdata->phi_func_pdata.phi_pointer->name),
                    (void *)&cur_insert);
         } else {
-          cur_insert = (Value *)malloc(sizeof(Value));
-          value_init(cur_insert);
-          cur_insert->VTy->TID =
-              (((Value *)neighbor_bblock_ins)->VTy->TID == IntegerTyID
-                   ? ImmediateIntTyID
-                   : ImmediateFloatTyID);
-          cur_insert->name = strdup("undefined");
-          // 为padata里的整数字面量常量赋值
-          cur_insert->pdata->var_pdata.iVal = 0;
-          cur_insert->pdata->var_pdata.fVal = 0.f;
+          if (((Value *)neighbor_bblock_ins)->VTy->TID == IntegerTyID)
+            cur_insert = HashMapGet(constant_single_value_hashmap, "0");
+          else
+            cur_insert = HashMapGet(constant_single_value_hashmap, "0.000000");
         }
         HashMapPut(
             ((Value *)neighbor_bblock_ins)->pdata->phi_func_pdata.phi_value,
@@ -1255,21 +1252,14 @@ void ins_toBBlock_pass(List *self) {
 
         case LabelOP:
           num_of_block++;
-          // printf(" %s ins is printed\n",
-          //        op_string[((Instruction *)element)->opcode]);
           if (pre_op != GotoOP && pre_op != ReturnOP &&
               pre_op != GotoWithConditionOP) {
-            // printf("%s is cur label %s is next label \n",
-            //        cur_bblock->label->name, ((User
-            //        *)element)->res->name);
             cur_bblock->true_bblock = name_get_bblock(((Value *)element)->name);
             ListPushBack(
                 name_get_bblock(((Value *)element)->name)->father_bblock_list,
                 cur_bblock);
           }
           cur_bblock = name_get_bblock(((Value *)element)->name);
-          // printf("\taddress:%p", cur_bblock->label);
-          // printf("\t%s:\n", cur_bblock->label->name);
 
           ListPushBack(cur_bblock->inst_list, element);
           break;
@@ -1324,6 +1314,7 @@ void ins_toBBlock_pass(List *self) {
 }
 
 void bblock_to_dom_graph_pass(Function *self) {
+  TIMER_BEGIN;
   int num_of_block = self->num_of_block;
   // // 设置支配树对应图的邻接表头
   // hashset_init(&(graph_head_set));
@@ -1345,6 +1336,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   bblock_to_dom_graph_dfs_pass(init_headnode, 0);
   HashMapDeinit(bblock_to_dom_graph_hashmap);
   hashmap_init(&bblock_to_dom_graph_hashmap);
+  TIMER_END("block_to_dom_graph_dfs_pass over!");
 
 #ifdef DEBUG_MODE
   for (int i = 0; i < num_of_block; i++) {
@@ -1430,11 +1422,17 @@ void bblock_to_dom_graph_pass(Function *self) {
   printf_cur_func_ins(self);
 #endif
 
+  TIMER_BEGIN;
   calculate_live_use_def_by_graph(graph_for_dom_tree);
+  TIMER_END("calculate_live_use_def_by_graph over!");
 
+  TIMER_BEGIN;
   calculate_live_in_out(graph_for_dom_tree);
+  TIMER_END("calculate_live_in_out over!");
 
+  TIMER_BEGIN;
   calculate_live_interval(graph_for_dom_tree, self);
+  TIMER_END("calculate_live_interval over!");
 
   line_scan_register_allocation(self);
 }
