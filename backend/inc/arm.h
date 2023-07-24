@@ -62,6 +62,7 @@ typedef enum
 
 typedef enum _DataFormat
 {
+    NO_FORMAT,
     INTERGER_TWOSCOMPLEMENT,
     IEEE754_32BITS
 } DataFormat;
@@ -144,8 +145,10 @@ typedef struct _operand
     unsigned addtion;
     //定义了变址类型
     enum _OffsetType offsetType;
-    //定义当前存储的数据的格式
+    //定义当前寄存器值或立即数的格式
     DataFormat format;
+    //定义当前间址内存空间的数据格式 2023-7-24
+    DataFormat point2spaceFormat;
     //定义了第二操作数的左移选项  2023-4-20
     enum SHIFT_WAY shiftWay;
     //定义了移位的数量  2023-4-20
@@ -275,7 +278,7 @@ typedef struct _assemNode
     bool symbol;
 
     //标号节点的标号
-    char label[20];
+    char label[128];
 
     //mov 扩展 移位位数  2023-4-19
     int lslnum;
@@ -327,11 +330,15 @@ extern struct _operand fp;
 extern struct _operand pc;
 extern struct _operand sp_indicate_offset;
 extern struct _operand fp_indicate_offset;
-extern struct _operand param_push_op;
+extern struct _operand param_push_op_interger;
+extern struct _operand param_push_op_float;
 
 extern struct _operand trueOp;
 extern struct _operand falseOp;
 extern struct _operand floatZeroOp;
+
+extern struct _operand r023_float[4];
+extern struct _operand r023_int[4];
 
 
 //arm_assemble

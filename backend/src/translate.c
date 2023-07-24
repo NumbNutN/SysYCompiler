@@ -182,7 +182,7 @@ void translate_param_instructions(Instruction* this)
         //小于等于4个则直接丢R0-R3
         if(passed_param_number <= 3)
         {
-            pseudo_ldr("LDR",r027[passed_param_number],param_op);
+            pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
             //寄存器限制
             add_register_limited(1 << passed_param_number);
         }
@@ -190,22 +190,38 @@ void translate_param_instructions(Instruction* this)
         else{
             struct _operand temp = operand_pick_temp_register(ARM);
             pseudo_ldr("LDR",temp,param_op);
-            movii(param_push_op,temp);
+            movii(param_push_op_interger,temp);
             operand_recycle_temp_register(temp);
         }
     }
     //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
     else{
-        //小于等于4个则直接丢R0-R3
-        if(passed_param_number <= 3)
+        //当参数为变量或立即数时，形式参数要判断是否需要类型提升
+        if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
         {
-            operand_load_to_specified_register(param_op,r027[passed_param_number]);
-            //寄存器限制
-            add_register_limited(1 << passed_param_number);
+            if(passed_param_number <= 3)
+            {
+                mov(r023_float[passed_param_number],param_op);
+                //寄存器限制
+                add_register_limited(1 << passed_param_number);
+            }
+            else{
+                mov(param_push_op_float,param_op);
+                subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
+            }
         }
-        else
-            //堆入栈顶
-            movii(param_push_op,param_op);
+        else{
+            //小于等于4个则直接丢R0-R3
+            if(passed_param_number <= 3)
+            {
+                mov(r023_int[passed_param_number],param_op);
+                //寄存器限制
+                add_register_limited(1 << passed_param_number);
+            }
+            else
+                //堆入栈顶
+                mov(param_push_op_interger,param_op);
+        }
     }
 }
 
@@ -556,70 +572,41 @@ void translate_getelementptr_instruction(Instruction* this)
 */
 void translate_store_instruction(Instruction* this)
 {
+    //被存储的操作数字段
     struct _operand stored_elem = toOperand(this,SECOND_OPERAND);
+    //存放位置的操作数字段，往往是寄存器或以FP相对寻址的内存，存放绝对地址
+    //其format或point2format应该没有什么意义
     struct _operand addr = toOperand(this,FIRST_OPERAND);
 
+    Value* addrValue = ins_get_operand(this, FIRST_OPERAND);
     //当对全局变量操作时
-    if((value_is_global(ins_get_operand(this, FIRST_OPERAND))) &&
-       (ins_get_operand(this, FIRST_OPERAND)->VTy->TID != ArrayTyID))
+    if(value_is_global(addrValue) && !value_is_array(addrValue))
     {
-        //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //申请存放地址的临时寄存器
-        struct _operand tempAddrOp = operand_pick_temp_register(ARM);
+        struct _operand addrLoadedReg = operand_pick_temp_register(ARM);
         //取全局变量标号指示的内存单元
-        pseudo_ldr("LDR",tempAddrOp,addr);
-        //修改临时寄存器的寻址模式
-        operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
-        //获取数据格式
-        tempAddrOp.format = addr.format;
+        pseudo_ldr("LDR",addrLoadedReg,addr);
+
+        //构造间址
+        struct _operand addressingOp = operand_Create_indirect_addressing(
+            addrLoadedReg.oprendVal, 
+            value_get_elemFormat(ins_get_operand(this,FIRST_OPERAND)));
+
         //将数据送入内存单元
-        //TODO
-        mov(tempAddrOp,stored_elem);
-        //归还可能的存储数据的临时寄存器
-        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
+        mov(addressingOp,stored_elem);
         //归还临时地址寄存器
-        operand_recycle_temp_register(tempAddrOp);
+        operand_recycle_temp_register(addrLoadedReg);
     }
     //当对局部数组 或 全局数组的解引用指针（最后一层引用） 操作时
     else if((value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
     {
-        //将需要存储的数据加载到寄存器中
-        stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
-        //封装间接寻址
-        struct _operand storeMem = operand_Create_indirect_addressing(addr);
-        //格式
-        storeMem.format = addr.format;
+        //封装间接寻址，根据地址空间数据类型确定point2format
+        struct _operand storeMem = operand_Create_indirect_addressing(
+            addr.oprendVal,
+            value_get_elemFormat(ins_get_operand(this,FIRST_OPERAND)));
         //执行store
         mov(storeMem,stored_elem);
-        //归还可能的存储数据的临时寄存器
-        general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
     }
-    //其他情况为对局部变量的操作
-    //退化为赋值操作
-    else
-    {
-        /* 这个列表记录生成的单目表达式里两个个操作数的 寻址方式*/
-        AssembleOperand opList[2];
-
-        opList[TARGET_OPERAND] = toOperand(this,FIRST_OPERAND);
-        opList[FIRST_OPERAND] = toOperand(this,SECOND_OPERAND);
-        if(ins_operand_is_float(this,FIRST_OPERAND))
-        {
-            if(!ins_operand_is_float(this,TARGET_OPERAND))
-                movif(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
-            else
-                movff(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
-        }
-        else
-        {
-            if(ins_operand_is_float(this,TARGET_OPERAND))
-                movfi(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
-            else
-                movii(opList[TARGET_OPERAND],opList[FIRST_OPERAND]);
-        }
-    }
-
 }
 
 /**
@@ -636,34 +623,28 @@ void translate_load_instruction(Instruction* this)
        (ins_get_operand(this, FIRST_OPERAND)->VTy->TID != ArrayTyID))
     {
         //申请存放地址的临时寄存器
-        struct _operand tempAddrOp = operand_pick_temp_register(ARM);
+        struct _operand addrLoadedReg = operand_pick_temp_register(ARM);
         //取全局变量标号指示的内存单元
-        pseudo_ldr("LDR",tempAddrOp,addr);
-        //修改临时寄存器的寻址方式
-        operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
-        tempAddrOp.format = addr.format;
+        pseudo_ldr("LDR",addrLoadedReg,addr);
+        //构造间址
+        struct _operand addressingOp = operand_Create_indirect_addressing(
+            addrLoadedReg.oprendVal, 
+            value_get_elemFormat(ins_get_operand(this,FIRST_OPERAND)));
         //将数据取出至目标
-        mov(loaded_target,tempAddrOp);
+        mov(loaded_target,addressingOp);
         //归还临时地址寄存器
-        operand_recycle_temp_register(tempAddrOp);
+        operand_recycle_temp_register(addrLoadedReg);
     }
     //当对局部数组 或 全局数组的解引用指针（最后一层引用） 操作时
     else if((value_get_type(ins_get_operand(this, FIRST_OPERAND)) == ArrayTyID))
     {
         //封装间接寻址
-        struct _operand loadMem = operand_Create_indirect_addressing(addr);
-        loadMem.format = addr.format;
+        struct _operand loadMem = operand_Create_indirect_addressing(
+            addr.oprendVal,
+            value_get_elemFormat(ins_get_operand(this,FIRST_OPERAND)));
         //执行load
         mov(loaded_target,loadMem);
-
-    }
-    //其他情况为对局部变量的操作
-    //退化为赋值操作
-    else
-    {
-        translate_assign_instructions(this);
-    }
-    
+    }    
 }
 
 /**

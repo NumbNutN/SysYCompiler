@@ -113,11 +113,43 @@ bool label_is_entry(Instruction* label_ins);
 bool value_is_global(Value* var);
 
 /**
+ * @brief 判断当前变量是否是数组类型
+ * @birth: Created by LGD on 2023-7-24
+*/
+bool value_is_array(Value* val);
+
+/**
  * @brief 判断一个变量是否是浮点数
  * @author Created by LGD on 20230113
  * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
 */
 bool value_is_float(Value* var);
+
+/**
+ * @brief 判断一个指针指向空间是否是浮点数据
+ * @birth: Created by lGD on 2023-7-24
+*/
+bool value_mem_item_is_float(Value* var);
+
+/**
+ * @brief 返回指针类型Value元素的format
+ * @birth: Created by LGD on 2023-7-24
+*/
+enum _DataFormat value_get_elemFormat(Value* var);
+
+/**
+ * @brief 通过中间代码Value的描述确定operand的format
+ * @birth: Created by LGD on 20230226
+*/
+enum _DataFormat valueFindFormat(Value* var);
+
+/**
+ * @brief 将立即数Value的数值返回，返回结果永远为unsigned 64
+ *          当为32位有/无符号整型时返回数值
+ *          当为IEEE754 32位浮点数时以浮点记法的64位（高32位为0）返回
+ * @birth: Created by LGD on 2023-7-22
+**/
+uint64_t value_getConstant(Value* val);
 
 /**
  * @brief 遍历列表到指定编号的函数的FuncLabel位置
