@@ -243,7 +243,7 @@ void reg2mem(struct _operand reg,struct _operand mem)
         break;
         case VFP:
         {
-            vfp_memory_access_instructions("FLDR",reg,mem,FloatTyID);
+            vfp_memory_access_instructions("FST",reg,mem,FloatTyID);
         }
         break;
     }
@@ -278,7 +278,7 @@ void mem2reg(struct _operand reg,struct _operand mem)
         break;
         case VFP:
         {
-            vfp_memory_access_instructions("FSTR",reg,mem,FloatTyID);
+            vfp_memory_access_instructions("FLD",reg,mem,FloatTyID);
         }
         break;
     }
@@ -420,49 +420,9 @@ enum _DataFormat valueFindFormat(Value* var)
 */
 void movif(AssembleOperand tar,AssembleOperand op1)
 {
-    //如果目标在寄存器
-    if(operand_is_in_register(tar))
-    {
-        //如果源在寄存器
-        if(operand_is_in_register(op1))
-            operand_regInt2Float(op1,tar);
-        //源在内存
-        else
-        {   
-            struct _operand temp;
-            temp = operand_load_to_register(op1, nullop,VFP);
-            operand_regInt2Float(temp,tar);
-            operand_recycle_temp_register(temp);        
-        }
-    } 
-    //目标在内存
-    else if(operand_is_in_memory(tar))
-    {
-        struct _operand temp;
-        //如果源在寄存器
-        if(operand_is_in_register(op1))
-        {
-            temp = operand_pick_temp_register(VFP);
-            operand_regInt2Float(op1,temp);
-            reg2mem(temp,tar);
-        }
-        //如果源在内存
-        else if(operand_is_in_memory(op1))
-        {
-            temp = operand_load_to_register(op1,nullop,VFP);
-            operand_regInt2Float(temp,temp);
-            reg2mem(temp,tar);
-        }
-        operand_recycle_temp_register(temp);       
-    }
-}
-
-/***
- * @brief tar:float = op:int
- * @birth: Created by LGD on 20230130
-*/
-void movfi(AssembleOperand tar,AssembleOperand op1)
-{
+    //确保源在VFP
+    struct _operand srcOp1 = op1;
+    op1 = operandConvert(srcOp1, VFP, 0, 0);
     //如果目标在寄存器
     if(operand_is_in_register(tar))
     {
@@ -492,12 +452,63 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
         //如果源在内存
         else if(operand_is_in_memory(op1))
         {
-            temp = operand_load_to_register(op1, nullop,VFP);
+            temp = operand_load_to_register(op1,nullop,VFP);
             operand_regFloat2Int(temp,temp);
             reg2mem(temp,tar);
         }
         operand_recycle_temp_register(temp);       
     }
+    if(!operand_is_same(op1, srcOp1))
+        operand_recycle_temp_register(op1);
+}
+
+/***
+ * @brief tar:float = op:int
+ * @birth: Created by LGD on 20230130
+*/
+void movfi(AssembleOperand tar,AssembleOperand op1)
+{
+    //确保源在VFP
+    struct _operand srcOp1 = op1;
+    op1 = operandConvert(srcOp1, VFP, 0, 0);
+    //如果目标在寄存器
+    if(operand_is_in_register(tar))
+    {
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+            operand_regInt2Float(op1,tar);
+        //源在内存
+        else
+        {   
+            struct _operand temp;
+            temp = operand_load_to_register(op1, nullop,VFP);
+            operand_regInt2Float(temp,tar);
+            operand_recycle_temp_register(temp);        
+        }
+    } 
+    //目标在内存
+    else if(operand_is_in_memory(tar))
+    {
+        struct _operand temp;
+        //如果源在寄存器
+        if(operand_is_in_register(op1))
+        {
+            //申请临时目标寄存器
+            temp = operand_pick_temp_register(VFP);
+            operand_regInt2Float(op1,temp);
+            reg2mem(temp,tar);
+        }
+        //如果源在内存
+        else if(operand_is_in_memory(op1))
+        {
+            temp = operand_load_to_register(op1, nullop,VFP);
+            operand_regInt2Float(temp,temp);
+            reg2mem(temp,tar);
+        }
+        operand_recycle_temp_register(temp);       
+    }
+    if(!operand_is_same(op1, srcOp1))
+        operand_recycle_temp_register(op1);
 }
 
 /**
@@ -602,9 +613,9 @@ void movini(AssembleOperand tar,AssembleOperand op1)
 */
 void mov(struct _operand tar,struct _operand src)
 {
-    if(operand_get_format(src) == operand_get_format(tar) == INTERGER_TWOSCOMPLEMENT)
+    if(operand_get_format(src) == INTERGER_TWOSCOMPLEMENT && operand_get_format(tar) == INTERGER_TWOSCOMPLEMENT)
         movii(tar,src);
-    else if(operand_get_format(src) == operand_get_format(tar) == IEEE754_32BITS)
+    else if(operand_get_format(src) == IEEE754_32BITS && operand_get_format(tar) == IEEE754_32BITS)
         movff(tar,src);
     else if((operand_get_format(src) == INTERGER_TWOSCOMPLEMENT) && (operand_get_format(tar) == IEEE754_32BITS))
         movfi(tar,src);

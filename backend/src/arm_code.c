@@ -383,7 +383,7 @@ void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOpe
     assert(mode == REGISTER_DIRECT);
     node->op[0] = reg;
     mode = mem.addrMode;
-    assert(mode == REGISTER_INDIRECT_WITH_OFFSET);
+    assert(mode == REGISTER_INDIRECT_WITH_OFFSET || mode == REGISTER_INDIRECT);
     node->op[1] = mem;
 
     strcpy(node->label,NONELABEL);

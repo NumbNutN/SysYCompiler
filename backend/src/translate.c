@@ -571,9 +571,11 @@ void translate_store_instruction(Instruction* this)
         pseudo_ldr("LDR",tempAddrOp,addr);
         //修改临时寄存器的寻址模式
         operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
+        //获取数据格式
+        tempAddrOp.format = addr.format;
         //将数据送入内存单元
         //TODO
-        reg2mem(stored_elem, tempAddrOp);
+        mov(tempAddrOp,stored_elem);
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
         //归还临时地址寄存器
@@ -586,8 +588,10 @@ void translate_store_instruction(Instruction* this)
         stored_elem = operand_load_to_register(stored_elem,nullop,ARM);
         //封装间接寻址
         struct _operand storeMem = operand_Create_indirect_addressing(addr);
+        //格式
+        storeMem.format = addr.format;
         //执行store
-        reg2mem(stored_elem, storeMem);
+        mov(storeMem,stored_elem);
         //归还可能的存储数据的临时寄存器
         general_recycle_temp_register_conditional(this,SECOND_OPERAND,stored_elem);
     }
@@ -637,8 +641,9 @@ void translate_load_instruction(Instruction* this)
         pseudo_ldr("LDR",tempAddrOp,addr);
         //修改临时寄存器的寻址方式
         operand_change_addressing_mode(&tempAddrOp,REGISTER_INDIRECT);
+        tempAddrOp.format = addr.format;
         //将数据取出至目标
-        movii(loaded_target,tempAddrOp);
+        mov(loaded_target,tempAddrOp);
         //归还临时地址寄存器
         operand_recycle_temp_register(tempAddrOp);
     }
@@ -647,8 +652,9 @@ void translate_load_instruction(Instruction* this)
     {
         //封装间接寻址
         struct _operand loadMem = operand_Create_indirect_addressing(addr);
+        loadMem.format = addr.format;
         //执行load
-        movii(loaded_target,loadMem);
+        mov(loaded_target,loadMem);
 
     }
     //其他情况为对局部变量的操作
