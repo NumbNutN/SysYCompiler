@@ -309,7 +309,7 @@ void pre_eval(ast *a) {
       Value *goto_label_ins = (Value *)ins_new_no_operator_v2(GotoOP);
       strcpy(buffer, "goto ");
       strcat(buffer, while_head_label_ins->name);
-      goto_label_ins->name = buffer;
+      goto_label_ins->name = strdup(buffer);
       goto_label_ins->VTy->TID = GotoTyID;
       goto_label_ins->pdata->no_condition_goto.goto_location =
           while_head_label_ins;
