@@ -398,22 +398,6 @@ void general_recycle_temp_register_conditional(Instruction* this,int specificOpe
 //----------------------------------------//
 //            新的方法                     //
 
-/**
- * @brief 通过中间代码Value的描述确定operand的format
- * @birth: Created by LGD on 20230226
-*/
-enum _DataFormat valueFindFormat(Value* var)
-{
-    if(value_is_float(var))
-    {
-        return IEEE754_32BITS;
-    }
-    else
-    {
-        return INTERGER_TWOSCOMPLEMENT;
-    }
-}
-
 /***
  * @brief tar:int = op:float
  * @birth: Created by LGD on 20230130

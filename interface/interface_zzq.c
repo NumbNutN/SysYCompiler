@@ -436,18 +436,90 @@ bool value_is_global(Value* var)
 }
 
 /**
+ * @brief 判断当前变量是否是数组类型
+ * @birth: Created by LGD on 2023-7-24
+*/
+bool value_is_array(Value* val)
+{
+    return value_get_type(val) == ArrayTyID;
+}
+
+/**
  * @brief 判断一个变量是否是浮点数
  * @author Created by LGD on 20230113
  * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
+ *          2023-7-24 支持判断参数是否是浮点数
+ *          2023-7-24 对于数组类型，一律返回false
 */
 bool value_is_float(Value* var)
 {
     if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
-    else if(value_get_type(var) == ArrayTyID){
-        if(var->pdata->array_pdata.array_type == FloatTyID) return true;
-        else return false;
+    else if(value_get_type(var) == ArrayTyID)return false;
+    else if(value_get_type(var) == ParamOP){
+        if(var->pdata->param_pdata.param_type == FloatTyID) return true;
+        return false;
     }
     else return false;
+}
+
+/**
+ * @brief 判断一个指针指向空间是否是浮点数据
+ * @birth: Created by lGD on 2023-7-24
+*/
+bool value_mem_item_is_float(Value* var)
+{
+    assert( (value_is_array(var) ||
+            value_is_global(var)) && 
+            "current value is not a pointer");
+    
+    if(value_is_array(var)){
+        if(var->pdata->array_pdata.array_type == FloatTyID) return true;
+        return false;
+    }
+    if(value_is_global(var)){
+        //全局数组
+        if(value_is_array(var)){
+            if(var->pdata->array_pdata.array_type == FloatTyID) return true;
+            return false;
+        }
+        //全局变量
+        else{
+            if(value_get_type(var) == FloatTyID) return true;
+            return false;
+        }
+    }
+}
+
+/**
+ * @brief 通过中间代码Value的描述确定operand的format
+ * @birth: Created by LGD on 20230226
+*/
+enum _DataFormat valueFindFormat(Value* var)
+{
+    if(value_is_float(var)) return IEEE754_32BITS;
+    else return INTERGER_TWOSCOMPLEMENT;
+}
+
+/**
+ * @brief 返回指针类型Value元素的format
+ * @birth: Created by LGD on 2023-7-24
+*/
+enum _DataFormat value_get_elemFormat(Value* var)
+{
+    if(value_mem_item_is_float(var))return IEEE754_32BITS;
+    else return INTERGER_TWOSCOMPLEMENT;
+}
+
+/**
+ * @brief 将立即数Value的数值返回，返回结果永远为unsigned 64
+ *          当为32位有/无符号整型时返回数值
+ *          当为IEEE754 32位浮点数时以浮点记法的64位（高32位为0）返回
+ * @birth: Created by LGD on 2023-7-22
+**/
+uint64_t value_getConstant(Value* val)
+{
+    if(value_is_float(val))return new_float2IEEE75432BITS(val->pdata->var_pdata.fVal);
+    else return val->pdata->var_pdata.iVal;
 }
 
 /**
@@ -710,7 +782,7 @@ void insert_variable_map(Function *handle_func,HashMap* map)
         int iter_num = 0;
         ListFirst((self_cfg->node_set)[i]->bblock_head->inst_list,false);
         while(ListNext((self_cfg->node_set)[i]->bblock_head->inst_list,&p))
-        ins_deepSet_varMap(p,map);
+        ins_shallowSet_varMap(p,map);
   }
 }
 

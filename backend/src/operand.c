@@ -9,16 +9,17 @@
 struct _operand r0 = {REGISTER_DIRECT,R0,0};
 struct _operand r1 = {REGISTER_DIRECT,R1,0};
 struct _operand r2 = {REGISTER_DIRECT,R2,0};
-struct _operand immedOp = {IMMEDIATE,0,0};
-struct _operand sp = {REGISTER_DIRECT,SP,0};
-struct _operand lr = {REGISTER_DIRECT,LR,0};
-struct _operand fp = {REGISTER_DIRECT,R7,0};
-struct _operand pc = {REGISTER_DIRECT,PC,0};
+struct _operand immedOp = {IMMEDIATE,0,0,.format=INTERGER_TWOSCOMPLEMENT};
+struct _operand sp = {REGISTER_DIRECT,SP,0,.format=INTERGER_TWOSCOMPLEMENT};
+struct _operand lr = {REGISTER_DIRECT,LR,0,.format=INTERGER_TWOSCOMPLEMENT};
+struct _operand fp = {REGISTER_DIRECT,R7,0,.format=INTERGER_TWOSCOMPLEMENT};
+struct _operand pc = {REGISTER_DIRECT,PC,0,.format=INTERGER_TWOSCOMPLEMENT};
 
 struct _operand sp_indicate_offset = {
                 REGISTER_INDIRECT_WITH_OFFSET,
                 SP,
-                0
+                0,
+                .format=INTERGER_TWOSCOMPLEMENT
 };
 
 struct _operand fp_indicate_offset = {
@@ -27,11 +28,22 @@ struct _operand fp_indicate_offset = {
     .addtion = 0
 };
 
-struct _operand param_push_op = {
+struct _operand param_push_op_interger = {
     .addrMode = REGISTER_INDIRECT_PRE_INCREMENTING,
     .oprendVal = SP,
-    .addtion = -4
+    .addtion = -4,
+    .format = INTERGER_TWOSCOMPLEMENT,
+    .point2spaceFormat = INTERGER_TWOSCOMPLEMENT
 };
+
+struct _operand param_push_op_float = {
+    .addrMode = REGISTER_INDIRECT_WITH_OFFSET,
+    .oprendVal = SP,
+    .addtion = -4,
+    .format = INTERGER_TWOSCOMPLEMENT,
+    .point2spaceFormat = IEEE754_32BITS
+};
+
 
 struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R1},
@@ -41,6 +53,21 @@ struct _operand r027[8] = {{.addrMode=REGISTER_DIRECT,.oprendVal=R0},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R5},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R6},
                             {.addrMode=REGISTER_DIRECT,.oprendVal=R7}};
+
+struct _operand r023_int[4] = {
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R0,.format=INTERGER_TWOSCOMPLEMENT},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R1,.format=INTERGER_TWOSCOMPLEMENT},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R2,.format=INTERGER_TWOSCOMPLEMENT},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R3,.format=INTERGER_TWOSCOMPLEMENT}
+};
+
+struct _operand r023_float[4] = {
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R0,.format=IEEE754_32BITS},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R1,.format=IEEE754_32BITS},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R2,.format=IEEE754_32BITS},
+    {.addrMode=REGISTER_DIRECT,.oprendVal=R3,.format=IEEE754_32BITS}
+};
+
 struct _operand trueOp = {IMMEDIATE,1,0};
 struct _operand falseOp = {IMMEDIATE,0,0};
 
@@ -50,6 +77,7 @@ struct _operand floatZeroOp = {.addrMode=IMMEDIATE,.oprendVal=0,.addtion=0,.form
 /**
  * @brief 由于仅通过operand判断需不需要临时寄存器需要额外的归类方法
  * @birth: Created by LGD on 20230130
+ * @update: 2023-7-24 断言寻址模式是已知的
 */
 RegorMem operand_in_regOrmem(AssembleOperand op)
 {
@@ -66,6 +94,10 @@ RegorMem operand_in_regOrmem(AssembleOperand op)
             return IN_INSTRUCTION;
         case NONE_ADDRMODE:
             return UNALLOCATED;
+        case LABEL_MARKED_LOCATION:
+            return IN_DATA_SEC;
+        default:
+            assert(false && "unrecognize addressing mode");
     }
 }
 
@@ -87,24 +119,31 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* val)
             op.oprendVal = FP;
             op.addtion = get_variable_register_order_or_memory_offset_test(this,val);
             op.offsetType = OFFSET_IMMED;
+            op.format = INTERGER_TWOSCOMPLEMENT;
+            op.point2spaceFormat = valueFindFormat(val);
         break;
         case IN_DATA_SEC:
             op.addrMode = LABEL_MARKED_LOCATION;
             op.oprendVal = val->name;
+            op.point2spaceFormat = valueFindFormat(val);
         break;
         case IN_REGISTER:
             op.addrMode = REGISTER_DIRECT;
             op.oprendVal = get_variable_register_order_or_memory_offset_test(this,val);
+            op.format = valueFindFormat(val);
         break;
         case IN_INSTRUCTION:
             op.addrMode = IMMEDIATE;
             op.oprendVal = value_getConstant(val);
+            op.format = valueFindFormat(val);
         break;
         case UNALLOCATED:
             op.addrMode = NONE_ADDRMODE;
             op.oprendVal = 0;
+            op.format = valueFindFormat(val);
     }
-    op.format = valueFindFormat(val);
+    
+
     return op;
 }
 
@@ -230,14 +269,30 @@ enum _ARMorVFP operand_get_regType(struct _operand op)
 }
 
 /**
- * @brief 获取操作数的编码格式
- * @birth: Created by LGD on 2023-7-23
+ * @brief 获取操作数寄存器或立即数的编码格式
+ * @birth: Created by LGD on 2023-7-24
 */
-enum _DataFormat operand_get_format(struct _operand op)
+enum _DataFormat operand_get_reg_format(struct _operand op)
 {
+    assert(op.format != NO_FORMAT && "当前寄存器格式为空");
     return op.format;
 }
 
+/**
+ * @brief 获取操作数的编码格式
+ * @birth: Created by LGD on 2023-7-23
+ * @update: 2023-7-24 根据在寄存器、立即数和在内存返回不同的格式
+*/
+enum _DataFormat operand_get_format(struct _operand op)
+{
+    if(operand_in_regOrmem(op) == IN_MEMORY || operand_in_regOrmem(op) == IN_DATA_SEC)
+    {
+        assert(op.point2spaceFormat != NO_FORMAT && "当前间址内存格式为空");
+        return op.point2spaceFormat;
+    }
+    else
+        return operand_get_reg_format(op);
+}
 
 /**
  * @brief 把暂存器存器再封装一层
@@ -733,17 +788,34 @@ struct _operand operand_create2_relative_adressing(RegisterOrder SPorFP,struct _
 /**
  * @brief 创建一个寄存器间接寻址操作数
  * @birth: Created by LGD on 2023-7-20
+ * @update: 2023-7-24 需要指定间址指向的空间存放的数据类型
 */
-struct _operand operand_Create_indirect_addressing(struct _operand reg)
+struct _operand operand_Create_indirect_addressing(RegisterOrder reg,enum _DataFormat point2format)
 {
     struct _operand reg_indirect = {
         .addrMode = REGISTER_INDIRECT,
-        .oprendVal = reg.oprendVal,
+        .oprendVal = reg,
         .addtion = 0,
-        .format = INTERGER_TWOSCOMPLEMENT
+        .format = INTERGER_TWOSCOMPLEMENT,
+        .point2spaceFormat = point2format
     };
     return reg_indirect;
 }
+
+/**
+ * @brief 创建一个寄存器直接寻址的操作数
+ * @birth: Created by LGD on 2023-7-24
+*/
+struct _operand operand_create_register_direct(RegisterOrder reg,enum _DataFormat format)
+{
+    struct _operand op = {.addrMode = REGISTER_DIRECT,
+                .oprendVal = reg,
+                .addtion = 0,
+                .format = format};
+    return op;
+}
+
+
 
 /**
  * @brief 将操作数取到一个寄存器中，或者其他定制化需求

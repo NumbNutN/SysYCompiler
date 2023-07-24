@@ -345,7 +345,7 @@ void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* labe
     */
     assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,"B");
-    char* addr = (char*)malloc(sizeof(char)*10);
+    char* addr = (char*)malloc(sizeof(char)*128);
     node->op[0].oprendVal = addr;
     node->op[0].addrMode = TARGET_LABEL;        //20221203  设定寻址方式
     //目标Label
@@ -381,9 +381,11 @@ void vfp_memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOpe
     AddrMode mode;
     mode = reg.addrMode;
     assert(mode == REGISTER_DIRECT);
+    assert(operand_get_regType(reg) == VFP);
     node->op[0] = reg;
     mode = mem.addrMode;
-    assert(mode == REGISTER_INDIRECT_WITH_OFFSET || mode == REGISTER_INDIRECT);
+    assert(mode == REGISTER_INDIRECT_WITH_OFFSET || mode == REGISTER_INDIRECT || mode == REGISTER_INDIRECT_PRE_INCREMENTING);
+    assert(operand_get_regType(mem) == ARM);
     node->op[1] = mem;
 
     strcpy(node->label,NONELABEL);

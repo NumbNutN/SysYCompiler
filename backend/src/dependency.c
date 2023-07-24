@@ -5,17 +5,7 @@
 #include "memory_manager.h"
 #include <math.h>
 
-/**
- * @brief 将立即数Value的数值返回，返回结果永远为unsigned 64
- *          当为32位有/无符号整型时返回数值
- *          当为IEEE754 32位浮点数时以浮点记法的64位（高32位为0）返回
- * @birth: Created by LGD on 2023-7-22
-**/
-uint64_t value_getConstant(Value* val)
-{
-    if(value_is_float(val))return new_float2IEEE75432BITS(val->pdata->var_pdata.fVal);
-    else return val->pdata->var_pdata.iVal;
-}
+
 
 
 /**
@@ -102,6 +92,7 @@ TypeID value_get_type(Value* val)
 {
     return val->VTy->TID;
 }
+
 
 /**
  * @brief f2ieee
