@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
     is_functional_test = true;
     choose_case = read_code_from_file(argv[1]);
   } else if (argc == 3) {
-    is_functional_test = false;
+    is_functional_test = true;
     choose_case = read_code_from_file(argv[1]);
   } else {
     is_functional_test = true;
