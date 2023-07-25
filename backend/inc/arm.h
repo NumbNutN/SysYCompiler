@@ -266,7 +266,7 @@ void as_set_function_type(char* name);
 typedef struct _assemNode
 {
     //操作码
-    char opCode[8];
+    char opCode[16];
     //操作数
     AssembleOperand op[4];
     //定义了操作数的数量
@@ -339,7 +339,11 @@ extern struct _operand floatZeroOp;
 
 extern struct _operand r023_float[4];
 extern struct _operand r023_int[4];
+extern struct _operand s023_float[4];
 
+extern struct _operand returnIntOp;
+extern struct _operand returnFloatOp;
+extern struct _operand returnFloatSoftOp;
 
 //arm_assemble
 #define NONESUFFIX ""
@@ -390,6 +394,17 @@ enum _Pick_Arm_Register_Limited{
 
 /* 当前全局的arm寄存器限制情况 */
 extern enum _Pick_Arm_Register_Limited global_arm_register_limited;
+
+
+/**
+ * @brief 子程序调用策略
+ * @birth: Created by LGD on 2023-7-25
+*/
+enum _Procedure_Call_Strategy {
+    FP_SOFT,
+    FP_HARD
+};
+extern enum _Procedure_Call_Strategy procudre_call_strategy;
 
 //ARM指令
 assmNode* memory_access_instructions(char* opCode,AssembleOperand reg,AssembleOperand mem,char* suffix,bool symbol,char* label);

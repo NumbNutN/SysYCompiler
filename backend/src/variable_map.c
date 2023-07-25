@@ -114,10 +114,14 @@ void set_variable_stack_offset_by_name(HashMap* map,char* name,size_t offset)
     vi->ori.oprendVal = FP;
     vi->ori.addtion = offset;
     vi->ori.offsetType = OFFSET_IMMED;
+    vi->ori.format = INTERGER_TWOSCOMPLEMENT;
+    vi->ori.point2spaceFormat = INTERGER_TWOSCOMPLEMENT;
     vi->current.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     vi->current.oprendVal = FP;
     vi->current.addtion = offset;
     vi->current.offsetType = OFFSET_IMMED;
+    vi->current.format = INTERGER_TWOSCOMPLEMENT;
+    vi->current.point2spaceFormat = INTERGER_TWOSCOMPLEMENT;
 }
 
 /**
@@ -129,8 +133,10 @@ void set_variable_register_order_by_name(HashMap* map,char* name,RegisterOrder r
     VarInfo* vi = HashMapGet(map,name);
     vi->ori.addrMode = REGISTER_DIRECT;
     vi->ori.oprendVal = reg_order;
+    vi->ori.format = INTERGER_TWOSCOMPLEMENT;
     vi->current.addrMode = REGISTER_DIRECT;
     vi->current.oprendVal = reg_order;
+    vi->current.format = INTERGER_TWOSCOMPLEMENT;
 }
 
 /**
@@ -774,7 +780,7 @@ size_t count_register_change_from_R42R12(HashMap* register_attribute_map)
             bool already_included = 0;
             for(int i =0;i<9;i++)
             {
-                if(operand_is_same(reg_list[i],reg->current))
+                if(reg_list[i].oprendVal==reg->current.oprendVal)
                     already_included = 1;
             }
             if(already_included)continue;

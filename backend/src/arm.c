@@ -7,6 +7,8 @@
 
 enum Section currentSection = NONESECTION;
 
+enum _Procedure_Call_Strategy procudre_call_strategy;
+
 void change_currentSection(enum Section c)
 {
     if(c != currentSection)

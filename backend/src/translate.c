@@ -174,53 +174,95 @@ void translate_param_instructions(Instruction* this)
     AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
     //获取当前传递参数序号
     size_t passed_param_number = get_parameter_idx_by_name(ins_get_assign_left_value(this)->name);
-
-    //判断当前传入的变量是否是全局数组
-    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+    if(procudre_call_strategy == FP_SOFT)
     {
-        //需要将全局标号的地址取出到寄存器后传递
-        //小于等于4个则直接丢R0-R3
-        if(passed_param_number <= 3)
+        //判断当前传入的变量是否是全局数组
+        if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
         {
-            pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
-            //寄存器限制
-            add_register_limited(1 << passed_param_number);
-        }
-        //多于4个参数，临时寄存器调出后回收
-        else{
-            struct _operand temp = operand_pick_temp_register(ARM);
-            pseudo_ldr("LDR",temp,param_op);
-            movii(param_push_op_interger,temp);
-            operand_recycle_temp_register(temp);
-        }
-    }
-    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
-    else{
-        //当参数为变量或立即数时，形式参数要判断是否需要类型提升
-        if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
-        {
-            if(passed_param_number <= 3)
-            {
-                mov(r023_float[passed_param_number],param_op);
-                //寄存器限制
-                add_register_limited(1 << passed_param_number);
-            }
-            else{
-                mov(param_push_op_float,param_op);
-                subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
-            }
-        }
-        else{
+            //需要将全局标号的地址取出到寄存器后传递
             //小于等于4个则直接丢R0-R3
             if(passed_param_number <= 3)
             {
-                mov(r023_int[passed_param_number],param_op);
+                pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
                 //寄存器限制
                 add_register_limited(1 << passed_param_number);
             }
-            else
-                //堆入栈顶
-                mov(param_push_op_interger,param_op);
+            //多于4个参数，临时寄存器调出后回收
+            else{
+                struct _operand temp = operand_pick_temp_register(ARM);
+                pseudo_ldr("LDR",temp,param_op);
+                movii(param_push_op_interger,temp);
+                operand_recycle_temp_register(temp);
+            }
+        }
+        //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
+        else{
+            //当参数为变量或立即数时，形式参数要判断是否需要类型提升
+            if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+            {
+                if(passed_param_number <= 3)
+                {
+                    mov(r023_float[passed_param_number],param_op);
+                    //寄存器限制
+                    add_register_limited(1 << passed_param_number);
+                }
+                else{
+                    mov(param_push_op_float,param_op);
+                    subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
+                }
+            }
+            else{
+                //小于等于4个则直接丢R0-R3
+                if(passed_param_number <= 3)
+                {
+                    mov(r023_int[passed_param_number],param_op);
+                    //寄存器限制
+                    add_register_limited(1 << passed_param_number);
+                }
+                else
+                    //堆入栈顶
+                    mov(param_push_op_interger,param_op);
+            }
+        }
+    }
+    else if(procudre_call_strategy == FP_HARD)
+    {
+        //判断当前传入的变量是否是全局数组
+        if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+        {
+            //需要将全局标号的地址取出到寄存器后传递
+            //小于等于4个则直接丢R0-R3
+            if(passed_param_number <= 3)
+            {
+                pseudo_fld("FLD",s023_float[passed_param_number],param_op,FloatTyID);
+                //寄存器限制
+                add_register_limited(1 << passed_param_number);
+            }
+            //多于4个参数，临时寄存器调出后回收
+            else{
+                struct _operand temp = operand_pick_temp_register(ARM);
+                pseudo_ldr("LDR",temp,param_op);
+                movii(param_push_op_interger,temp);
+                operand_recycle_temp_register(temp);
+            }
+        }
+        //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
+        else{
+            //当参数为变量或立即数时，形式参数要判断是否需要类型提升
+            if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+            {
+                if(passed_param_number <= 3)
+                {
+                    mov(s023_float[passed_param_number],param_op);
+                    //寄存器限制
+                    add_register_limited(1 << passed_param_number);
+                }
+                else{
+                    mov(param_push_op_float,param_op);
+                    subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
+                }
+            }
+            else assert(false && "current FP_HARD strategy does not support interger for parameter");
         }
     }
 }
@@ -269,6 +311,8 @@ void translate_call_with_return_value_instructions(Instruction* this)
     //第一步 跳转至对应函数的标号
     char* tarLabel = ins_get_tarLabel(this);
 
+    Value* val = ins_get_operand(this, TARGET_OPERAND);
+
     branch_instructions(tarLabel,"L",false,NONELABEL);
 
     //取消寄存器限制
@@ -288,10 +332,20 @@ void translate_call_with_return_value_instructions(Instruction* this)
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
 
     struct _operand returnVal = toOperand(this,TARGET_OPERAND);
-
     //如果返回值无效，则无需翻译
+
     if(!operand_is_unallocated(returnVal))
-        movii(returnVal,r0);
+    {
+        if(!strcmp(ins_get_tarLabel(this),"getfloat"))
+            mov(returnVal,returnFloatOp);
+        else
+        {
+            if(value_is_float(val))
+                movff(returnVal,returnFloatSoftOp);
+            else
+                movii(returnVal,returnIntOp);
+        }
+    }
 
     //定义函数已执行，这用于重置参数传递的状态
     passed_param_number = 0;
@@ -326,6 +380,9 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         translate_sub(this);
         return;
     }
+
+    if(opCode == DivOP)
+        0;
     struct _operand op1,op2,srcOp1,srcOp2;
     op1 = srcOp1 = toOperand(this,FIRST_OPERAND);
     op2 = srcOp2 = toOperand(this,SECOND_OPERAND);
@@ -350,6 +407,7 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
             operand_r2r_cvt(op2, op2);
         
         middleOp = operand_pick_temp_register(VFP);
+        middleOp.format = IEEE754_32BITS;
 
         switch(ins_get_opCode(this))
         {
@@ -373,35 +431,39 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
             op1 = operand_load_to_register(srcOp1, nullop, ARM);
         if(!operand_is_in_register(srcOp2))
             op2 = operand_load_to_register(srcOp2, nullop, ARM);
-    
+
+
         switch(ins_get_opCode(this))
         {
             case AddOP:
                 middleOp = operand_pick_temp_register(ARM);
+                middleOp.format = INTERGER_TWOSCOMPLEMENT;
                 general_data_processing_instructions(ADD,
                     middleOp,op1,op2,NONESUFFIX,false);
             break;
             case SubOP:
                 middleOp = operand_pick_temp_register(ARM);
+                middleOp.format = INTERGER_TWOSCOMPLEMENT;
                 general_data_processing_instructions(SUB,
                     middleOp,op1,op2,NONESUFFIX,false);
             break;
             case MulOP:
                 middleOp = operand_pick_temp_register(ARM);
+                middleOp.format = INTERGER_TWOSCOMPLEMENT;
                 general_data_processing_instructions(MUL,
                     middleOp,op1,op2,NONESUFFIX,false);
             break;
 #ifdef USE_DIV_ABI
             case DivOP:
-                middleOp = r0;
-                movii(r0,op1);
-                movii(r1,op2);
+                middleOp = r023_int[0];
+                movii(r023_int[0],op1);
+                movii(r023_int[1],op2);
                 branch_instructions_test("__aeabi_idiv","L",false,NONELABEL);
             break;
             case ModOP:
-                middleOp = r1;
-                movii(r0,op1);
-                movii(r1,op2);
+                middleOp = r023_int[1];
+                movii(r023_int[0],op1);
+                movii(r023_int[1],op2);
                 branch_instructions_test("__aeabi_idivmod","L",false,NONELABEL);
             break;
 #else
@@ -463,6 +525,7 @@ void translate_sub(Instruction* this)
             operand_r2r_cvt(op2, op2);
         
         middleOp = operand_pick_temp_register(VFP);
+        middleOp.format = IEEE754_32BITS;
 
         fadd_and_fsub_instruction("FSUB",
             middleOp,op1,op2,FloatTyID);
@@ -474,12 +537,13 @@ void translate_sub(Instruction* this)
     else
     {   
         middleOp = operand_pick_temp_register(ARM);
+        middleOp.format = INTERGER_TWOSCOMPLEMENT;
 
 #ifndef ALLOW_TWO_IMMEDIATE
         assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
 #endif
         //如果第1个操作数为立即数，第2个不是，使用RSB指令
-        if(opernad_is_immediate(op1) && !opernad_is_immediate(op2))
+        if(operand_is_immediate(op1) && !operand_is_immediate(op2))
         {
             op2 = operandConvert(op2,ARM,false,IN_MEMORY);
             general_data_processing_instructions(RSB,
@@ -543,6 +607,7 @@ void translate_getelementptr_instruction(Instruction* this)
     //使用乘加指令
     step_long = operand_load_to_register(step_long,nullop,ARM);
     struct _operand middleOp = operand_pick_temp_register(ARM);
+    middleOp.format = INTERGER_TWOSCOMPLEMENT;
     //乘加指令，且tarOp不会作为立即数，没必要从内存加载
     //middleOp = operand_load_to_register(tarOp,nullop);
 
@@ -781,6 +846,7 @@ void translate_logical_binary_instruction_new(Instruction* this)
     else
         cmpii(opList[FIRST_OPERAND],opList[SECOND_OPERAND]);
     
+    assert(opList[TARGET_OPERAND].format == INTERGER_TWOSCOMPLEMENT && "要求布尔类型为补码形式");
     movii(opList[TARGET_OPERAND],falseOp);
     switch(ins_get_opCode(this))
     {
@@ -837,17 +903,24 @@ void translate_goto_instruction_test_bool(Instruction* this)
  * @birth: Created by LGD on 2022-12-11
  * @update:2022-12-25 封装后使函数更精简
  *         2023-5-4 重写
- * @update:2023-6-6 添加返回函数恢复栈帧的语句
+ *         2023-6-6 添加返回函数恢复栈帧的语句
+ *         2023-7-25 根据子进程调用策略选择不同的寄存器
 */
 void translate_return_instructions(Instruction* this)
 {
-
+    //获取要返回的操作数
     struct _operand returnOperand = toOperand(this,FIRST_OPERAND);
-    movii(r0,returnOperand);
-    //当翻译返回语句时，此后R0应当是禁用状态
-    //add_register_limited(RETURN_VALUE_LIMITED);
-    //为了确保函数正常返回，这里将添加跳出语句
-    //恢复当前函数栈帧
+    //确定返回值接收策略
+    if(!strcmp(currentPF.func_name,"getfloat"))
+        mov(returnFloatOp,returnOperand);
+    else
+    {
+        if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+            mov(returnFloatSoftOp,returnOperand);
+        else
+            mov(returnIntOp,returnOperand);
+    }
+
     reset_sp_value(false);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);

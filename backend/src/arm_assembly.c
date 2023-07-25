@@ -827,6 +827,7 @@ void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2)
     
 
     middleOp = operand_pick_temp_register(ARM);
+    middleOp.format = INTERGER_TWOSCOMPLEMENT;
     general_data_processing_instructions(ADD,
         middleOp,op1,op2,NONESUFFIX,false);
             
@@ -859,7 +860,7 @@ struct _operand subii(struct _operand op1,struct _operand op2)
         assert(!(opernad_is_immediate(op1) && opernad_is_immediate(op2)) && "减法中两个操作数都是立即数是不允许的");
 #endif
     //如果第1个操作数为立即数，第2个不是，使用RSB指令
-    if(opernad_is_immediate(op1) && !opernad_is_immediate(op2))
+    if(operand_is_immediate(op1) && !operand_is_immediate(op2))
     {
         op2 = operandConvert(op2,ARM,false,IN_MEMORY);
         general_data_processing_instructions(RSB,

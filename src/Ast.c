@@ -6,7 +6,6 @@
 #include "type.h"
 #include "value.h"
 
-
 #include <math.h>
 #include <stdarg.h> //变长参数函数所需的头文件
 #include <stdbool.h>
@@ -604,7 +603,7 @@ void in_eval(ast *a, Value *left) {
     ListDeinit(param_type_list);
     param_type_list = NULL;
 
-    cur_construction_func = NULL;
+
     // 将参数的个数清零
     param_seed = 0;
   }
@@ -720,9 +719,9 @@ void in_eval(ast *a, Value *left) {
       ListPushBack(ins_list, (void *)goto_condition_ins);
 
 #ifdef DEBUG_MODE
-    printf("while br %s, true: %s  false : %s \n", left->name,
-           while_true_label_ins->name, while_false_label_ins->name);
-    printf("%s\n", while_true_label_ins->name);
+      printf("while br %s, true: %s  false : %s \n", left->name,
+             while_true_label_ins->name, while_false_label_ins->name);
+      printf("%s\n", while_true_label_ins->name);
 #endif
     }
     ListPushBack(ins_list, while_true_label_ins);
@@ -1179,7 +1178,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
             ListPushBack(array_list,
                          (void *)(intptr_t)(right->pdata->var_pdata.iVal));
           } else {
-            //数组作为函数参数
+            // 数组作为函数参数
             ListPushBack(array_list, (void *)(intptr_t)(1));
           }
         } else if (a->r && SEQ(a->r->name, "ASSIGNOP")) {
@@ -1435,11 +1434,58 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 
         for (int i = 1; i < N_OP_NUM; i++) {
           if (SEQ(a->r->name, NORMAL_OPERATOR[i])) {
+
+            if (left->VTy->TID == FloatTyID &&
+                right->VTy->TID == ImmediateIntTyID) {
+              char buffer[30];
+              sprintf(buffer, "%f", (float)right->pdata->var_pdata.iVal);
+              if (HashMapContain(constant_single_value_hashmap, buffer)) {
+                right = HashMapGet(constant_single_value_hashmap, buffer);
+              } else {
+                Value *cur = (Value *)malloc(sizeof(Value));
+                value_init(cur);
+                cur->VTy->TID = ImmediateFloatTyID;
+                cur->name = strdup(buffer);
+                cur->pdata->var_pdata.iVal = right->pdata->var_pdata.iVal;
+                cur->pdata->var_pdata.fVal =
+                    (float)right->pdata->var_pdata.iVal;
+                HashMapPut(constant_single_value_hashmap, strdup(buffer), cur);
+                right = cur;
+              }
+            }
+
+            if (left->VTy->TID == ImmediateIntTyID &&
+                right->VTy->TID == FloatTyID) {
+              char buffer[30];
+              sprintf(buffer, "%f", (float)left->pdata->var_pdata.iVal);
+              if (HashMapContain(constant_single_value_hashmap, buffer)) {
+                left = HashMapGet(constant_single_value_hashmap, buffer);
+              } else {
+                Value *cur = (Value *)malloc(sizeof(Value));
+                value_init(cur);
+                cur->VTy->TID = ImmediateFloatTyID;
+                cur->name = strdup(buffer);
+                cur->pdata->var_pdata.iVal = left->pdata->var_pdata.iVal;
+                cur->pdata->var_pdata.fVal = (float)left->pdata->var_pdata.iVal;
+                HashMapPut(constant_single_value_hashmap, strdup(buffer), cur);
+                left = cur;
+              }
+            }
+
+            TypeID res_typeid;
+            if (i >= 6)
+              res_typeid = IntegerTyID;
+            else
+              res_typeid = ins_res_type(left, right);
+
             Value *cur_ins =
                 (Value *)ins_new_binary_operator_v2(DefaultOP, left, right);
             // 添加变量的名字
             cur_ins->name = name_generate(TEMP_VAR);
-            cur_ins->VTy->TID = ins_res_type(left, right);
+            if (i >= 6)
+              cur_ins->VTy->TID = res_typeid;
+            else
+              cur_ins->VTy->TID = res_typeid;
 
             char *oprand_type =
                 NowVarDecStr[cur_ins->VTy->TID < 4 ? cur_ins->VTy->TID
@@ -1510,6 +1556,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
   }
 
   if (SEQ(a->name, "FunDec")) {
+    cur_construction_func = NULL;
     StackPop(stack_symbol_table);
     // 销毁当前的符号表中的哈希表然后销毁符号表
     HashMapDeinit(cur_symboltable->symbol_map);
@@ -1539,22 +1586,23 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 #endif
   }
 
-  if (SEQ(a->name, "RETURN")) {
-    char temp_str[20];
+    if (SEQ(a->name, "RETURN")) {
+    Value *func_return_ins = NULL;
 
     if (right == NULL)
-      right = HashMapGet(constant_single_value_hashmap, "0");
+      func_return_ins = (Value *)ins_new_no_operator_v2(ReturnOP);
+    else
+      func_return_ins = (Value *)ins_new_single_operator_v2(ReturnOP, right);
 
-    Value *func_return_ins =
-        (Value *)ins_new_single_operator_v2(ReturnOP, right);
-    // 添加变量的名字 类型 和返回值
     func_return_ins->name = strdup("return");
     func_return_ins->VTy->TID = ReturnTyID;
+    func_return_ins->pdata->return_pdata.return_type =
+        cur_construction_func->pdata->symtab_func_pdata.return_type;
 
     // 插入
     ListPushBack(ins_list, (void *)func_return_ins);
 
-#ifdef DEBUG_MODE
+#ifdef PRINT_OK
     printf("%s\n", func_return_ins->name);
 #endif
   }
