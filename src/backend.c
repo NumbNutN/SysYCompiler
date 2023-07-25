@@ -29,6 +29,11 @@ void register_replace(Function *handle_func) {
 
   Label(handle_func->label->name);
 
+  //记录当前函数名
+  strcpy(currentPF.func_name,handle_func->label->name);
+  //记录当前函数结构体
+  currentPF.fcb = handle_func;
+
   //第一次function遍历，遍历所有的变量计算栈帧大小并将变量全部添加到变量信息表
   //遍历每一个block的list
   size_t totalLocalVariableSize = 0;

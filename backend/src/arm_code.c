@@ -406,7 +406,7 @@ void ftosi_and_ftout_instruction(char* opCode,AssembleOperand sd,AssembleOperand
     assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
-    strcpy(node->suffix,vfp_suffix_from_type(type));
+    strcpy(node->suffix,"");
     assert(sd.addrMode == REGISTER_DIRECT);
     assert(fm.addrMode == REGISTER_DIRECT);
 
@@ -431,7 +431,7 @@ void fsito_and_fuito_instruction(char* opCode,AssembleOperand fd,AssembleOperand
     assmNode* node = arm_instruction_node_init();
     strcpy(node->opCode,opCode);
     node->op_len = 2;
-    strcpy(node->suffix,vfp_suffix_from_type(type));
+    strcpy(node->suffix,"");
     assert(fd.addrMode == REGISTER_DIRECT);
     assert(sm.addrMode == REGISTER_DIRECT);
 
@@ -529,6 +529,8 @@ void fabs_fcpy_and_fneg_instruction(char* opCode,AssembleOperand fd,AssembleOper
     linkNode(node);
 }
 
+//
+
 //伪指令
 void Label(char* label)
 {
@@ -599,9 +601,12 @@ void pseudo_ldr(char* opCode,AssembleOperand reg,AssembleOperand immedi)
  * @brief FLD伪指令
  * @param opCode LDR
  * @birth: Created by LGD on 20230202
+ * @update: 2023-7-25 增加对节点寻址模式的检查
 */
 void pseudo_fld(char* opCode,AssembleOperand reg,AssembleOperand immedi,TypeID type)
 {
+    assert(immedi.addrMode == IMMEDIATE || immedi.addrMode == LABEL_MARKED_LOCATION &&
+        "FLD Pseudo require Immediate or label");
     assmNode* node = arm_instruction_node_init();
     node->assemType = LDR_PSEUDO_INSTRUCTION;
     strcpy(node->opCode,opCode);

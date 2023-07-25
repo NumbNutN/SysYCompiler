@@ -175,7 +175,7 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
  * @brief 判断一个operand是否在指令中
  * @birth: Created by LGD on 20230328
 */
-bool opernad_is_immediate(struct _operand op);
+bool operand_is_immediate(struct _operand op);
 /**
  * @brief 判断一个operand是否在内存中
  * @birth: Created by LGD on 2023-4-24

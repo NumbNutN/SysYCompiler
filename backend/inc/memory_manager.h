@@ -5,6 +5,7 @@
 #include "arm.h"
 
 #include "value.h"
+#include "function.h"
 
 #define STACK_MAX_SIZE 0xFFFF
 
@@ -47,6 +48,11 @@ struct _Produce_Frame{
     size_t local_variable_size;
     //@bith 2023-7-17 记录当前活动记录现场保护的大小
     size_t env_protected_size;
+
+    //定义当前函数名
+    char func_name[128];
+    //函数控制块
+    Function* fcb;
 };
 
 extern struct _Produce_Frame  currentPF;

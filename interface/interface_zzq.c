@@ -328,11 +328,41 @@ size_t traverse_list_and_count_the_number_of_function(List* this)
 }
 
 /**
+ * @brief 翻译函数调用
+ * @birth: Created by LGD on 2023-7-25
+*/
+void translate_function_call(List* this,Instruction* p1)
+{
+    //创建子链表
+    List* funcCallList = ListInit();
+    ListPushBack(funcCallList, p1);
+    Instruction* p;
+    TAC_OP opCode;
+    do {
+        ListNext(this, &p);
+        opCode = ins_get_opCode(p);
+        if((opCode == ParamOP) || (opCode == CallWithReturnValueOP) || (opCode == CallOP))
+            ListPushBack(funcCallList, p);
+        if((opCode == CallOP) && !strcmp(ins_get_tarLabel(p),"putfloat"))
+            procudre_call_strategy = FP_HARD;
+        else if((opCode == CallOP) && strcmp(ins_get_tarLabel(p),"putfloat"))
+            procudre_call_strategy = FP_SOFT;
+    } while(opCode == ParamOP);
+    //得知参数传递策略后，从paramOp开始重新翻译
+    Instruction* procedureP;
+    ListFirst(funcCallList, false);
+    while(ListNext(funcCallList, &procedureP)){
+        check_before_translate(procedureP);
+        translate_IR_test(procedureP);
+    }
+}
+/**
  * @biref:遍历所有三地址并翻译
  * @update:20220103 对链表进行初始化
  *         2023-5-12 order用于标注当前Instruction
  *         2023-5-14 当遇到参数传递时，倒序遍历
  *         2023-5-29 添加临时寄存器归还检测
+ *         2023-7-25 遇到paramOp需要向前遍历
 */
 size_t traverse_list_and_translate_all_instruction(List* this,int order)
 {
@@ -346,12 +376,17 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
     }
     do
     {
+        //以ParamOp开始，代表对函数的翻译开始
+        if(ins_get_opCode(p) == ParamOP)
+        {
+            translate_function_call(this,p);
+            continue;
+        }
         if(check_before_translate(p) == false)continue;
         translate_IR_test(p);
         currentInstruction = p;
         detect_temp_register_status();
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);
-
 }
 
 /**
@@ -450,13 +485,19 @@ bool value_is_array(Value* val)
  * @update: 2023-7-20 如果在数组中，也可以判断其是否是浮点数
  *          2023-7-24 支持判断参数是否是浮点数
  *          2023-7-24 对于数组类型，一律返回false
+ *          2023-7-25 修正对参数类型判断的错误
+ *          2023-7-25 支持判断返回值是否是浮点数
 */
 bool value_is_float(Value* var)
 {
     if(value_get_type(var) == FloatTyID || value_get_type(var) == ImmediateFloatTyID)return true;
     else if(value_get_type(var) == ArrayTyID)return false;
-    else if(value_get_type(var) == ParamOP){
+    else if(value_get_type(var) == ParamTyID){
         if(var->pdata->param_pdata.param_type == FloatTyID) return true;
+        return false;
+    }
+    else if(value_get_type(var) == ReturnTyID){
+        if(var->pdata->return_pdata.return_type == FloatTyID) return true;
         return false;
     }
     else return false;
@@ -569,7 +610,6 @@ void print_ins(Instruction *element)
     printf("%9s\t     %d: %20s ", "", ((Instruction *)element)->ins_id,
            op_string[((Instruction *)element)->opcode]);
     printf("\t%25s ", ((Value *)element)->name);
-
     if (((Instruction *)element)->opcode == PhiFuncOp) {
       printf("\tsize: %d ",
              HashMapSize(((Value *)element)->pdata->phi_func_pdata.phi_value));
@@ -590,6 +630,8 @@ void print_ins(Instruction *element)
     } else if (((Instruction *)element)->user.num_oprands == 0) {
       printf("\t%10s", "null");
     }
+    if(ins_get_opCode(element) == CallOP || ins_get_opCode(element) == CallWithReturnValueOP)
+        printf("\t%s",ins_get_tarLabel(element));
     printf("\n");
 }
 
@@ -688,14 +730,14 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
         if(has_init_literal)
         {
             //传递目的地址
-            movii(r0, info->current);
+            movii(r023_int[0], info->current);
             add_register_limited(PARAMETER1_LIMITED);
             //传递源地址 //伪指令获得
             pseudo_ldr("LDR",r1,info->ori);
             add_register_limited(PARAMETER2_LIMITED);
             //传递尺寸
             struct _operand size = operand_create_immediate_op(totalSpace,INTERGER_TWOSCOMPLEMENT);
-            movii(r2,size);
+            movii(r023_int[2],size);
             add_register_limited(PARAMETER3_LIMITED);
             
             //若存在字面量，将当前字面量首地址拷贝到当前地址处
