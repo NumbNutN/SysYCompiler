@@ -246,4 +246,10 @@ BinaryOperand binaryOpff(struct _operand op1,struct _operand op2);
 */
 void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2);
 
+/**
+ * @brief 为代码添加文字池以避免文字池太远的问题
+ * @birth: Created by LGD on 2023-7-27
+*/
+void add_interal_pool();
+
 #endif
