@@ -41,6 +41,8 @@ void update_variable_location(VarInfo* varInfo,bool doClear)
     }
     varInfo->current.format = INTERGER_TWOSCOMPLEMENT;
     varInfo->ori.format = INTERGER_TWOSCOMPLEMENT;
+    varInfo->ori.point2spaceFormat = INTERGER_TWOSCOMPLEMENT;
+    varInfo->current.point2spaceFormat = INTERGER_TWOSCOMPLEMENT;
     movii(varInfo->current,varInfo->ori);
     if(doClear)
         varInfo->ori = varInfo->current;
