@@ -86,6 +86,7 @@ void set_var_curStkOff(VarInfo* varInfo,int offset)
     varInfo->current.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
     varInfo->current.oprendVal = FP;
     varInfo->current.addtion = offset;
+    varInfo->current.offsetType = OFFSET_IMMED;
 }
 
 /**

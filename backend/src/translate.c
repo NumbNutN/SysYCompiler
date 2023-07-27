@@ -908,6 +908,16 @@ void translate_goto_instruction_test_bool(Instruction* this)
 */
 void translate_return_instructions(Instruction* this)
 {
+    //无返回值时
+    if(user_get_operand_use(&(this->user),0) == NULL)
+    {
+        resume_spill_area(false);
+        //恢复现场
+        bash_push_pop_instruction_list("POP",currentPF.used_reg);
+        //退出函数
+        bash_push_pop_instruction("POP",&fp,&pc,END);
+        return;
+    }
     //获取要返回的操作数
     struct _operand returnOperand = toOperand(this,FIRST_OPERAND);
     //确定返回值接收策略
