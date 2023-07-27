@@ -1424,3 +1424,25 @@ size_t ins_variable_load_in_register(Instruction* this,int i,ARMorVFP regType,As
         return -1;
 } 
 
+/**
+ * @brief 为代码添加文字池以避免文字池太远的问题
+ * @birth: Created by LGD on 2023-7-27
+*/
+void add_interal_pool()
+{
+    size_t cnt = 0;
+    size_t idx = 0;
+    char poolName[32];
+    for (prev = head->next; prev != NULL; prev = prev->next) {
+        ++cnt;
+        ++idx;
+        if(cnt >= 500)
+        {
+            sprintf(poolName,"poolEnd%lu",idx);
+            branch_instructions(poolName, NONESUFFIX, false,NONELABEL);
+            pool();
+            Label(poolName);
+            cnt = 0;
+        }
+    }
+}

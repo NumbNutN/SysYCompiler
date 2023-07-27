@@ -329,6 +329,8 @@ int main(int argc, char **argv) {
     register_replace((Function *)element);
   }
 
+  add_interal_pool();
+
   /* 生成文件 */
   freopen(argv[3], "w", stdout);
   print_model();

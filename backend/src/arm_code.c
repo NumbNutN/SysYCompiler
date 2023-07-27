@@ -625,13 +625,14 @@ void pseudo_fld(char* opCode,AssembleOperand reg,AssembleOperand immedi,TypeID t
 
 /**
  * @update: 可以记录链接节点的数量
+ *          2023-7-27 prev可以为链表中或链表末
 */
 void linkNode(assmNode* now)
 {
     /*
     链接下一个汇编指令
     */
-    now->next = NULL;
+    now->next = prev->next;
     prev->next = now;
     prev = now;
 
