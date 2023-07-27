@@ -51,21 +51,15 @@ void register_replace(Function *handle_func) {
   //初始化函数栈帧
   new_stack_frame_init(totalLocalVariableSize);
 
-  //2023-5-22 这决定了局部变量区间的累计偏移值
-  currentPF.fp_offset -= totalLocalVariableSize;
 
   //堆栈LR寄存器和R7
   bash_push_pop_instruction("PUSH",&fp,&lr,END);
-  //2023-5-22 对R7和LR的保存也要计算在偏移值内
-  currentPF.fp_offset -= 2*4;
   
   //设置当前函数栈帧
   set_stack_frame_status(0,totalLocalVariableSize/4);
 
   //根据传递参数的个数修正FP的偏移值
   size_t param_num = func_get_param_numer(handle_func);
-  if(param_num > 4)
-    currentPF.fp_offset -= (param_num-4)*4;
   
   HashMap* VariableInfoMap = NULL;
   variable_map_init(&VariableInfoMap);
@@ -87,14 +81,14 @@ void register_replace(Function *handle_func) {
   //记录保护现场域的大小
   currentPF.env_protected_size = used_reg_size + 8;
 
-  //2023-5-22 这决定了现场保护区域FP的偏移值
-  currentPF.fp_offset -= used_reg_size;
-
   //为所有参数设置初始位置
   set_param_origin_place(VariableInfoMap,param_num);
 
+  //8字节对齐
+  align_2_public_interface_require();
+
   //执行期间使指针变动生效
-  update_sp_value();
+  setup_spill_area();
 
   //使当前R7与SP保持一致
   general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
@@ -122,7 +116,7 @@ void register_replace(Function *handle_func) {
   }
 
     //恢复SP
-    reset_sp_value(true);
+    resume_spill_area(true);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);
     //退出函数
