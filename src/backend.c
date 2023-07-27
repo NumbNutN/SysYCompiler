@@ -81,11 +81,11 @@ void register_replace(Function *handle_func) {
   //记录保护现场域的大小
   currentPF.env_protected_size = used_reg_size + 8;
 
-  //为所有参数设置初始位置
-  set_param_origin_place(VariableInfoMap,param_num);
-
   //8字节对齐
   align_2_public_interface_require();
+
+  //为所有参数设置初始位置
+  set_param_origin_place(VariableInfoMap,param_num);
 
   //执行期间使指针变动生效
   setup_spill_area();
