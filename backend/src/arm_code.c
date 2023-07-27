@@ -8,6 +8,9 @@
 #include "enum_2_str.h"
 #include "print_format.h"
 
+//currentPF
+#include "memory_manager.h"
+
 int CntAssemble = 0;
 
 enum _Pick_Arm_Register_Limited global_arm_register_limited = NONE_LIMITED;
@@ -228,6 +231,7 @@ void push_pop_instructions(char* opcode,AssembleOperand reg)
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9
  * @update: 2023-7-13 有序的寄存器列表
+ *          2023-7-27 更新当前函数堆栈信息
 */
 void bash_push_pop_instruction(char* opcode,...)
 {
@@ -269,13 +273,15 @@ void bash_push_pop_instruction(char* opcode,...)
             }
         }
 
+    currentPF.SPOffset -= cnt*4;
     linkNode(node);
 }
 /**
  * @brief 变长的push尝试
  * @birth: Created by LGD on 2023-4-9
  * @update: 2023-7-11 当列表为空时不生成指令
- * @update: 2023-7-13 有序的寄存器列表
+ *          2023-7-13 有序的寄存器列表
+ *          2023-7-27 更新当前函数堆栈信息
 */
 void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
 {
@@ -305,6 +311,7 @@ void bash_push_pop_instruction_list(char* opcode,struct _operand* regList)
         }
 
     node->assemType = ASSEM_PUSH_POP_INSTRUCTION;
+    currentPF.SPOffset -= cnt*4;
     linkNode(node);
 }
 

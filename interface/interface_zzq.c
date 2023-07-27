@@ -780,7 +780,7 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
 void translate_funcEnd_instruction()
 {
     //恢复SP
-    reset_sp_value(false);
+    resume_spill_area(false);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);
     //退出函数

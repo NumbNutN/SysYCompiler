@@ -129,21 +129,19 @@ void update_fp_value()
  * @birth:???
  * @update:2023-5-13 多数情况下，对SP的改动借助临时寄存器是不可取的
  *          2023-7-18 用r7负责不合法的立即数
+ *          2023-7-27 只生效内存溢出区部分
 */
-void update_sp_value()
+void setup_spill_area()
 {
-    if(!abs(currentPF.SPOffset))
+    if(currentPF.local_variable_size == 0)
         return;
-    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset),INTERGER_TWOSCOMPLEMENT);
+
+    struct _operand offset = operand_create_immediate_op(currentPF.local_variable_size,INTERGER_TWOSCOMPLEMENT);
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
         offset = operand_load_immediate_to_specified_register(offset, fp);
 
-    if(currentPF.SPOffset > 0)
-        general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
-    else
-        general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
-
+    general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
 }
 
 /**
@@ -151,23 +149,22 @@ void update_sp_value()
  * @param doClear 是否将偏移值回复到0
  * @birth: Created by LGD on 2023-7-17
  * @update: 2023-7-18 用r7负责不合法的立即数
+ *          2023-7-27 只生效内存溢出区部分
 **/
-void reset_sp_value(bool doClear)
+void resume_spill_area(bool doClear)
 {
-    if(!currentPF.SPOffset)
+    if(currentPF.local_variable_size == 0)
         return;
-    struct _operand offset = operand_create_immediate_op(abs(currentPF.SPOffset),INTERGER_TWOSCOMPLEMENT);
+    
+    struct _operand offset = operand_create_immediate_op(currentPF.local_variable_size,INTERGER_TWOSCOMPLEMENT);
     //检查立即数合法性
     if(!operand_check_immed_valid(offset))
         offset = operand_load_immediate_to_specified_register(offset, fp);
 
-    if(currentPF.SPOffset > 0)
-        general_data_processing_instructions(SUB,sp,sp,offset,NONESUFFIX,false);
-    else
-        general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
+    general_data_processing_instructions(ADD,sp,sp,offset,NONESUFFIX,false);
         
     if(doClear)
-        currentPF.SPOffset = 0;
+        currentPF.local_variable_size = 0;
 }
 
 /**
@@ -181,11 +178,21 @@ void init_parameter_register_list()
 }
 
 
-
-
 /**
- * @brief 恢复当前函数的堆栈状态
+ * @brief 保证SP开辟栈区8字节对齐
+ * @birth: Created by LGD on 2023-7-27
 */
+void align_2_public_interface_require()
+{
+    //如果未达到8字节对齐要求
+    if(currentPF.SPOffset % 8)
+    {
+        size_t blankSize = 8 - abs(currentPF.SPOffset) % 8;
+        currentPF.local_variable_size += blankSize;
+        currentPF.SPOffset -=  blankSize;
+    }
+}
+
 
 
 
@@ -565,14 +572,7 @@ int return_param_offset(size_t i)
 /**********************************************/
 /*            局部变量地址参数管理              */
 /**********************************************/
-/**
- * @brief 根据变量类型记录FP从上一个活动记录到当前活动记录的累计偏移值
- * @birth: Created by LGD on 2023-5-22
-*/
-void fp_offset_counter(Value* val)
-{
-    currentPF.fp_offset -= opTye2size(val->VTy->TID);
-}
+
 
 
 /**********************************************/

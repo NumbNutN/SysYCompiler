@@ -921,7 +921,7 @@ void translate_return_instructions(Instruction* this)
             mov(returnIntOp,returnOperand);
     }
 
-    reset_sp_value(false);
+    resume_spill_area(false);
     //恢复现场
     bash_push_pop_instruction_list("POP",currentPF.used_reg);
     //退出函数

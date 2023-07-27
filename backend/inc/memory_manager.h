@@ -39,8 +39,6 @@ struct _Produce_Frame{
     size_t param_counter;
     //@birth:2023-5-16 维护一个变量名到Value* 的哈希表
     HashMap* symbol_map;
-    //@birth:2023-5-22 定义了当前函数引起的FP递减量的计数器，其用来矫正外部函数局部变量指针的寻址方式
-    int fp_offset;
     //@brief 2023-6-6 定义了当前函数使用的通用寄存器
     struct _operand used_reg[64];
 
@@ -95,16 +93,22 @@ int request_new_local_variable_memory_unit();
 */
 void update_fp_value();
 /**
- * @biref 使对栈顶指针的更改生效
+ * @brief 使对栈顶指针的更改生效
+ * @birth:???
+ * @update:2023-5-13 多数情况下，对SP的改动借助临时寄存器是不可取的
+ *          2023-7-18 用r7负责不合法的立即数
+ *          2023-7-27 只生效内存溢出区部分
 */
-void update_sp_value();
+void setup_spill_area();
 
 /**
  * @brief 使栈指针的偏移撤销
  * @param doClear 是否将偏移值回复到0
  * @birth: Created by LGD on 2023-7-17
+ * @update: 2023-7-18 用r7负责不合法的立即数
+ *          2023-7-27 只生效内存溢出区部分
 **/
-void reset_sp_value(bool doClear);
+void resume_spill_area(bool doClear);
 
 /**********************************************/
 /*                 外部调用                    */
@@ -179,10 +183,7 @@ int get_param_stack_offset_by_idx(size_t idx);
 /*             局部变量指针管理                */
 /**********************************************/
 /**
- * @brief 根据变量类型记录FP从上一个活动记录到当前活动记录的累计偏移值
- * @birth: Created by LGD on 2023-5-22
-*/
-void fp_offset_counter(Value* val);
+
 
 /**
  * @brief 遍历链表并对所有allocate param语句完成指针的偏移映射
