@@ -5,9 +5,10 @@ SRCDIR = .
 
 BUILDDIR = build
 TESTDIR = test_cases
+MYDIR = my_cases
 
 # 递归查找当前目录及子目录中的所有以.c后缀结尾的文件
-SRC := $(shell find $(SRCDIR) -name "*.c" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*")
+SRC := $(shell find $(SRCDIR) -name "*.c" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*" -not -path "$(SRCDIR)/$(MYDIR)*")
 OBJ := $(SRC:%.c=$(BUILDDIR)/%.o)
 
 HEAD := $(shell find $(SRCDIR) -name "*.h" -not -path "$(SRCDIR)/$(BUILDDIR)*" -not -path "$(SRCDIR)/$(TESTDIR)*")
