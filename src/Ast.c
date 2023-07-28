@@ -313,7 +313,7 @@ void pre_eval(ast *a) {
       goto_label_ins->VTy->TID = GotoTyID;
       goto_label_ins->pdata->no_condition_goto.goto_location =
           while_head_label_ins;
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
       printf("br %s\n", while_head_label_ins->name);
       printf("%s\n", while_head_label_ins->name);
 #endif
@@ -602,7 +602,6 @@ void in_eval(ast *a, Value *left) {
           (TypeID)(intptr_t)element;
     ListDeinit(param_type_list);
     param_type_list = NULL;
-
 
     // 将参数的个数清零
     param_seed = 0;
@@ -1178,7 +1177,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
             ListPushBack(array_list,
                          (void *)(intptr_t)(right->pdata->var_pdata.iVal));
           } else {
-            // 数组作为函数参数
+            //数组作为函数参数
             ListPushBack(array_list, (void *)(intptr_t)(1));
           }
         } else if (a->r && SEQ(a->r->name, "ASSIGNOP")) {
@@ -1378,45 +1377,50 @@ Value *post_eval(ast *a, Value *left, Value *right) {
           } else {
             if (SEQ(a->r->name, "PLUS")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal + right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal + right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "MINUS")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal - right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal - right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "STAR")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal * right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal * right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "DIV")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal / right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal / right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "EQUAL")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal == right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal == right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "NOTEQUAL")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal != right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal != right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "GREAT")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal > right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal > right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "LESS")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal < right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal < right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "GREATEQUAL")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal >= right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal >= right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             } else if (SEQ(a->r->name, "LESSEQUAL")) {
               const_int_value =
-                  left->pdata->var_pdata.iVal <= right->pdata->var_pdata.fVal;
+                  left->pdata->var_pdata.iVal <= right->pdata->var_pdata.iVal;
+              sprintf(buffer, "%d", const_int_value);
+            } else if (SEQ(a->r->name, "MOD")) {
+              const_int_value =
+                  left->pdata->var_pdata.iVal % right->pdata->var_pdata.iVal;
               sprintf(buffer, "%d", const_int_value);
             }
+
             if (HashMapContain(constant_single_value_hashmap, buffer))
               cur = HashMapGet(constant_single_value_hashmap, buffer);
             else {
@@ -1586,7 +1590,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
 #endif
   }
 
-    if (SEQ(a->name, "RETURN")) {
+  if (SEQ(a->name, "RETURN")) {
     Value *func_return_ins = NULL;
 
     if (right == NULL)
@@ -1602,7 +1606,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
     // 插入
     ListPushBack(ins_list, (void *)func_return_ins);
 
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("%s\n", func_return_ins->name);
 #endif
   }
