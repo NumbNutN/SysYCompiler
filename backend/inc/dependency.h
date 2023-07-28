@@ -8,7 +8,9 @@
 #include "value.h"
 #include "instruction.h"
 
-#define TEMP_REG_NUM 4
+#define TEMP_ARM_REG_NUM sizeof(TempARMRegList)/sizeof(TempReg)
+#define TEMP_VFP_REG_NUM 4
+
 #define ADDITION_REG_NUM 8
 
 #define IEEE_754_32BIT_EXPONENT 8
@@ -71,6 +73,7 @@ typedef struct _TempReg
 {
     int reg;
     bool isAviliable;
+    bool isLimited;
 } TempReg;
 
 

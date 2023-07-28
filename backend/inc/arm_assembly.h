@@ -11,8 +11,8 @@
 void initDlist();
 //assmNode* Add(Instruction* ins);
 
-extern TempReg TempARMRegList[TEMP_REG_NUM];
-extern TempReg TempVFPRegList[TEMP_REG_NUM];
+extern TempReg TempARMRegList[];
+extern TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 /**
  * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器
  *        若在寄存器和指令中，返回对应的寄存器或常数
@@ -62,8 +62,9 @@ bool Is_limited_temp_register(RegisterOrder reg);
 /**
  * @brief 添加新的限制级别
  * @birth: Created by LGD on 2023-5-4
+ * @update: 2023-7-28 现在您每次调用仅能限制一个寄存器
 */
-void add_register_limited(enum _Pick_Arm_Register_Limited limited);
+void add_register_limited(RegisterOrder limitedReg);
 
 /**
  * @brief 根据参数个数限制
@@ -74,8 +75,9 @@ void add_parameter_limited(size_t regNum);
 /**
  * @brief 移除一个限制级别，如果其本身没有这个限制级别，将忽略
  * @birth: Created by LGD on 2023-5-4
+ * @update: 2023-7-28 现在您每次调用仅能限制一个寄存器
 */
-void remove_register_limited(enum _Pick_Arm_Register_Limited limited);
+void remove_register_limited(RegisterOrder limitedReg);
 
 /**
  * @brief 判断一个指令的操作数是否是浮点数
