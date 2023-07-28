@@ -740,6 +740,7 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
  *          2023-7-28 参数传递时同样要考虑临时寄存器是否可用
  *          2023-7-28 为所有保存了参数的寄存器加以限制
  *          2023-7-28 只有参数序号小于4的才需要限制和取消限制
+ *          2023-7-28 对于即使没有使用的参数现在也可以取消限制
 */
 void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
 {
@@ -749,6 +750,11 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
     VarInfo* varInfo;
     for(int i=0;i<paramNum;++i)
     {
+        //每完成一次参数的传递，使一个参数寄存器自由
+        //即使参数没有被使用也需要取消限制
+        if(i < 4)
+            remove_register_limited(i);
+        
         sprintf(name,"param%d",i);
         if(!HashMapContain(varMap, name)){
             //当前参数没有分配寄存器 不需要移动位置
@@ -757,9 +763,6 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
         varInfo = HashMapGet(varMap,name);
         update_variable_location(varInfo,true);
 
-        //每完成一次参数的传递，使一个参数寄存器自由
-        if(i < 4)
-            remove_register_limited(i);
         //每完成一次参数传递，使一个目的寄存器不自由
         if(operand_is_in_register(varInfo->current))
             operand_add_register_limited(varInfo->current);
