@@ -497,8 +497,11 @@ void in_eval(ast *a, Value *left) {
         left->VTy->TID == ImmediateFloatTyID) {
       int cur_init_total_offset = array_init_assist.added[0];
       for (int i = 1; i < array_init_assist.array_level; i++) {
-        cur_init_total_offset +=
-            array_init_assist.added[i] * array_init_assist.array_info[i - 1];
+        int temp = array_init_assist.added[i];
+        for (int j = i - 1; j >= 0; j--) {
+          temp *= array_init_assist.array_info[j];
+        }
+        cur_init_total_offset += temp;
       }
       global_array_init_item *cur_init_offset =
           malloc(sizeof(global_array_init_item));
@@ -742,11 +745,31 @@ Value *post_eval(ast *a, Value *left, Value *right) {
             array_init_assist.added[i] = 0;
           }
         }
-        if (!is_all_zero)
-          array_init_assist.added[ensure_zero]++;
 
-        if (array_init_assist.is_empty)
+        if (!is_all_zero || array_init_assist.is_empty) {
           array_init_assist.added[ensure_zero]++;
+          for (int i = ensure_zero; i < array_init_assist.array_level; i++) {
+            if (array_init_assist.added[i] == array_init_assist.array_info[i]) {
+              array_init_assist.added[i] = 0;
+              array_init_assist.added[i + 1]++;
+            } else {
+              break;
+            }
+          }
+        }
+
+        // if (array_init_assist.is_empty) {
+        //   array_init_assist.added[ensure_zero]++;
+        //   for (int i = ensure_zero; i < array_init_assist.array_level; i++) {
+        //     if (array_init_assist.added[i] ==
+        //     array_init_assist.array_info[i]) {
+        //       array_init_assist.added[i] = 0;
+        //       array_init_assist.added[i + 1]++;
+        //     } else {
+        //       break;
+        //     }
+        //   }
+        // }
 
         return NULL;
       }
