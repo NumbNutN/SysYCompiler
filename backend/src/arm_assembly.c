@@ -34,8 +34,22 @@ assmNode* prev;
 //目标操作数暂存器
 // extern Value* tempReg; //算数运算暂存寄存器
 
-TempReg TempARMRegList[TEMP_REG_NUM];
-TempReg TempVFPRegList[TEMP_REG_NUM];
+TempReg TempARMRegList[] = \
+        {
+            {.reg = R0},
+            {.reg = R1},
+            {.reg = R2},
+            {.reg = R3},
+            {.reg = R4},
+            {.reg = R5},
+            {.reg = R6},
+            {.reg = R8},
+            {.reg = R9},
+            {.reg = R10},
+            {.reg = R11},
+        };
+
+TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 TempReg AddtionalARMRegList[ADDITION_REG_NUM];
 
 
@@ -47,7 +61,7 @@ Stack* Free_Vps_Register_list;
 */
 void Free_Vps_Register_Init()
 {
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_VFP_REG_NUM;i++)
     {
         TempVFPRegList[i].reg = S1+i;
         TempVFPRegList[i].isAviliable = true;
@@ -56,7 +70,7 @@ void Free_Vps_Register_Init()
 
 RegisterOrder pick_one_free_vfp_register()
 {   
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_VFP_REG_NUM;i++)
     {
         if(TempVFPRegList[i].isAviliable)
         {
@@ -69,7 +83,7 @@ RegisterOrder pick_one_free_vfp_register()
 
 void recycle_vfp_register(RegisterOrder reg)
 {
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_VFP_REG_NUM;i++)
     {
         if(reg == TempVFPRegList[i].reg)
             TempVFPRegList[i].isAviliable = true;
@@ -86,40 +100,48 @@ void recycle_vfp_register(RegisterOrder reg)
 void Init_arm_tempReg()
 {
 
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_ARM_REG_NUM;i++)
     {
-        TempARMRegList[i].reg = R0+i;
         TempARMRegList[i].isAviliable = true;
+        TempARMRegList[i].isLimited = false;
     }
 }
 
 /**
  * @brief 判断当前寄存器是否是限制级别寄存器
  * @birth: Created by LGD on 2023-5-4
+ * @update: 2023-7-28 现在您每次调用仅能限制一个寄存器
 */
 bool Is_limited_temp_register(RegisterOrder reg)
 {
-    enum _Pick_Arm_Register_Limited result = NONE_LIMITED;
-    if((global_arm_register_limited & RETURN_VALUE_LIMITED) == RETURN_VALUE_LIMITED)
-        result |= (reg == R0);
-    if((global_arm_register_limited & PARAMETER1_LIMITED) == PARAMETER1_LIMITED)
-        result |= (reg == R0);
-    if((global_arm_register_limited & PARAMETER2_LIMITED) == PARAMETER2_LIMITED)
-        result |= (reg == R1);
-    if((global_arm_register_limited & PARAMETER3_LIMITED) == PARAMETER3_LIMITED)
-        result |= (reg == R2);
-    if((global_arm_register_limited & PARAMETER4_LIMITED) == PARAMETER4_LIMITED)
-        result |= (reg == R3);
-    return (result != NONE_LIMITED);
+    int idx = 0;
+    for(;idx <TEMP_ARM_REG_NUM;idx ++){
+        if(TempARMRegList[idx].reg == reg)
+        {
+            //找到对应寄存器
+            return TempARMRegList[idx].isLimited;
+        }
+    }
+    assert(idx  != TEMP_ARM_REG_NUM && "当前寄存器不存在");
 }
 
 /**
  * @brief 添加新的限制级别
  * @birth: Created by LGD on 2023-5-4
+ * @update: 2023-7-28 现在您每次调用仅能限制一个寄存器
 */
-void add_register_limited(enum _Pick_Arm_Register_Limited limited)
+void add_register_limited(RegisterOrder limitedReg)
 {
-    global_arm_register_limited |= limited;
+    int idx = 0;
+    for(;idx <TEMP_ARM_REG_NUM;idx ++){
+        if(TempARMRegList[idx].reg == limitedReg)
+        {
+            //找到对应寄存器
+            TempARMRegList[idx].isLimited = true;
+            break;
+        }
+    }
+    assert(idx != TEMP_ARM_REG_NUM && "当前寄存器不存在");
 }
 
 /**
@@ -128,16 +150,29 @@ void add_register_limited(enum _Pick_Arm_Register_Limited limited)
 */
 void add_parameter_limited(size_t regNum)
 {
-    global_arm_register_limited |= (0xF >> (4 - regNum));
+    for(int regIdx=0;regIdx<regNum;++regIdx)
+    {
+        add_register_limited(regIdx);
+    }
 }
 
 /**
  * @brief 移除一个限制级别，如果其本身没有这个限制级别，将忽略
  * @birth: Created by LGD on 2023-5-4
+ * @update: 2023-7-28 现在您每次调用仅能限制一个寄存器
 */
-void remove_register_limited(enum _Pick_Arm_Register_Limited limited)
+void remove_register_limited(RegisterOrder limitedReg)
 {
-    global_arm_register_limited &= ~limited;
+    int idx = 0;
+    for(;idx <TEMP_ARM_REG_NUM;idx ++){
+        if(TempARMRegList[idx].reg == limitedReg)
+        {
+            //找到对应寄存器
+            TempARMRegList[idx].isLimited = false;
+            break;
+        }
+    }
+    assert(idx != TEMP_ARM_REG_NUM && "当前寄存器不存在");
 }
 
 /**
@@ -147,9 +182,9 @@ void remove_register_limited(enum _Pick_Arm_Register_Limited limited)
 */
 unsigned pick_one_free_temp_arm_register()
 {
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_ARM_REG_NUM;i++)
     {
-        if(!TempARMRegList[i].isAviliable || Is_limited_temp_register(TempARMRegList[i].reg))continue;
+        if(!TempARMRegList[i].isAviliable || TempARMRegList[i].isLimited)continue;
         TempARMRegList[i].isAviliable = false;
         return TempARMRegList[i].reg;
     }
@@ -162,7 +197,7 @@ unsigned pick_one_free_temp_arm_register()
 */
 void recycle_temp_arm_register(int reg)
 {
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<TEMP_ARM_REG_NUM;i++)
     {
         if(reg == TempARMRegList[i].reg)
         {

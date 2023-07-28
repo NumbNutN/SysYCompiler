@@ -904,3 +904,44 @@ bool operand_check_immed_valid(struct _operand op)
     return check_immediate_valid(op.oprendVal);
 }
 
+/**
+ * @brief 为操作数添加寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void operand_add_register_limited(struct _operand op)
+{
+    add_register_limited(op.oprendVal);
+}
+
+/**
+ * @brief 为操作数列表添加寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void bash_operand_add_register_limited(struct _operand* opList)
+{
+    for(struct _operand* ptr = opList;!operand_is_none(*ptr);++ptr)
+    {
+        operand_add_register_limited(*ptr);
+    }
+}
+
+/**
+ * @brief 为操作数取消寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void operand_remove_register_limited(struct _operand op)
+{
+    remove_register_limited(op.oprendVal);
+}
+
+/**
+ * @brief 取消列表的所有寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void bash_operand_remove_register_limited(struct _operand* opList)
+{
+    for(struct _operand* ptr = opList;!operand_is_none(*ptr);++ptr)
+    {
+        operand_remove_register_limited(*ptr);
+    }
+}

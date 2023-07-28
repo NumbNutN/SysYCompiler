@@ -167,6 +167,7 @@ size_t flush_param_number()
  * @author Created by LGD on 2023-3-16
  * @update:2023-5-14 考虑参数在内存和为立即数的情况
  * @update:2023-5-30 添加寄存器限制
+ *         2023-7-28 修改了对add_register_limited的调用方式
 */
 void translate_param_instructions(Instruction* this)
 {
@@ -185,7 +186,7 @@ void translate_param_instructions(Instruction* this)
             {
                 pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
                 //寄存器限制
-                add_register_limited(1 << passed_param_number);
+                add_register_limited(passed_param_number);
             }
             //多于4个参数，临时寄存器调出后回收
             else{
@@ -204,7 +205,7 @@ void translate_param_instructions(Instruction* this)
                 {
                     mov(r023_float[passed_param_number],param_op);
                     //寄存器限制
-                    add_register_limited(1 << passed_param_number);
+                    add_register_limited(passed_param_number);
                 }
                 else{
                     mov(param_push_op_float,param_op);
@@ -217,7 +218,7 @@ void translate_param_instructions(Instruction* this)
                 {
                     mov(r023_int[passed_param_number],param_op);
                     //寄存器限制
-                    add_register_limited(1 << passed_param_number);
+                    add_register_limited(passed_param_number);
                 }
                 else
                     //堆入栈顶
@@ -236,7 +237,7 @@ void translate_param_instructions(Instruction* this)
             {
                 pseudo_fld("FLD",s023_float[passed_param_number],param_op,FloatTyID);
                 //寄存器限制
-                add_register_limited(1 << passed_param_number);
+                add_register_limited(passed_param_number);
             }
             //多于4个参数，临时寄存器调出后回收
             else{
@@ -255,7 +256,7 @@ void translate_param_instructions(Instruction* this)
                 {
                     mov(s023_float[passed_param_number],param_op);
                     //寄存器限制
-                    add_register_limited(1 << passed_param_number);
+                    add_register_limited(passed_param_number);
                 }
                 else{
                     mov(param_push_op_float,param_op);
@@ -282,10 +283,10 @@ void translate_call_instructions(Instruction* this)
     branch_instructions(label,"L",false,NONELABEL);
 
     //取消寄存器限制
-    remove_register_limited(PARAMETER1_LIMITED | 
-                    PARAMETER2_LIMITED |
-                    PARAMETER3_LIMITED |
-                    PARAMETER4_LIMITED);
+    remove_register_limited(R0);
+    remove_register_limited(R1);
+    remove_register_limited(R2);
+    remove_register_limited(R3);
     //第二步 确保栈顶恢复到栈帧的位置
     general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
 
@@ -316,17 +317,16 @@ void translate_call_with_return_value_instructions(Instruction* this)
     branch_instructions(tarLabel,"L",false,NONELABEL);
 
     //取消寄存器限制
-    remove_register_limited(PARAMETER1_LIMITED | 
-                    PARAMETER2_LIMITED |
-                    PARAMETER3_LIMITED |
-                    PARAMETER4_LIMITED);
-    add_register_limited(RETURN_VALUE_LIMITED);
+    remove_register_limited(R0);
+    remove_register_limited(R1);
+    remove_register_limited(R2);
+    remove_register_limited(R3);
+    add_register_limited(R0);
 
     //第二步 确保栈顶恢复到栈帧的位置
     general_data_processing_instructions_extend(MOV,NONESUFFIX,false,sp,fp,nullop);
     
-    remove_register_limited(
-                    RETURN_VALUE_LIMITED);
+    remove_register_limited(R0);
     //第三步 回程将R0赋给指定变量
     //根据 The Base Procedure Call Standard
     //32位 (4字节 1字长)的数据 （包括sysy的整型和浮点型数据） 均通过R0 传回
@@ -392,7 +392,11 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 
     //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
     if((opCode == DivOP) || (opCode == ModOP))
-        add_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
+    {
+        add_register_limited(R0);
+        add_register_limited(R1);
+    }
+
 
     //双目中有其一是浮点数
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
@@ -473,7 +477,11 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     }
     //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
     if((opCode == DivOP) || (opCode == ModOP))
-        remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED);
+    {
+        remove_register_limited(R0);
+        remove_register_limited(R1);
+    }
+
     
     //释放第一、二操作数
     general_recycle_temp_register_conditional(this,FIRST_OPERAND,op1);

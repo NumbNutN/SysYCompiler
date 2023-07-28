@@ -723,28 +723,35 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
         struct _operand arrOff = operand_create_immediate_op(arrayOffset,INTERGER_TWOSCOMPLEMENT);
         //获取局部数组当前地址指针（是寄存器或内存，在之前分配）
         struct _operand addrPtr = info->current;
+
         //和FP相加构成绝对地址
         addiii(addrPtr, fp, arrOff);
+
+        //为当前数组地址存储单元限制寄存器
+        if(operand_is_in_register(addrPtr))
+            operand_add_register_limited(addrPtr);
 
         //在数据段构造字面量
         if(has_init_literal)
         {
             //传递目的地址
             movii(r023_int[0], info->current);
-            add_register_limited(PARAMETER1_LIMITED);
+            add_register_limited(R0);
             //传递源地址 //伪指令获得
             pseudo_ldr("LDR",r1,info->ori);
-            add_register_limited(PARAMETER2_LIMITED);
+            add_register_limited(R1);
             //传递尺寸
             struct _operand size = operand_create_immediate_op(totalSpace,INTERGER_TWOSCOMPLEMENT);
             movii(r023_int[2],size);
-            add_register_limited(PARAMETER3_LIMITED);
+            add_register_limited(R2);
             
             //若存在字面量，将当前字面量首地址拷贝到当前地址处
             branch_instructions("memcpy", "L", false, NONELABEL);
 
             //解除寄存器限制
-            remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED | PARAMETER3_LIMITED);
+            remove_register_limited(R0);
+            remove_register_limited(R1);
+            remove_register_limited(R2);
 
             info->ori = info->current;
         }
@@ -752,21 +759,23 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
         else{
             //传递目的地址
             movii(r0, info->current);
-            add_register_limited(PARAMETER1_LIMITED);
+            add_register_limited(R0);
             //传递清0值
             struct _operand setValue = operand_create_immediate_op(0,INTERGER_TWOSCOMPLEMENT);
             movii(r1,setValue);
-            add_register_limited(PARAMETER2_LIMITED);
+            add_register_limited(R1);
             //传递尺寸
             struct _operand size = operand_create_immediate_op(totalSpace,INTERGER_TWOSCOMPLEMENT);
             movii(r2,size);
-            add_register_limited(PARAMETER3_LIMITED);
+            add_register_limited(R2);
 
             //不存在字面量，清干净内存
             branch_instructions("memset", "L", false, NONELABEL);
 
             //解除寄存器限制
-            remove_register_limited(PARAMETER1_LIMITED | PARAMETER2_LIMITED | PARAMETER3_LIMITED);
+            remove_register_limited(R0);
+            remove_register_limited(R1);
+            remove_register_limited(R2);
 
             info->ori = info->current;
         }

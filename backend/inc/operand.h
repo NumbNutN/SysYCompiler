@@ -229,6 +229,32 @@ size_t operand_get_immediate(struct _operand op);
 void operand_change_addressing_mode(struct _operand* op,AddrMode addrMode);
 
 
+/********************************************************/
+/*                    Register Limited                 */
+/********************************************************/
 
+/**
+ * @brief 为操作数添加寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void operand_add_register_limited(struct _operand op);
+
+/**
+ * @brief 为操作数列表添加寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void bash_operand_add_register_limited(struct _operand* opList);
+
+/**
+ * @brief 为操作数取消寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void operand_remove_register_limited(struct _operand op);
+
+/**
+ * @brief 取消列表的所有寄存器限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void bash_operand_remove_register_limited(struct _operand* opList);
 
 #endif

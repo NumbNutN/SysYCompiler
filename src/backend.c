@@ -94,20 +94,18 @@ void register_replace(Function *handle_func) {
   general_data_processing_instructions(MOV,fp,nullop,sp,NONESUFFIX,false);
 
   //传递参数
+  //现在将会限制传递参数的寄存器
   move_parameter_to_recorded_place(VariableInfoMap,param_num);
 
-  // Value* var;
-  // VarInfo* info;
-  // HashMap_foreach(VariableInfoMap, var, info)
-  // {
-  //   printf("%s %p\n",var,info);
-  // }
-  //为所有数组分配和传递地址
   //不再有前提 所有的指令都分配了变量信息表
+  //现在将会限制传递参数的寄存器
   attribute_and_load_array_base_address(handle_func,VariableInfoMap);
 
   //为所有指令插入变量信息表
   insert_variable_map(handle_func,VariableInfoMap);
+
+  //翻译前为其余所有局部变量限制寄存器
+  bash_operand_add_register_limited(currentPF.used_reg);
 
   //第三次function遍历，翻译每一个list
   for (int i = 0; i < self_cfg->node_num; i++) {
@@ -115,12 +113,15 @@ void register_replace(Function *handle_func) {
     traverse_list_and_translate_all_instruction((self_cfg->node_set)[i]->bblock_head->inst_list,0);
   }
 
-    //恢复SP
-    resume_spill_area(true);
-    //恢复现场
-    bash_push_pop_instruction_list("POP",currentPF.used_reg);
-    //退出函数
-    bash_push_pop_instruction("POP",&fp,&pc,END);
+  //翻译后取消所有局部变量的寄存器限制
+  bash_operand_remove_register_limited(currentPF.used_reg);
+
+  //恢复SP
+  resume_spill_area(true);
+  //恢复现场
+  bash_push_pop_instruction_list("POP",currentPF.used_reg);
+  //退出函数
+  bash_push_pop_instruction("POP",&fp,&pc,END);
   //在每一个函数的退出位置插入文字池
   pool();
   

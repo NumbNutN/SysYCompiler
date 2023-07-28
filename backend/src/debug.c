@@ -1,4 +1,5 @@
 #include "arm_assembly.h"
+#include "dependency.h"
 
 /**************************************************************/
 /*                          Debug                           */
@@ -10,7 +11,7 @@
 */
 void detect_temp_register_status()
 {
-    for(int i=0;i<TEMP_REG_NUM;i++)
+    for(int i=0;i<11;i++)
     {
         assert(TempARMRegList[i].isAviliable && "current Instruction use temp register but didn't recycle\n");
     }
