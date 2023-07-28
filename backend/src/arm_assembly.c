@@ -147,10 +147,12 @@ void add_register_limited(RegisterOrder limitedReg)
 /**
  * @brief 根据参数个数限制
  * @birth: Created by LGD on 2023-7-28
+ * @update: 2023-7-28 只有序号小于4的参数才需要限制
 */
 void add_parameter_limited(size_t regNum)
 {
-    for(int regIdx=0;regIdx<regNum;++regIdx)
+    int maxIdx = regNum > 4? 4:regNum;
+    for(int regIdx=0;regIdx<maxIdx;++regIdx)
     {
         add_register_limited(regIdx);
     }
