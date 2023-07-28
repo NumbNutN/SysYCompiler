@@ -737,9 +737,12 @@ void traverse_list_and_allocate_for_variable(List* this,HashMap* zzqMap,HashMap*
  * @birth: Created by LGD on 2023-5-13
  * @update: 2023-5-16 添加对数组指针访问的重定向
  *          2023-7-18 传递参数时，应当优先将R0-R3传递出来
+ *          2023-7-28 参数传递时同样要考虑临时寄存器是否可用
 */
 void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
 {
+    //在传递参数之前，先根据参数情况限制参数
+    add_parameter_limited(paramNum);
     char name[16] = {0};
     VarInfo* varInfo;
     for(int i=0;i<paramNum;++i)
@@ -751,6 +754,9 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
         }
         varInfo = HashMapGet(varMap,name);
         update_variable_location(varInfo,true);
+
+        //每完成一次参数的传递，使一个寄存器自由
+        remove_register_limited(1 << i);
     }
 }
 
