@@ -64,6 +64,13 @@ bool Is_limited_temp_register(RegisterOrder reg);
  * @birth: Created by LGD on 2023-5-4
 */
 void add_register_limited(enum _Pick_Arm_Register_Limited limited);
+
+/**
+ * @brief 根据参数个数限制
+ * @birth: Created by LGD on 2023-7-28
+*/
+void add_parameter_limited(size_t regNum);
+
 /**
  * @brief 移除一个限制级别，如果其本身没有这个限制级别，将忽略
  * @birth: Created by LGD on 2023-5-4
