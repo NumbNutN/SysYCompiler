@@ -31,6 +31,7 @@ bool ins_mul_2_lsl_trigger(Instruction* ins)
  * @brief 乘法移位优化
  * @birth: Created by LGD on 2023-4-19
  * @update: 2023-5-29 添加寄存器回收
+ *          2023-7-29 更简洁的表达
 */
 void ins_mul_2_lsl(Instruction* ins)
 {
@@ -41,12 +42,8 @@ void ins_mul_2_lsl(Instruction* ins)
     if(op1.addrMode == IMMEDIATE && number_is_power_of_2(op1.oprendVal))
     {
         AssembleOperand cvtOp2;
-        if(operand_in_regOrmem(op2) == IN_MEMORY)
-            cvtOp2 = operand_load_from_memory(op2,ARM);
-        else if(operand_in_regOrmem(op2) == IN_INSTRUCTION)
-            cvtOp2 = operand_load_immediate(op2,ARM);
-        else
-            cvtOp2 = op2;
+        
+        cvtOp2 = operandConvert(op2, ARM, 0, 0);
 
         operand_set_shift(&cvtOp2,LSL,log(op1.oprendVal)/log(2));
         
@@ -61,12 +58,7 @@ void ins_mul_2_lsl(Instruction* ins)
     {
         AssembleOperand cvtOp1;
 
-        if(operand_in_regOrmem(op1) == IN_MEMORY)
-            cvtOp1 = operand_load_from_memory(op1,ARM);
-        else if(operand_in_regOrmem(op1) == IN_INSTRUCTION)
-            cvtOp1 = operand_load_immediate(op1,ARM);
-        else
-            cvtOp1 = op1;
+        cvtOp1 = operandConvert(op1, ARM, 0, 0);
             
         operand_set_shift(&cvtOp1,LSL,log(op2.oprendVal)/log(2));
 

@@ -179,27 +179,7 @@ void translate_param_instructions(Instruction* this)
 
     if(procudre_call_strategy == FP_SOFT)
     {
-    //判断当前传入的变量是否是全局数组
-    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
-    {
-        //需要将全局标号的地址取出到寄存器后传递
-        //小于等于4个则直接丢R0-R3
-        if(passed_param_number <= 3)
-        {
-            pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
-            //寄存器限制
-            add_register_limited(passed_param_number);
-        }
-        //多于4个参数，临时寄存器调出后回收
-        else{
-            struct _operand temp = operand_pick_temp_register(ARM);
-            pseudo_ldr("LDR",temp,param_op);
-            movii(param_push_op_interger,temp);
-            operand_recycle_temp_register(temp);
-        }
-    }
-    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
-    else{
+        //当前传入的变量是其余情况（全局变量 全局数组 全局数组的解引用 局部数组 局部变量）
         //当参数为变量或立即数时，形式参数要判断是否需要类型提升
         if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
         {
@@ -227,30 +207,9 @@ void translate_param_instructions(Instruction* this)
                 mov(param_push_op_interger,param_op);
         }
     }
-    }
     else if(procudre_call_strategy == FP_HARD)
     {
-    //判断当前传入的变量是否是全局数组
-    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
-    {
-        //需要将全局标号的地址取出到寄存器后传递
-        //小于等于4个则直接丢R0-R3
-        if(passed_param_number <= 3)
-        {
-            pseudo_fld("FLD",s023_float[passed_param_number],param_op,FloatTyID);
-            //寄存器限制
-            add_register_limited(passed_param_number);
-        }
-        //多于4个参数，临时寄存器调出后回收
-        else{
-            struct _operand temp = operand_pick_temp_register(ARM);
-            pseudo_ldr("LDR",temp,param_op);
-            movii(param_push_op_interger,temp);
-            operand_recycle_temp_register(temp);
-        }
-    }
-    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
-    else{
+        //当前传入的变量是其余情况（全局变量 全局数组 全局数组的解引用 局部数组 局部变量）
         //当参数为变量或立即数时，形式参数要判断是否需要类型提升
         if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
         {
@@ -266,7 +225,6 @@ void translate_param_instructions(Instruction* this)
             }
         }
         else assert(false && "current FP_HARD strategy does not support interger for parameter");
-    }
     }
 }
 
@@ -555,14 +513,14 @@ void translate_sub(Instruction* this)
         //如果第1个操作数为立即数，第2个不是，使用RSB指令
         if(operand_is_immediate(op1) && !operand_is_immediate(op2))
         {
-            op2 = operandConvert(op2,ARM,false,IN_MEMORY);
+            op2 = operandConvert(op2,ARM,false,IN_STACK_SECTION);
             general_data_processing_instructions(RSB,
                 middleOp,op2,op1,NONESUFFIX,false);
         }
         //第1个操作数不是立即数，第2个操作数可以是任何数，使用SUB指令
         else{
-            op1 = operandConvert(op1,ARM,false,IN_MEMORY | IN_INSTRUCTION);
-            op2 = operandConvert(op2,ARM,false,IN_MEMORY | IN_INSTRUCTION);
+            op1 = operandConvert(op1,ARM,false,IN_STACK_SECTION | IN_INSTRUCTION);
+            op2 = operandConvert(op2,ARM,false,IN_STACK_SECTION | IN_INSTRUCTION);
             general_data_processing_instructions(SUB,
                 middleOp,op1,op2,NONESUFFIX,false);
         }
@@ -602,15 +560,8 @@ void translate_getelementptr_instruction(Instruction* this)
     struct _operand idx = toOperand(this,SECOND_OPERAND);
     struct _operand step_long = operand_create_immediate_op(ins_getelementptr_get_step_long(this),INTERGER_TWOSCOMPLEMENT);
     struct _operand arrBase = arrBaseOri;
-    //如果解引用的对象是全局数组
-    if(value_is_global(ins_get_operand(this, FIRST_OPERAND))){
-        //采用临时寄存器作为全局数组的基地址
-        arrBase = operand_pick_temp_register(ARM);
-        pseudo_ldr("LDR",arrBase,arrBaseOri);
-    }
-    //解引用的对象是局部数组或者全局数组的解引用
-    else
-        arrBase = operand_load_to_register(arrBaseOri,nullop,ARM);
+    //解引用的对象是全局数组 局部数组或者全局数组的解引用
+    arrBase = operand_load_to_register(arrBaseOri,nullop,ARM);
 
 
     idx = operand_load_to_register(idx,nullop,ARM);
