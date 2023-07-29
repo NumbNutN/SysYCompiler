@@ -302,10 +302,11 @@ extern assmNode* prev;
 typedef enum _RegorMem
 {
     IN_REGISTER     = 1,
-    IN_MEMORY       = 2,
+    IN_STACK_SECTION       = 2,
     IN_DATA_SEC     = 4,
     IN_INSTRUCTION  = 8,
-    UNALLOCATED     = 16
+    IN_LITERAL_POOL = 16,
+    UNALLOCATED     = 32
 } RegorMem;
 
 /**

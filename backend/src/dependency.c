@@ -42,7 +42,7 @@ bool op_is_in_instruction(Value* op)
 */
 bool variable_is_in_memory(Instruction* this,Value* var)
 {
-    return get_variable_place(this,var) == IN_MEMORY;
+    return get_variable_place(this,var) == IN_STACK_SECTION;
 }
 
 /**

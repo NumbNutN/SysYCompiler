@@ -240,23 +240,22 @@ void ins_cpy_varinfo_space(Instruction* this,HashMap* map)
 /**
  * @brief 获取操作数的位置，如果是变量查变量表，如果是常数直接返回IN_INSTRUCTION
  * @author Created by LGD on 20220106
- * @update 20230305 完善了zzq return_var的设定
+ * @update: 2023-03-05 完善了zzq return_var的设定
+ *          2023-7-29 现在全局标号的place为IN_LITERAL_POOL
 */
 //TODO 2023-7-9 回顾一下
 RegorMem get_variable_place(Instruction* this,Value* var)
 {
     if(name_is_global(var->name))
     {
-        return IN_DATA_SEC;
+        return IN_LITERAL_POOL;
     }
-    else
-    {
-        if(op_is_in_instruction(var))
-            return IN_INSTRUCTION;
+    else if(op_is_in_instruction(var))
+        return IN_INSTRUCTION;
+    else{
         VarInfo* vs = variable_map_get_value(this->map,var);
         return operand_in_regOrmem(vs->ori);
     }
-
 }
 
 /**
@@ -360,7 +359,7 @@ AddrMode judge_addrMode_by_place(RegorMem place)
 {
     switch(place)
     {
-        case IN_MEMORY:
+        case IN_STACK_SECTION:
             return REGISTER_INDIRECT_WITH_OFFSET;
         case IN_REGISTER:
             return REGISTER_DIRECT;
@@ -990,8 +989,8 @@ char* RegOrMem_2_str(RegorMem place)
 {
     switch(place)
     {
-        case IN_MEMORY:
-            return "MEMORY";
+        case IN_STACK_SECTION:
+            return "STACK_FRAME";
         case IN_INSTRUCTION:
             return "INSTRUCT";
         case IN_REGISTER:

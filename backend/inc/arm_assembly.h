@@ -238,16 +238,7 @@ void subfff(struct _operand tarOp,struct _operand op1,struct _operand op2);
  * @birth: Created by LGD on 20230226
 */
  BinaryOperand binaryOpii(struct _operand op1,struct _operand op2);
- /**
- * @brief 双目运算 整数浮点混合双目运算
- * @birth: Created by LGD on 20230226
-*/
- BinaryOperand binaryOpfi(struct _operand op1,struct _operand op2);
- /**
- * @brief 双目运算 浮点运算
- * @birth: Created by LGD on 20230226
-*/
-BinaryOperand binaryOpff(struct _operand op1,struct _operand op2);
+
 
 /**
 @brief:完成一次整数的相加

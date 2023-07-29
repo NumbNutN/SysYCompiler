@@ -56,12 +56,6 @@ int main(int argc, char **argv) {
   } else if (argc == 6) {
     is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
-  } else if (argc == 2) {
-    is_functional_test = true;
-    choose_case = read_code_from_file(argv[1]);
-  } else if (argc == 3) {
-    is_functional_test = true;
-    choose_case = read_code_from_file(argv[1]);
   } else {
     is_functional_test = true;
     assert("invalid parameters");

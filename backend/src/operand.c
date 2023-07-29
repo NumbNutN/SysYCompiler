@@ -115,7 +115,7 @@ RegorMem operand_in_regOrmem(AssembleOperand op)
         case REGISTER_INDIRECT_POST_INCREMENTING:
         case REGISTER_INDIRECT_PRE_INCREMENTING:
         case REGISTER_INDIRECT_WITH_OFFSET:
-            return IN_MEMORY;
+            return IN_STACK_SECTION;
         case REGISTER_DIRECT:
             return IN_REGISTER;
         case IMMEDIATE:
@@ -123,7 +123,7 @@ RegorMem operand_in_regOrmem(AssembleOperand op)
         case NONE_ADDRMODE:
             return UNALLOCATED;
         case LABEL_MARKED_LOCATION:
-            return IN_DATA_SEC;
+            return IN_LITERAL_POOL;
         default:
             assert(false && "unrecognize addressing mode");
     }
@@ -134,6 +134,7 @@ RegorMem operand_in_regOrmem(AssembleOperand op)
  * @birth: Created by LGD on 2023-3-16
  * @update: 2023-4-4 将栈顶指针改为栈帧
  * @update: 2023-4-20 清空内存
+ *          2023-7-29 现在ValuetoOperand不会再判断IN_DATA_SEC
 */
 AssembleOperand ValuetoOperand(Instruction* this,Value* val)
 {
@@ -142,7 +143,7 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* val)
     RegorMem rOm = get_variable_place(this,val);
     switch(rOm)
     {
-        case IN_MEMORY:
+        case IN_STACK_SECTION:
             op.addrMode = REGISTER_INDIRECT_WITH_OFFSET;
             op.oprendVal = FP;
             op.addtion = get_variable_register_order_or_memory_offset_test(this,val);
@@ -151,8 +152,12 @@ AssembleOperand ValuetoOperand(Instruction* this,Value* val)
             op.point2spaceFormat = valueFindFormat(val);
         break;
         case IN_DATA_SEC:
+            assert(false && "ValuetoOperand方法不再受理在Data_Sec的情况");
+        break;
+        case IN_LITERAL_POOL:
             op.addrMode = LABEL_MARKED_LOCATION;
             op.oprendVal = val->name;
+            op.format = INTERGER_TWOSCOMPLEMENT;
             op.point2spaceFormat = valueFindFormat(val);
         break;
         case IN_REGISTER:
@@ -215,19 +220,38 @@ bool operand_is_same(struct _operand dst,struct _operand src)
 */
 bool operand_is_immediate(AssembleOperand op)
 {
-    return (op.addrMode == IMMEDIATE);
+    return (op.addrMode == IMMEDIATE || op.addrMode == LABEL_MARKED_LOCATION);
+}
+
+/**
+ * @brief 判断一个操作数是否在栈区
+ * @birth: Created by LGD on 2023-7-29
+*/
+bool operand_is_in_stack_section(AssembleOperand op)
+{
+    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
+            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
+            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
+            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING);  //后变址
+}
+
+/**
+ * @brief 判断一个操作数是否在数据段中
+ * @birth: Created by LGD on 2023-7-29
+*/
+bool operand_is_in_data_section(AssembleOperand op)
+{
+    return op.addrMode == LABEL_MARKED_LOCATION;
 }
 
 /**
  * @brief 判断一个operand是否在内存中
  * @birth: Created by LGD on 2023-4-24
+ * @update: 在数据段中也会视为operand_is_in_memory
 */
 bool operand_is_in_memory(AssembleOperand op)
 {
-    return (op.addrMode == REGISTER_INDIRECT ||   //寄存器间接寻址 LDR R0, [R1]
-            op.addrMode == REGISTER_INDIRECT_WITH_OFFSET ||     //前变址
-            op.addrMode == REGISTER_INDIRECT_PRE_INCREMENTING ||  //自动变址
-            op.addrMode == REGISTER_INDIRECT_POST_INCREMENTING); //后变址
+    return (operand_is_in_stack_section(op)); 
 }
 
 /**
@@ -313,7 +337,7 @@ enum _DataFormat operand_get_reg_format(struct _operand op)
 */
 enum _DataFormat operand_get_format(struct _operand op)
 {
-    if(operand_in_regOrmem(op) == IN_MEMORY || operand_in_regOrmem(op) == IN_DATA_SEC)
+    if(operand_is_in_memory(op))
     {
         assert(op.point2spaceFormat != NO_FORMAT && "当前间址内存格式为空");
         return op.point2spaceFormat;
@@ -437,7 +461,7 @@ AssembleOperand operand_regFloat2Int(AssembleOperand src,struct _operand tar)
 {
     AssembleOperand temp;
     enum _ARMorVFP type;
-    assert((operand_in_regOrmem(src) == IN_REGISTER) && "当前转换方法仅支持寄存器");
+    assert(operand_is_in_register(src) && "当前转换方法仅支持寄存器");
     assert(operand_get_regType(src)== VFP && "源寄存器只支持IEEE754");
 
     if(operand_get_regType(src) == VFP)
@@ -466,7 +490,7 @@ AssembleOperand operand_regInt2Float(AssembleOperand src,struct _operand tar)
 {
     AssembleOperand temp;
     enum _ARMorVFP type;
-    assert((operand_in_regOrmem(src) == IN_REGISTER) && "当前转换方法仅支持寄存器");
+    assert(operand_is_in_register(src) && "当前转换方法仅支持寄存器");
     assert(operand_get_regType(src)== VFP && "源寄存器只支持IEEE754");
 
     //指定目标寄存器
@@ -545,7 +569,6 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
             pseudo_fld("FLDS",dst,src,FloatTyID);
         break;
     }
-    assert((operand_in_regOrmem(src) != IN_MEMORY) && (operand_in_regOrmem(src) != IN_REGISTER));
     return dst;
 }
 
@@ -570,6 +593,7 @@ AssembleOperand operand_load_immediate(AssembleOperand src,enum _ARMorVFP type)
  * @update: Created by LGD on 2023-4-11
  *          2023-7-19 保持格式一致
  *          2023-7-25 检查数据格式
+ *          2023-7-29 现在正式支持从数据段加载数据到寄存器
 */
 AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand src,AssembleOperand dst)
 {
@@ -582,16 +606,7 @@ AssembleOperand operand_load_from_memory_to_spcified_register(AssembleOperand sr
     if(dst.format == NO_FORMAT) dst.format = src.point2spaceFormat;
 
     enum _ARMorVFP regType = register_type(dst.oprendVal);
-    switch(regType)
-    {
-        case ARM:
-            mem2reg(dst, src);
-        break;
-        case VFP:
-            vfp_memory_access_instructions("FLD",dst,src,FloatTyID);
-        break;
-    }
-    assert((operand_in_regOrmem(src) != IN_INSTRUCTION) && (operand_in_regOrmem(src) != IN_REGISTER));
+    mem2reg(dst, src);
     return dst;
 }
 
@@ -621,12 +636,11 @@ void operand_load_to_specified_register(struct _operand oriOp,struct _operand ta
     assert(tarOp.addrMode == REGISTER_DIRECT && "load to register should specify a real register!");
 
     if(operand_is_same(tarOp, oriOp)) return;
-    if(operand_in_regOrmem(oriOp) == IN_MEMORY)
+    if(operand_is_in_memory(oriOp))
         operand_load_from_memory_to_spcified_register(oriOp,tarOp);
-    else if(operand_in_regOrmem(oriOp) == IN_INSTRUCTION)
+    else if(operand_is_immediate(oriOp))
         operand_load_immediate_to_specified_register(oriOp,tarOp);
-
-    else if(operand_in_regOrmem(oriOp) == IN_REGISTER)
+    else if(operand_is_in_register(oriOp))
     {
         assert(oriOp.format != NO_FORMAT && "源必须有格式");
         assert((oriOp.format == tarOp.format ||
@@ -855,29 +869,29 @@ struct _operand operandConvert(struct _operand op,enum _ARMorVFP aov,bool mask,e
 
     if(!mask)
     {
-        if( (((rom & IN_MEMORY) == IN_MEMORY) || !rom) &&  
-            operand_in_regOrmem(op) == IN_MEMORY)
+        if( (((rom & IN_STACK_SECTION) == IN_STACK_SECTION) || !rom) &&  
+            operand_is_in_memory(op))
             cvtOp = operand_load_from_memory(op,aov);
 
         if((((rom & IN_INSTRUCTION) == IN_INSTRUCTION) || !rom ) && 
-            operand_in_regOrmem(op) == IN_INSTRUCTION)
+            operand_is_immediate(op))
             cvtOp = operand_load_immediate(op,aov);
 
         if((((rom & IN_INSTRUCTION) == IN_REGISTER) || !rom ) && 
-            (operand_in_regOrmem(op) == IN_REGISTER) &&
+            operand_is_in_register(op) &&
             operand_get_regType(op) != aov)
             cvtOp = operand_load_to_register(op,nullop,aov);
     }
     else
     {
-        if( (((rom & IN_MEMORY) == IN_MEMORY) || !rom) && 
-            operand_in_regOrmem(op) == IN_MEMORY)
+        if( (((rom & IN_STACK_SECTION) == IN_STACK_SECTION) || !rom) && 
+            operand_is_in_memory(op))
             return cvtOp;
         if((((rom & IN_INSTRUCTION) == IN_INSTRUCTION) || !rom ) &&
-            operand_in_regOrmem(op) == IN_INSTRUCTION)
+            operand_is_immediate(op))
             return cvtOp;
         if((((rom & IN_INSTRUCTION) == IN_REGISTER) || !rom ) &&
-            operand_in_regOrmem(op) == IN_REGISTER)
+            operand_is_in_register(op))
             return cvtOp;
         
         cvtOp = operand_load_to_register(op,nullop,aov);
