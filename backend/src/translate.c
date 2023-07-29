@@ -168,6 +168,7 @@ size_t flush_param_number()
  * @update:2023-5-14 考虑参数在内存和为立即数的情况
  * @update:2023-5-30 添加寄存器限制
  *         2023-7-28 修改了对add_register_limited的调用方式
+ *         2023-7-29 修复浮点参数错误的栈帧指针自减方法
 */
 void translate_param_instructions(Instruction* this)
 {
@@ -175,96 +176,97 @@ void translate_param_instructions(Instruction* this)
     AssembleOperand param_op = toOperand(this,FIRST_OPERAND);
     //获取当前传递参数序号
     size_t passed_param_number = get_parameter_idx_by_name(ins_get_assign_left_value(this)->name);
+
     if(procudre_call_strategy == FP_SOFT)
     {
-        //判断当前传入的变量是否是全局数组
-        if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+    //判断当前传入的变量是否是全局数组
+    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+    {
+        //需要将全局标号的地址取出到寄存器后传递
+        //小于等于4个则直接丢R0-R3
+        if(passed_param_number <= 3)
         {
-            //需要将全局标号的地址取出到寄存器后传递
-            //小于等于4个则直接丢R0-R3
+            pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
+            //寄存器限制
+            add_register_limited(passed_param_number);
+        }
+        //多于4个参数，临时寄存器调出后回收
+        else{
+            struct _operand temp = operand_pick_temp_register(ARM);
+            pseudo_ldr("LDR",temp,param_op);
+            movii(param_push_op_interger,temp);
+            operand_recycle_temp_register(temp);
+        }
+    }
+    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
+    else{
+        //当参数为变量或立即数时，形式参数要判断是否需要类型提升
+        if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+        {
             if(passed_param_number <= 3)
             {
-                pseudo_ldr("LDR",r023_int[passed_param_number],param_op);
+                mov(r023_float[passed_param_number],param_op);
                 //寄存器限制
                 add_register_limited(passed_param_number);
             }
-            //多于4个参数，临时寄存器调出后回收
             else{
-                struct _operand temp = operand_pick_temp_register(ARM);
-                pseudo_ldr("LDR",temp,param_op);
-                movii(param_push_op_interger,temp);
-                operand_recycle_temp_register(temp);
+                mov(param_push_op_float,param_op);
+                subiii(sp,sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
             }
         }
-        //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
         else{
-            //当参数为变量或立即数时，形式参数要判断是否需要类型提升
-            if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+            //小于等于4个则直接丢R0-R3
+            if(passed_param_number <= 3)
             {
-                if(passed_param_number <= 3)
-                {
-                    mov(r023_float[passed_param_number],param_op);
-                    //寄存器限制
-                    add_register_limited(passed_param_number);
-                }
-                else{
-                    mov(param_push_op_float,param_op);
-                    subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
-                }
+                mov(r023_int[passed_param_number],param_op);
+                //寄存器限制
+                add_register_limited(passed_param_number);
             }
-            else{
-                //小于等于4个则直接丢R0-R3
-                if(passed_param_number <= 3)
-                {
-                    mov(r023_int[passed_param_number],param_op);
-                    //寄存器限制
-                    add_register_limited(passed_param_number);
-                }
-                else
-                    //堆入栈顶
-                    mov(param_push_op_interger,param_op);
-            }
+            else
+                //堆入栈顶
+                mov(param_push_op_interger,param_op);
         }
+    }
     }
     else if(procudre_call_strategy == FP_HARD)
     {
-        //判断当前传入的变量是否是全局数组
-        if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+    //判断当前传入的变量是否是全局数组
+    if(value_is_global(ins_get_operand(this,FIRST_OPERAND)))
+    {
+        //需要将全局标号的地址取出到寄存器后传递
+        //小于等于4个则直接丢R0-R3
+        if(passed_param_number <= 3)
         {
-            //需要将全局标号的地址取出到寄存器后传递
-            //小于等于4个则直接丢R0-R3
+            pseudo_fld("FLD",s023_float[passed_param_number],param_op,FloatTyID);
+            //寄存器限制
+            add_register_limited(passed_param_number);
+        }
+        //多于4个参数，临时寄存器调出后回收
+        else{
+            struct _operand temp = operand_pick_temp_register(ARM);
+            pseudo_ldr("LDR",temp,param_op);
+            movii(param_push_op_interger,temp);
+            operand_recycle_temp_register(temp);
+        }
+    }
+    //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
+    else{
+        //当参数为变量或立即数时，形式参数要判断是否需要类型提升
+        if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
+        {
             if(passed_param_number <= 3)
             {
-                pseudo_fld("FLD",s023_float[passed_param_number],param_op,FloatTyID);
+                mov(s023_float[passed_param_number],param_op);
                 //寄存器限制
                 add_register_limited(passed_param_number);
             }
-            //多于4个参数，临时寄存器调出后回收
             else{
-                struct _operand temp = operand_pick_temp_register(ARM);
-                pseudo_ldr("LDR",temp,param_op);
-                movii(param_push_op_interger,temp);
-                operand_recycle_temp_register(temp);
+                mov(param_push_op_float,param_op);
+                subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
             }
         }
-        //当前传入的变量是其余情况（全局变量 全局数组的解引用 局部数组 局部变量）
-        else{
-            //当参数为变量或立即数时，形式参数要判断是否需要类型提升
-            if(value_is_float(ins_get_operand(this, TARGET_OPERAND)))
-            {
-                if(passed_param_number <= 3)
-                {
-                    mov(s023_float[passed_param_number],param_op);
-                    //寄存器限制
-                    add_register_limited(passed_param_number);
-                }
-                else{
-                    mov(param_push_op_float,param_op);
-                    subii(sp,operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT));
-                }
-            }
-            else assert(false && "current FP_HARD strategy does not support interger for parameter");
-        }
+        else assert(false && "current FP_HARD strategy does not support interger for parameter");
+    }
     }
 }
 

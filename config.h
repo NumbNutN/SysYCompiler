@@ -58,6 +58,10 @@
 #define COUNT_STACK_SIZE_VIA_TRAVERSAL_INS_LIST
 //#define COUNT_STACK_SIZE_VIA_TRAVERSAL_MAP
 
+/* 定义对浮点参数传递方式 */
+#define FLOAT_ABI_MODE_SOFTFP
+//#define FLOAT_ABI_MODE_HARD
+
 /* 测试模式 */
 #define DEBUG_MODE
 

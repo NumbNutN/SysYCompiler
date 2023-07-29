@@ -547,6 +547,7 @@ void movfi(AssembleOperand tar,AssembleOperand op1)
  * @todo mem = reg 还可以优化一个语句
  * @update: 2023-4-11 目标数为寄存器时的直接位移
  *          2023-7-18 重构
+ *          2023-7-29 如果源在寄存器，则没必要再次申请临时寄存器
 */
 void movff(AssembleOperand tar,AssembleOperand op1)
 {
@@ -560,9 +561,10 @@ void movff(AssembleOperand tar,AssembleOperand op1)
     //如果target在内存
     else
     {
-        struct _operand temp = operand_load_to_register(op1, nullop,VFP);
+        struct _operand temp = operandConvert(op1, VFP, 0, IN_MEMORY | IN_INSTRUCTION);
         reg2mem(temp,tar);
-        operand_recycle_temp_register(temp);
+        if(!operand_is_same(temp, op1))
+            operand_recycle_temp_register(temp);
     }
 }
 
@@ -572,6 +574,7 @@ void movff(AssembleOperand tar,AssembleOperand op1)
  * @update: 2023-4-11 优化了立即数传入寄存器
  *          2023-7-17 当检测两个操作数位置一致时，不作处理
  *          2023-7-18 重构
+ *          2023-7-29 如果源在寄存器，则没必要再次申请临时寄存器
 */
 void movii(AssembleOperand tar,AssembleOperand op1)
 {
@@ -581,9 +584,10 @@ void movii(AssembleOperand tar,AssembleOperand op1)
     //如果tar在内存
     else
     {
-        struct _operand temp = operand_load_to_register(op1, nullop,ARM);
+        struct _operand temp = operandConvert(op1, ARM, 0, IN_MEMORY | IN_INSTRUCTION);
         reg2mem(temp,tar);
-        operand_recycle_temp_register(temp);
+        if(!operand_is_same(temp, op1))
+            operand_recycle_temp_register(temp);
     }
 }
 
