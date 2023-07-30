@@ -748,23 +748,24 @@ void move_parameter_to_recorded_place(HashMap* varMap,size_t paramNum)
     char name[16] = {0};
     VarInfo* varInfo;
     for(int i=0;i<paramNum;++i)
-    {
-        //每完成一次参数的传递，使一个参数寄存器自由
-        //即使参数没有被使用也需要取消限制
-        if(i < 4)
-            remove_register_limited(i);
-        
+    {    
         sprintf(name,"param%d",i);
         if(!HashMapContain(varMap, name)){
             //当前参数没有分配寄存器 不需要移动位置
-            continue;
+            //每完成一次参数的传递，使一个参数寄存器自由
+            //即使参数没有被使用也需要取消限制
+            if(i < 4)
+                remove_register_limited(i);
         }
-        varInfo = HashMapGet(varMap,name);
-        update_variable_location(varInfo,true);
-
-        //每完成一次参数传递，使一个目的寄存器不自由
-        if(operand_is_in_register(varInfo->current))
-            operand_add_register_limited(varInfo->current);
+        else{
+            varInfo = HashMapGet(varMap,name);
+            update_variable_location(varInfo,true);
+            if(i < 4)
+                remove_register_limited(i);
+            //每完成一次参数传递，使一个目的寄存器不自由
+            if(operand_is_in_register(varInfo->current))
+                operand_add_register_limited(varInfo->current);
+        }
     }
 }
 
