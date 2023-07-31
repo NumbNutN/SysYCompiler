@@ -22,6 +22,9 @@ typedef enum _ARM_Instruction_Mnemonic
     MVN,
     CMP,
 
+    MOVW,
+    MOVT,
+
     AND,
     ORR,
 

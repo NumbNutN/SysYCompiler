@@ -22,7 +22,7 @@ void print_operand(AssembleOperand op, size_t opernadIdx) {
   switch (op.addrMode) {
   // MOV R0,#15
   case IMMEDIATE:
-    printf("#%d", (int)op.oprendVal);
+    printf("#%u", (uint32_t)op.oprendVal);
     break;
   case DIRECT:
     // LDR R0,MEM
@@ -137,7 +137,7 @@ void print_single_assembleNode(assmNode *p) {
     // 打印操作数
     for (int i = 0; i < p->op_len; i++) {
       /***********************MOV指令****************************/
-      if (!strcmp(p->opCode, "MOV") && i == Rn)
+      if (!memcmp(p->opCode, "MOV",3) && i == Rn)
         continue;
       /***********************CMP指令****************************/
       if (!strcmp(p->opCode, "CMP") && i == Rn)

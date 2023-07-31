@@ -231,7 +231,10 @@ bool check_indirect_offset_valid(int offset)
 bool check_immediate_valid(int num)
 {
     for(int i=0;i<=30;i+=2)
-        if( (((num >> i) | (num <<(32-i)) ) & ~(0xFF)) == 0)return true;
+    {
+        int res = ((num >> i) | (num <<(32-i)) ) & ~(0xFF);
+        if( res == 0)return true;
+    }
     return false;
 }
 
