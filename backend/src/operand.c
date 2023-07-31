@@ -563,7 +563,18 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
     switch(regType)
     {
         case ARM:
-            pseudo_ldr("LDR",dst,src);
+        {
+            if(check_immediate_valid(src.oprendVal))
+                general_data_processing_instructions_extend(MOV, NONESUFFIX, false, dst,src,nullop);
+            else
+            {
+                //movw will zero the upper 16 bits. So there's a order to first w then t
+                struct _operand h32 = operand_create_immediate_op((uint32_t)src.oprendVal >> 16, INTERGER_TWOSCOMPLEMENT);
+                struct _operand l32 = operand_create_immediate_op(src.oprendVal & 0xFFFF,INTERGER_TWOSCOMPLEMENT);
+                general_data_processing_instructions_extend(MOVW, NONESUFFIX, false, dst,l32,nullop);
+                general_data_processing_instructions_extend(MOVT, NONESUFFIX, false, dst,h32,nullop);
+            }
+        }
         break;
         case VFP:
             pseudo_fld("FLDS",dst,src,FloatTyID);
