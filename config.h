@@ -16,9 +16,6 @@
 /* 允许二元运算 */
 #ifdef OPEN_TRANSLATE_BINARY
 
-    /*使用最开始的Load Store通用方法处理binary运算*/
-    //#define OPEN_LOAD_AND_STORE_BINARY_OPERATE
-
     /* 是否允许二元的两个操作数均为立即数 2023-7-11*/
     #define ALLOW_TWO_IMMEDIATE
 
@@ -44,9 +41,6 @@
 /* 从高/低地址拆分内存单元 */
 #define SPLIT_MEMORY_UNIT_ON_HIGH_ADDRESS
 //#define SPLIT_MEMORY_UNIT_ON_LOW_ADDRESS
-
-/*zzq的寄存器分配与load and store 指令已经安插*/
-//#define LLVM_LOAD_AND_STORE_INSERTED
 
 /*开启寄存器分配*/
 //#define OPEN_REGISTER_ALLOCATION
