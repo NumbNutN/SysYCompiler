@@ -13,26 +13,6 @@ void initDlist();
 
 extern TempReg TempARMRegList[];
 extern TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
-/**
- * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器
- *        若在寄存器和指令中，返回对应的寄存器或常数
- * @param regType 指定使用arm寄存器还是vfp
- * @return 若使用了临时寄存器，返回寄存器的编号，否则返回-1
- * @author created by LGD on 20221225
- * @update  20230112 新增指定用通用还是浮点寄存器
- *          20220109 当选取的是目的操作数时，不再访存
- *          20220103 offset报错,raspberry OS 和编译器的奇怪问题 遂将声明提前
-*/
-size_t ins_variable_load_in_register(Instruction* this,int i,ARMorVFP regType,struct _operand* op);
-
-/**
- * @brief 这个方法分析指令的第i个操作数，若变量在内存中，产生一个访存指令后返回临时寄存器,若在寄存器和指令中，返回对应的寄存器或常数
- * @author created by LGD on 20221225
- * @return 若使用了临时寄存器，返回寄存器的编号，否则返回-1
-*/
-size_t variable_load_in_register(Instruction* this,Value* op,struct _operand* assem_op);
-
-void variable_storage_back(Instruction* this,int i,int order);
 
 /**
  * @brief 浮点临时寄存器获取三件套
@@ -83,28 +63,6 @@ void remove_register_limited(RegisterOrder limitedReg);
  * @brief 判断一个指令的操作数是否是浮点数
 */
 bool ins_operand_is_float(Instruction* this,int opType);
-
-/**
- * @brief 这个方法专用于加载目标操作数
- *        规则如下：
- *          左侧变量在内存中时：
- *              挑选一个与结果类型匹配的寄存器
- *          左侧变量在寄存器中时：
- *              若双目运算结果与左侧变量类型不同，挑选一个与结果类型匹配的寄存器
- *              若双目运算结果与左侧变量类型相同，则直传寄存器
- * @author created by LGD on 20230113
- * @update: 20230122 添加了operandType来区分赋值语句和算术语句的操作数个数
-*/
-void ins_target_operand_load_in_register(Instruction* this,struct _operand* op,int operandType);
-/**
- * @brief 将变量存储回原来的位置
- *          若在内存中，将最终结果存到内存
- *          若在寄存器，将最终结果存在寄存器，若本身在指定寄存器则忽略
- *          若类型不符，则将类型转正确后再存
- * @author Created by LGD on 20230113
-*/
-void variable_storage_back_new(Instruction* this,int i,RegisterOrder order);
-
 
 /**
  * @brief 统一为整数和浮点数变量归还寄存器
