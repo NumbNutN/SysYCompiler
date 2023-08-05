@@ -339,6 +339,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 
+#define MAX_LINE_LENGTH 1000
 char *read_code_from_file(const char *file_path) {
   puts(file_path); 
   FILE *fd = fopen(file_path, "r");
@@ -352,14 +353,42 @@ char *read_code_from_file(const char *file_path) {
   long file_size = ftell(fd);
   fseek(fd, 0, SEEK_SET);
 
-  char *buffer = (char *)malloc(file_size + 1);
+  char *buffer = (char *)malloc(file_size + 100);
   if (buffer == NULL) {
     printf("malloc() error\n");
     fclose(fd);
     return NULL;
   }
-  size_t bytes_read = fread(buffer, 1, file_size, fd);
-  buffer[bytes_read] = '\0';
+  memset(buffer, 0, file_size + 100);
+
+  if (is_functional_test == false) {
+    char buffer_line[MAX_LINE_LENGTH];
+    int line_num = 0;
+    size_t buffer_len = 0;
+    while (fgets(buffer_line, MAX_LINE_LENGTH, fd)) {
+      line_num++;
+      char *found = strstr(buffer_line, "starttime();");
+      if (found != NULL) {
+        char new_buffer[50];
+        sprintf(new_buffer, "_sysy_starttime(%d);\n", line_num);
+        strcpy(found, new_buffer);
+      }
+      found = strstr(buffer_line, "stoptime();");
+      if (found != NULL) {
+        char new_buffer[50];
+        sprintf(new_buffer, "_sysy_stoptime(%d);\n", line_num);
+        strcpy(found, new_buffer);
+      }
+      strcat(buffer, buffer_line);
+    }
+#ifdef PRINT_OK
+    printf("%s\n", buffer);
+#endif
+  } else {
+    size_t bytes_read = fread(buffer, 1, file_size, fd);
+    buffer[bytes_read] = '\0';
+  }
+
   fclose(fd);
   return buffer;
 }

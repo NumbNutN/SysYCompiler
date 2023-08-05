@@ -971,9 +971,9 @@ void remove_bblock_phi_func_pass(ALGraph *self) {
     ListNode *iter = cur_handle->data->iter_node_;
     element = iter->element_;
     while (i < ListSize(cur_handle)) {
-      if (((Instruction *)element)->opcode == PhiFuncOp) {
+      if (((Instruction *)element)->opcode == PhiFuncOp)
         delete_ins(cur_handle, &iter, &element);
-      } else
+      else
         iter_next_ins(&iter, &i, &element);
     }
   }
