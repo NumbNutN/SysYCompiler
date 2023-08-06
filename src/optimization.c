@@ -10,7 +10,6 @@
 #include "user.h"
 #include <stdio.h>
 #include <string.h>
-#include <sys/_types/_intptr_t.h>
 
 typedef struct _live_interval {
   unsigned begin;
