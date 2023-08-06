@@ -1360,51 +1360,54 @@ void bblock_to_dom_graph_pass(Function *self) {
     printf("performance is begin!!!!!!!\n");
     printf("performance is begin!!!!!!!\n");
 #endif
-    // 初始化dom_tree树根
-    dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
-    dom_tree_root->bblock_node = init_headnode;
-    dom_tree_root->child = ListInit();
-    ListSetClean(dom_tree_root->child, CleanObject);
+  // 初始化dom_tree树根
+  dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
+  dom_tree_root->bblock_node = init_headnode;
+  dom_tree_root->child = ListInit();
+  ListSetClean(dom_tree_root->child, CleanObject);
 
-    // 建立支配关系的函数
-    dom_relation_pass();
+  // 建立支配关系的函数
+  dom_relation_pass();
 
-    // 插入phi函数
-    insert_phi_func_pass(self);
-
-    printf("\n");
+  // 插入phi函数
+  insert_phi_func_pass(self);
 
 #ifdef DEBUG_MODE
+    printf("\n");
     printf_cur_func_ins(self);
     printf("begin rename pass and delete alloca,store,load instruction!\n");
 #endif
 
-    rename_pass(self);
+  rename_pass(self);
 
 #ifdef DEBUG_MODE
     printf("rename pass over\n");
 #endif
 
-    // 删除alloca store load语句
-    delete_alloca_store_load_ins_pass(graph_for_dom_tree);
+  // 删除alloca store load语句
+  delete_alloca_store_load_ins_pass(graph_for_dom_tree);
 
 #ifdef DEBUG_MODE
     printf("delete alloca,store,load instruction over\n");
 #endif
 
-    // 清空哈希表 然后重新初始化供后面使用
-    HashSetDeinit(bblock_pass_hashset);
-    bblock_pass_hashset = NULL;
-    hashset_init(&(bblock_pass_hashset));
+  // 清空哈希表 然后重新初始化供后面使用
+  HashSetDeinit(bblock_pass_hashset);
+  bblock_pass_hashset = NULL;
+  hashset_init(&(bblock_pass_hashset));
 
+  // optimizization
+  if (!is_functional_test) {
+    array_replace_optimization(self);
+    delete_non_used_var_pass(self);
+  }
 
 #ifdef DEBUG_MODE
-    printf_cur_func_ins(self);
+  printf("super log!!!!!!!!!!!!!!!!!\n");
+  printf_cur_func_ins(self);
 #endif
 
-    delete_non_used_var_pass(self);
-
-    replace_phi_nodes(dom_tree_root);
+  replace_phi_nodes(dom_tree_root);
 
     remove_bblock_phi_func_pass(graph_for_dom_tree);
 #ifdef DEBUG_MODE
@@ -1413,7 +1416,6 @@ void bblock_to_dom_graph_pass(Function *self) {
     printf("performance is over!!!!!!!\n");
     printf("performance is over!!!!!!!\n");
 #endif
-  }
 
   printf("\n\n\n");
 
