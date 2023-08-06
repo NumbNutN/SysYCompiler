@@ -12,8 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/_types/_va_list.h>
-
 extern Stack *stack_ast_pre;
 extern Stack *stack_symbol_table;
 extern Stack *stack_else_label;

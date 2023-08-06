@@ -1436,4 +1436,5 @@ void bblock_to_dom_graph_pass(Function *self) {
   TIMER_END("calculate_live_interval over!");
 
   line_scan_register_allocation(self);
+  }
 }
