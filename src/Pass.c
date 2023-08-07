@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dependency.h"
 #include "interface_zzq.h"
 #include "memory_manager.h"
-#include "variable_map.h"
-#include "dependency.h"
 #include "symbol_table.h"
+#include "variable_map.h"
 #include <unistd.h>
 
 typedef struct _dom_tree {
@@ -1400,12 +1400,11 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   // delete_non_used_var_pass(self);
 
-  if (!is_functional_test) {
 #ifdef DEBUG_MODE
-    printf("performance is begin!!!!!!!\n");
-    printf("performance is begin!!!!!!!\n");
-    printf("performance is begin!!!!!!!\n");
-    printf("performance is begin!!!!!!!\n");
+  printf("performance is begin!!!!!!!\n");
+  printf("performance is begin!!!!!!!\n");
+  printf("performance is begin!!!!!!!\n");
+  printf("performance is begin!!!!!!!\n");
 #endif
   // 初始化dom_tree树根
   dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
@@ -1421,22 +1420,22 @@ void bblock_to_dom_graph_pass(Function *self) {
   insert_phi_func_pass(self);
 
 #ifdef DEBUG_MODE
-    printf("\n");
-    printf_cur_func_ins(self);
-    printf("begin rename pass and delete alloca,store,load instruction!\n");
+  printf("\n");
+  printf_cur_func_ins(self);
+  printf("begin rename pass and delete alloca,store,load instruction!\n");
 #endif
 
   rename_pass(self);
 
 #ifdef DEBUG_MODE
-    printf("rename pass over\n");
+  printf("rename pass over\n");
 #endif
 
   // 删除alloca store load语句
   delete_alloca_store_load_ins_pass(graph_for_dom_tree);
 
 #ifdef DEBUG_MODE
-    printf("delete alloca,store,load instruction over\n");
+  printf("delete alloca,store,load instruction over\n");
 #endif
 
   // 清空哈希表 然后重新初始化供后面使用
@@ -1463,12 +1462,12 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   replace_phi_nodes(dom_tree_root);
 
-    remove_bblock_phi_func_pass(graph_for_dom_tree);
+  remove_bblock_phi_func_pass(graph_for_dom_tree);
 #ifdef DEBUG_MODE
-    printf("performance is over!!!!!!!\n");
-    printf("performance is over!!!!!!!\n");
-    printf("performance is over!!!!!!!\n");
-    printf("performance is over!!!!!!!\n");
+  printf("performance is over!!!!!!!\n");
+  printf("performance is over!!!!!!!\n");
+  printf("performance is over!!!!!!!\n");
+  printf("performance is over!!!!!!!\n");
 #endif
 
   printf("\n\n\n");
@@ -1490,5 +1489,4 @@ void bblock_to_dom_graph_pass(Function *self) {
   TIMER_END("calculate_live_interval over!");
 
   line_scan_register_allocation(self);
-  }
 }
