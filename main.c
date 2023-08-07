@@ -205,7 +205,7 @@ char *performance_test[] = {
     "./performance_test/crypto-1.c",
     "./performance_test/crypto-2.c",
     "./performance_test/crypto-3.c",
-    "./performance_test/dead-code-elimination-1.c",
+    "./performance_test/dead-code-elimination-1.c", // 24
     "./performance_test/dead-code-elimination-2.c",
     "./performance_test/dead-code-elimination-3.c",
     "./performance_test/fft0.c",
