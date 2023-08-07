@@ -51,13 +51,12 @@ int main(int argc, char **argv) {
 #endif
   char *choose_case = NULL;
   if (argc == 5) {
-    is_functional_test = false;
+    is_functional_test = true;
     choose_case = read_code_from_file(argv[4]);
   } else if (argc == 6) {
     is_functional_test = false;
     choose_case = read_code_from_file(argv[4]);
   } else {
-    is_functional_test = true;
     assert("invalid parameters");
   }
   if (choose_case == NULL)
