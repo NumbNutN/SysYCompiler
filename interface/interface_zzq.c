@@ -694,6 +694,7 @@ size_t getLocalVariableSize(HashMap* varMap)
  * @update: 2023-5-22 如果操作数是形式参数，语句将调整数组的基址和FP的相对偏移
  *          2023-5-29 考虑了指针在内存的情况
  *          2023-7-20 全局变量作参数allocate时，无需矫正
+ *          2023-8-8 如果局部数组没有分配寄存器，则略过
 */
 void translate_allocate_instruction(Instruction* this,HashMap* map)
 {
@@ -708,6 +709,8 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
     //如果当前是局部数组，在这里分配单元
     else if(value_get_type(ins_get_assign_left_value(this)) == ArrayTyID){
         bool has_init_literal;
+        //如果当前局部数组没有分配寄存器，直接忽略
+        if(!HashMapContain(map, var->name))return;
         VarInfo* info = HashMapGet(map,var->name);
         size_t totalSpace = var->pdata->array_pdata.total_member * 4;
         if((has_init_literal = array_init_literal(name,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name))) == true)
