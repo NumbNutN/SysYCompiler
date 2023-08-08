@@ -874,6 +874,7 @@ void insert_copies_help(HashMap *insert_copies_stack_hashmap,
       }
     }
   }
+
   copy_pair *cur_dest_used = NULL;
   HashSetFirst(copy_set);
   while ((cur_dest_used = HashSetNext(copy_set)) != NULL) {
@@ -1114,6 +1115,7 @@ void delete_return_deadcode_pass(List *self) {
 }
 
 extern HashMap *assist_is_local_val;
+extern bool global_optimization;
 void ins_toBBlock_pass(List *self) {
   // 用来记录当前的正在处理的bblock
   BasicBlock *cur_bblock = NULL;
@@ -1129,7 +1131,7 @@ void ins_toBBlock_pass(List *self) {
 
   while (ListNext(self, &element)) {
 
-    if (!is_functional_test) {
+    if (global_optimization) {
       while (((Instruction *)element)->opcode != FuncLabelOP) {
         Value *test_global;
         if (((Instruction *)element)->opcode == AllocateOP &&
@@ -1208,7 +1210,7 @@ void ins_toBBlock_pass(List *self) {
       cur_func->entry_bblock = cur_bblock;
       ListPushBack(cur_bblock->inst_list, element);
 
-      if (!is_functional_test) {
+      if (global_optimization) {
         if (HashMapContain(local_global, cur_func->label->name)) {
           List *namer = HashMapGet(local_global, cur_func->label->name);
           ListFirst(namer, false);
@@ -1409,8 +1411,6 @@ void bblock_to_dom_graph_pass(Function *self) {
   }
 #endif
 
-  // delete_non_used_var_pass(self);
-
   // 初始化dom_tree树根
   dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
   dom_tree_root->bblock_node = init_headnode;
@@ -1452,6 +1452,7 @@ void bblock_to_dom_graph_pass(Function *self) {
   printf("before optimization log!!!!!!!!!!!!!!!!!\n");
   printf_cur_func_ins(self);
 #endif
+
   delete_non_used_var_pass(self);
   // optimizization
   if (!is_functional_test) { 
