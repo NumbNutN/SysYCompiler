@@ -815,14 +815,25 @@ void printf_cur_func_ins(Function *self) {
   hashset_init(&(bblock_pass_hashset));
 }
 
+unsigned HashKeyAddressCopyPair(void *key) {
+  return HashDjb2(((copy_pair *)key)->src->name);
+}
+
+void hashset_init_copy_pair(HashSet **self) {
+  *self = HashSetInit();
+  HashSetSetHash(*self, HashKeyAddressCopyPair);
+  HashSetSetCompare(*self, CompareKeyAddress);
+  HashSetSetCleanKey(*self, CleanHashSetKey);
+}
+
 void insert_copies_help(HashMap *insert_copies_stack_hashmap,
                         HashMap *num_of_var_def, dom_tree *cur_bblock) {
   // Pass One:Initialize the data structures
   HashSet *copy_set = NULL;
-  hashset_init(&copy_set);
+  hashset_init_copy_pair(&copy_set);
 
   HashSet *worklist = NULL;
-  hashset_init(&worklist);
+  hashset_init_copy_pair(&worklist);
 
   // 伪代码中的map
   HashMap *var_replace_hashmap = NULL;
@@ -1015,7 +1026,7 @@ void print_ins_pass(List *self) {
 
 void print_bblock_pass(BasicBlock *self) {
   if (self != NULL && HashSetFind(bblock_pass_hashset, self) == false) {
-    printf("\taddress:%p", self->label);
+    // printf("\taddress:%p", self->label);
     printf("\t%s:\n", self->label->name);
     HashSetAdd(bblock_pass_hashset, self);
     print_ins_pass(self->inst_list);
@@ -1400,12 +1411,6 @@ void bblock_to_dom_graph_pass(Function *self) {
 
   // delete_non_used_var_pass(self);
 
-#ifdef DEBUG_MODE
-  printf("performance is begin!!!!!!!\n");
-  printf("performance is begin!!!!!!!\n");
-  printf("performance is begin!!!!!!!\n");
-  printf("performance is begin!!!!!!!\n");
-#endif
   // 初始化dom_tree树根
   dom_tree_root = (dom_tree *)malloc(sizeof(dom_tree));
   dom_tree_root->bblock_node = init_headnode;
@@ -1449,10 +1454,22 @@ void bblock_to_dom_graph_pass(Function *self) {
 #endif
 
   // optimizization
-  if (!is_functional_test) {
+  if (!is_functional_test) { 
+#ifdef DEBUG_MODE
+    printf("performance is begin!!!!!!!\n");
+    printf("performance is begin!!!!!!!\n");
+    printf("performance is begin!!!!!!!\n");
+    printf("performance is begin!!!!!!!\n");
+#endif
     delete_non_used_var_pass(self);
     array_replace_optimization(self);
     immediate_num_calculate(self);
+#ifdef DEBUG_MODE
+    printf("performance is over!!!!!!!\n");
+    printf("performance is over!!!!!!!\n");
+    printf("performance is over!!!!!!!\n");
+    printf("performance is over!!!!!!!\n");
+#endif
   }
 
 #ifdef DEBUG_MODE
@@ -1463,12 +1480,6 @@ void bblock_to_dom_graph_pass(Function *self) {
   replace_phi_nodes(dom_tree_root);
 
   remove_bblock_phi_func_pass(graph_for_dom_tree);
-#ifdef DEBUG_MODE
-  printf("performance is over!!!!!!!\n");
-  printf("performance is over!!!!!!!\n");
-  printf("performance is over!!!!!!!\n");
-  printf("performance is over!!!!!!!\n");
-#endif
 
   printf("\n\n\n");
 
