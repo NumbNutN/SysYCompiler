@@ -1308,6 +1308,7 @@ Value *post_eval(ast *a, Value *left, Value *right) {
                    element->ival, element->fval);
           }
 #endif
+
           HashMapPut(global_array_init_hashmap, strdup(left->name),
                      array_init_assist.offset_list);
           array_init_assist_func(NULL, NULL);
