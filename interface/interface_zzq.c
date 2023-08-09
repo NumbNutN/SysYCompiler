@@ -392,6 +392,7 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
 /**
 @brief:翻译全局变量定义链表
 @birth:Created by LGD on 2023-5-29
+@update: 2023-8-9 添加调试信息
 */
 void translate_global_variable_list(List* this)
 {
@@ -399,6 +400,7 @@ void translate_global_variable_list(List* this)
     ListFirst(this,false);
     while(ListNext(this,&p))
     {
+        print_ins(p);
         switch(p->opcode)
         {
             case AllocateOP:
