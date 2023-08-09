@@ -847,6 +847,7 @@ void insert_variable_map(Function *handle_func,HashMap* map)
  * @brief 设置当前所有参数的初始位置
  * @warning 所有的参数应当已经初始化VarInfo信息块，未分配寄存器除外
  * @birth: Created by LGD on 2023-7-17
+ * @update: 2023-8-10 设置初始位置同样设置为常数偏移
 */
 void set_param_origin_place(HashMap* varMap,size_t param_number)
 {
@@ -866,7 +867,9 @@ void set_param_origin_place(HashMap* varMap,size_t param_number)
             set_var_oriLoc(varInfo, r027[i]);
         }
         else{
+            //参数的原始位置同样要设置偏移属性
             fp_indicate_offset.addtion = get_param_stack_offset_by_idx(i);
+            fp_indicate_offset.offsetType = OFFSET_IMMED;
             set_var_oriLoc(varInfo, fp_indicate_offset);
         }
     }
