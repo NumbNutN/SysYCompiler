@@ -2,6 +2,7 @@
 #include "operand.h"
 //global_array_init_item
 #include <value.h>
+#include "interface_zzq.h"
 
 List* dataList = NULL;
 
@@ -179,8 +180,9 @@ void as_set_function_type(char* name)
  * @birth: Created by LGD on 2023-7-20
  * @update: 2023-7-21 返回布尔值判断是否有字面量
  *          2023-7-21 数组的最后空白部分也要补齐
+ *          2023-8-9 为了区分数组的类型 数组字面量初始化需要提供value
 */
-bool array_init_literal(char* name,size_t total_space,List* literalList)
+bool array_init_literal(Value* var,size_t total_space,List* literalList)
 {
     //判断当前数组是否有字面量
     if(literalList == NULL)return false;
@@ -190,12 +192,12 @@ bool array_init_literal(char* name,size_t total_space,List* literalList)
 
     ListFirst(literalList, false);
     global_array_init_item* item;
-    while(ListNext(literalList, (void*)&item) != false){
-        printf("%d %f\n",item->offset,item->value);
-    }
+    // while(ListNext(literalList, (void*)&item) != false){
+    //     printf("%d %f\n",item->offset,item->value);
+    // }
 
     ListFirst(literalList, false);
-    data_label(name);
+    data_label(var->name);
     //当前下标计数器
     size_t idx = 0;
     while(ListNext(literalList, (void*)&item) != false){
@@ -204,7 +206,15 @@ bool array_init_literal(char* name,size_t total_space,List* literalList)
             dot_zero_expression(NULL,4*(item->offset-idx));
             idx = item->offset;
         }
-        dot_long_expression_literal(NULL, (int)item->value, false);
+
+        if(value_mem_item_is_float(var)){
+            int* ieee_iterval = (void*)(&item->fval);
+            dot_long_expression_literal(NULL, *ieee_iterval, false);
+        }
+        else{
+            dot_long_expression_literal(NULL, item->ival, false);
+        }
+        
         ++idx;
     }
     //补齐数组末端
