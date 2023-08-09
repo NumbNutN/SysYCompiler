@@ -508,7 +508,11 @@ void pool();
 
 void linkNode(assmNode* now);
 
-
+/**
+ * @brief 从代码链中移除节点
+ * @birth: Created by LGD on 2023-8-9
+*/
+void codeRemoveNode(assmNode* node);
 
 /**
  * @brief 返回汇编指令指定的操作数

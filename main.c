@@ -16,6 +16,7 @@
 
 #include "print_format.h"
 #include "interface_zzq.h"
+#include "optimize.h"
 
 extern List *ins_list;
 extern List *global_func_list;
@@ -115,7 +116,10 @@ int main(int argc, char **argv) {
     register_replace((Function *)element);
   }
 
+  //添加文字池
   add_interal_pool();
+  //去除不必要的分支语句
+  remove_unnessary_branch();
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);
@@ -173,7 +177,7 @@ char *read_code_from_file(const char *file_path) {
       }
       strcat(buffer, buffer_line);
     }
-#ifdef PRINT_OK
+#ifdef DEBUG_MODE
     printf("%s\n", buffer);
 #endif
   } else {

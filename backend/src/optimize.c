@@ -81,3 +81,22 @@ void mul2lsl(assmNode* ins)
     strcpy(ins->opCode,"MOV");
     ins->op[2].oprendVal = 2;
 }
+
+/**
+ * @brief 当判断出强制跳转语句接一个标号时，可以删去该跳转
+ * @birth: Created by LGD on 2023-8-9
+*/
+void remove_unnessary_branch(){
+    assmNode* p;
+    for(p = head;p != NULL;p = p->next){
+        //当前语句是branch
+        if(strcmp("B",p->opCode))continue;
+        assmNode* pNext = p->next;
+        //下一个语句是label
+        if(pNext->assemType != LABEL)continue;
+        //branch语句指向标号和下一个标号一致
+        if(strcmp((char*)p->op[0].oprendVal,pNext->label))continue;
+        //移除节点
+        codeRemoveNode(p);
+    }
+}

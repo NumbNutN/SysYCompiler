@@ -11,3 +11,9 @@ bool ins_mul_2_lsl_trigger(Instruction* ins);
  * @update: Created by LGD on 2023-4-19
 */
 void ins_mul_2_lsl(Instruction* ins);
+
+/**
+ * @brief 当判断出强制跳转语句接一个标号时，可以删去该跳转
+ * @birth: Created by LGD on 2023-8-9
+*/
+void remove_unnessary_branch(void);
