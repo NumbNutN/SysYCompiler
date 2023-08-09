@@ -715,7 +715,7 @@ void translate_allocate_instruction(Instruction* this,HashMap* map)
         if(!HashMapContain(map, var->name))return;
         VarInfo* info = HashMapGet(map,var->name);
         size_t totalSpace = var->pdata->array_pdata.total_member * 4;
-        if((has_init_literal = array_init_literal(name,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name))) == true)
+        if((has_init_literal = array_init_literal(var,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name))) == true)
         {
             //构造其初始位置
             struct _operand arrayOri = {.addrMode = LABEL_MARKED_LOCATION,.oprendVal = (int64_t)(void*)name};

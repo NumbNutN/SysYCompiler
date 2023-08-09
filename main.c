@@ -344,7 +344,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-#define MAX_LINE_LENGTH 1024
+#define MAX_LINE_LENGTH 10240
 char *read_code_from_file(const char *file_path) {
   puts(file_path); 
   FILE *fd = fopen(file_path, "r");

@@ -1448,12 +1448,11 @@ void bblock_to_dom_graph_pass(Function *self) {
   bblock_pass_hashset = NULL;
   hashset_init(&(bblock_pass_hashset));
 
-#ifdef OPT_PRINT
-  printf("before optimization log!!!!!!!!!!!!!!!!!\n");
-  printf_cur_func_ins(self);
-#endif
+  // #ifdef OPT_PRINT
+  //   printf("before optimization log!!!!!!!!!!!!!!!!!\n");
+  //   printf_cur_func_ins(self);
+  // #endif
 
-  delete_non_used_var_pass(self);
   // optimizization
   if (!is_functional_test) { 
 #ifdef DEBUG_MODE
@@ -1471,6 +1470,7 @@ void bblock_to_dom_graph_pass(Function *self) {
     printf("performance is over!!!!!!!\n");
 #endif
   }
+  delete_non_used_var_pass(self);
 
 #ifdef DEBUG_MODE
   printf("super log!!!!!!!!!!!!!!!!!\n");

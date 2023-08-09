@@ -33,7 +33,7 @@ void translate_global_allocate_instruction(Instruction* this)
         //     printf("%s %p\n",name,list);
         // }
         size_t totalSpace = var->pdata->array_pdata.total_member * 4;
-        if(!array_init_literal(name,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name)))
+        if(!array_init_literal(var,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name)))
         {
             //即使全局数组不存在字面量，其也应当被声明空间
             dot_zero_expression(name, var->pdata->array_pdata.total_member * 4);

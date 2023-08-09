@@ -6,6 +6,7 @@
 #include "type.h"
 
 #include "cds.h"
+#include "value.h"
 
 extern int CntAssemble;
 
@@ -250,8 +251,9 @@ void dot_zero_expression(char* name,size_t space);
  * @birth: Created by LGD on 2023-7-20
  * @update: 2023-7-21 返回布尔值判断是否有字面量
  *          2023-7-21 数组的最后空白部分也要补齐
+ *          2023-8-9 为了区分数组的类型 数组字面量初始化需要提供value
 */
-bool array_init_literal(char* name,size_t total_space,List* literalList);
+bool array_init_literal(Value* var,size_t total_space,List* literalList);
 
 /****************************************************************/
 /*                           Other                             */
