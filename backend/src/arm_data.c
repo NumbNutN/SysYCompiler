@@ -32,6 +32,7 @@ void data_link_node(struct _dataNode* node)
     if(!dataList)
         assert("data list has not been inited");
     ListPushBack(dataList, node);
+    print_single_data(node);
     
 }
 
@@ -110,6 +111,8 @@ void dot_long_expression_literal(char* name,int num,bool replacale){
             if((p->dExp == DOT_LONG) || (p->dExp == DOT_ZERO))
             {
                 //找到重复项
+                //如果当前.long语句没有标号，跳过
+                if(!p->label)continue;
                 if(!strcmp(p->label,name))
                 {
                     data_remove_node(p);
