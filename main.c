@@ -25,7 +25,7 @@ extern List *global_var_list;
 SymbolTable *cur_symboltable = NULL;
 
 bool is_functional_test = true;
-bool global_optimization = false;
+bool global_optimization = true;
 
 int yyparse(void);
 
