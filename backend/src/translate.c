@@ -435,12 +435,6 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
 #endif  
         }
     }
-    //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
-    if((opCode == DivOP) || (opCode == ModOP))
-    {
-        remove_register_limited(R0);
-        remove_register_limited(R1);
-    }
 
     
     //释放第一、二操作数
@@ -461,6 +455,13 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
             movif(tarOp,middleOp);
         else
             movii(tarOp,middleOp);
+    }
+
+    //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
+    if((opCode == DivOP) || (opCode == ModOP))
+    {
+        remove_register_limited(R0);
+        remove_register_limited(R1);
     }
 
     //释放中间操作数
