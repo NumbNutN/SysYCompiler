@@ -514,6 +514,9 @@ void translate_sub(Instruction* this)
         //如果第1个操作数为立即数，第2个不是，使用RSB指令
         if(operand_is_immediate(op1) && !operand_is_immediate(op2))
         {
+            //判断第一立即数是否合法
+            if(!check_immediate_valid(op1.oprendVal))
+                op1 = operand_load_to_register(oriOp1, nullop, ARM);
             op2 = operandConvert(op2,ARM,false,IN_STACK_SECTION);
             general_data_processing_instructions(RSB,
                 middleOp,op2,op1,NONESUFFIX,false);
