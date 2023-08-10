@@ -1461,7 +1461,7 @@ void bblock_to_dom_graph_pass(Function *self) {
     printf("performance is begin!!!!!!!\n");
     printf("performance is begin!!!!!!!\n");
 #endif
-    public_expression_substitution_opt(self);
+    //public_expression_substitution_opt(self);
     array_replace_optimization(self);
     immediate_num_calculate(self);
 #ifdef DEBUG_MODE
