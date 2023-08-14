@@ -19,6 +19,7 @@ extern HashMap *global_array_init_hashmap;
 /**
  * @brief 翻译allocate语句
  * @birth: Created by LGD on 2023-7-16
+ * @update: 2023-8-14 现在未定义字面量的全局数组会放在bss段
 **/
 void translate_global_allocate_instruction(Instruction* this)
 {
@@ -28,21 +29,18 @@ void translate_global_allocate_instruction(Instruction* this)
     if(value_get_type(ins_get_operand(this, TARGET_OPERAND)) == ArrayTyID)
     {
         List* list;
-        // HashMap_foreach(global_array_init_hashmap, name, list)
-        // {
-        //     printf("%s %p\n",name,list);
-        // }
         size_t totalSpace = var->pdata->array_pdata.total_member * 4;
         if(!array_init_literal(var,totalSpace,(List*)HashMapGet(global_array_init_hashmap, (void*)name)))
         {
+            //如果当前全局数组不存在字面量，则声明到bss段
             //即使全局数组不存在字面量，其也应当被声明空间
-            dot_zero_expression(name, var->pdata->array_pdata.total_member * 4);
+            dot_zero_expression(BSS,name, var->pdata->array_pdata.total_member * 4);
         }
     }
     //翻译全局变量
     else{
         size_t size = opTye2size(ins_get_operand(this,TARGET_OPERAND)->VTy->TID);
-        dot_zero_expression(name,4);
+        dot_zero_expression(DATA,name,4);
     }
 
 }

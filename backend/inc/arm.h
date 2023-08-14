@@ -241,10 +241,11 @@ void data_label(char* name);
 void dot_long_expression(char* name,struct _operand expr,bool replacale);
 /**
  * @brief: .zero表达式
- * @birth:Created by LGD on 2023-5-29
+ * @birth:Created by LGD on 2023-5-29a
  * @update: 2023-7-20 必须指定空间大小
+ *          2023-8-14 现在需要指令定义的段
 */
-void dot_zero_expression(char* name,size_t space);
+void dot_zero_expression(enum Section sec,char* name,size_t space);
 /**
  * @brief 翻译数组字面量
  * @return 为1代表当前数组有初始化，为0则否
