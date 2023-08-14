@@ -148,17 +148,32 @@ void dot_long_expression(char* name,struct _operand expr,bool replacale)
 
 /**
  * @brief: .zero表达式
- * @birth:Created by LGD on 2023-5-29
+ * @birth:Created by LGD on 2023-5-29a
  * @update: 2023-7-20 必须指定空间大小
+ *          2023-8-14 现在需要指令定义的段
 */
-void dot_zero_expression(char* name,size_t space)
+void dot_zero_expression(enum Section sec,char* name,size_t space)
 {
     struct _dataNode* node = (struct _dataNode*)malloc(sizeof(struct _dataNode));
     memset(node, 0, sizeof(struct _dataNode));
     node->label = name;
     node->dExp = DOT_ZERO;
     node->content = space;
-    data_link_node(node);
+    switch(sec){
+        case DATA:
+            data_link_node(node);
+        break;
+        case BSS:
+            bss_link_node(node);
+        break;
+        case CODE:
+            assert("尚未支持在CODE段使用pseudo");
+        break;
+        default:
+            assert("尚未支持");
+        break;
+    }
+
 }
 
 /**
@@ -203,7 +218,7 @@ bool array_init_literal(Value* var,size_t total_space,List* literalList)
     while(ListNext(literalList, (void*)&item) != false){
         if(item->offset != idx)
         {
-            dot_zero_expression(NULL,4*(item->offset-idx));
+            dot_zero_expression(DATA,NULL,4*(item->offset-idx));
             idx = item->offset;
         }
 
@@ -218,7 +233,7 @@ bool array_init_literal(Value* var,size_t total_space,List* literalList)
         ++idx;
     }
     //补齐数组末端
-    dot_zero_expression(NULL, total_space - idx * 4);
+    dot_zero_expression(DATA,NULL, total_space - idx * 4);
     return true;
 }
 
