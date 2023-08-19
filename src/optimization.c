@@ -529,7 +529,7 @@ void immediate_num_calculate(Function *handle_func) {
     element = iter->element_;
 
     while (i < ListSize(cur_handle_list)) {
-      if (element->user.num_oprands == 2) {
+      if (element->user.num_oprands == 2 && element->opcode != PhiFuncOp) {
         Value *oprand01 = user_get_operand_use((User *)element, 0)->Val;
         Value *oprand02 = user_get_operand_use((User *)element, 1)->Val;
         if ((oprand01->VTy->TID == ImmediateIntTyID ||
