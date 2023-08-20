@@ -49,11 +49,19 @@ uint8_t number_get_shift_time(int32_t num)
 */
 bool div_optimize_trigger(Instruction* this)
 {
-    struct _operand divisor;
-    divisor = toOperand(this,SECOND_OPERAND);
-    if(!operand_is_immediate(divisor))return false;
-    if(operand_get_immediate(divisor) < 0)return false;
-    return number_is_power_of_2(operand_get_immediate(divisor));
+    TAC_OP opCode = ins_get_opCode(this);
+    if(opCode == DivOP)
+    {
+        struct _operand divisor;
+        divisor = toOperand(this,SECOND_OPERAND);
+        if(!operand_is_immediate(divisor))return false;
+        if(operand_get_immediate(divisor) < 0)return false;
+        return number_is_power_of_2(operand_get_immediate(divisor));
+    }
+    else{
+        return false;
+    }
+
 }
 
 bool number_is_lsl_trigger(Instruction* this,struct _LSL_FEATURE* feat)
@@ -79,9 +87,11 @@ bool number_is_lsl_trigger(Instruction* this,struct _LSL_FEATURE* feat)
         }
         else return false;
 
-        if ((feat->feature == LSL_NORMAL) || (feat->feature == _2_N_SUB_1))
-            return false;
+        if ((feat->feature == LSL_NORMAL) || (feat->feature == _2_N_SUB_1))return false;
         else return true;
+    }
+    else{
+        return false;
     }
 }
 
