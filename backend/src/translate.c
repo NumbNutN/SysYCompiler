@@ -410,19 +410,19 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     }
 
     //Mul Optimize
-    struct _LSL_FEATURE feat;
-    if(number_is_lsl_trigger(this,&feat))
-    {
-        translate_mul_lsl(this,feat);
-        return;
-    }
+    // struct _LSL_FEATURE feat;
+    // if(number_is_lsl_trigger(this,&feat))
+    // {
+    //     translate_mul_lsl(this,feat);
+    //     return;
+    // }
 
-    //Div Optimize
-    if(div_optimize_trigger(this))
-    {
-        translate_div_2(this);
-        return;
-    }
+    // //Div Optimize
+    // if(div_optimize_trigger(this))
+    // {
+    //     translate_div_2(this);
+    //     return;
+    // }
         
     struct _operand op1,op2,srcOp1,srcOp2;
     op1 = srcOp1 = toOperand(this,FIRST_OPERAND);
