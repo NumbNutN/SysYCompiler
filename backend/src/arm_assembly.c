@@ -294,7 +294,20 @@ void reg2mem(struct _operand reg,struct _operand mem)
         break;
         case VFP:
         {
-            vfp_memory_access_instructions("FST",finiReg,mem,FloatTyID);
+            //当立即数偏移超出寻址范围时
+            if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+            {
+                //将数据传入偏移寄存器
+                struct _operand immed = operand_create_immediate_op(mem.addtion,INTERGER_TWOSCOMPLEMENT);
+                struct _operand offReg = operand_load_immediate(immed, ARM);
+                //构造带偏移的寻址操作数
+                struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
+                vfp_memory_access_instructions("FST",finiReg,offMem,FloatTyID);
+                //归还寄存器
+                operand_recycle_temp_register(offReg);
+            }
+            else
+                vfp_memory_access_instructions("FST",finiReg,mem,FloatTyID);
         }
         break;
     }
@@ -335,7 +348,20 @@ void mem2reg(struct _operand reg,struct _operand mem)
             break;
             case VFP:
             {
-                vfp_memory_access_instructions("FLD",reg,mem,FloatTyID);
+                //当立即数偏移超出寻址范围时
+                if(!check_indirect_offset_valid(mem.addtion) && mem.offsetType == OFFSET_IMMED)
+                {
+                    //创建立即数操作数
+                    struct _operand offMemImmed = operand_create_immediate_op(mem.addtion,INTERGER_TWOSCOMPLEMENT);
+                    //将超出寻址范围的数装载到临时寄存器
+                    struct _operand offMemReg = operand_load_immediate(offMemImmed, ARM);
+                    struct _operand offMem = operand_create_relative_adressing(mem.oprendVal,OFFSET_IN_REGISTER,offMemReg.oprendVal);
+                    vfp_memory_access_instructions("FLD",reg,offMem,FloatTyID);
+                    //归还寄存器
+                    operand_recycle_temp_register(offMemReg);
+                }
+                else
+                    vfp_memory_access_instructions("FLD",reg,mem,FloatTyID);
             }
             break;
         }
