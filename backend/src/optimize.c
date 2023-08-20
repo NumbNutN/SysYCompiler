@@ -11,6 +11,155 @@
 #include <string.h>
 #include <math.h>
 
+#include "optimize.h"
+
+/**
+ * @brief 判断一个数是否是2的指数
+*/
+bool number_is_power_of_2(int num)
+{
+    size_t cnt_bit1 = 0;
+    do
+    {
+        cnt_bit1 += num & 0x1;
+        num = num >> 1;
+    } while (num != 0);
+    return cnt_bit1 == 1;
+}
+
+/**
+ * @brief 获取右移位数
+ * @birth: Created by LGD on 2023-8-20
+*/
+uint8_t number_get_shift_time(int32_t num)
+{
+    assert(num > 0);
+    assert(number_is_power_of_2(num));
+    //循环
+    for(int i=0;i<31;++i)
+    {
+        if(num & 0x1)return i;
+        num = num >> 1;
+    }
+}
+
+/**
+ * @brief 判断除数是否可以优化
+ * @birth: Created by LGD on 2023-8-20
+*/
+bool div_optimize_trigger(Instruction* this)
+{
+    struct _operand divisor;
+    divisor = toOperand(this,SECOND_OPERAND);
+    if(!operand_is_immediate(divisor))return false;
+    if(operand_get_immediate(divisor) < 0)return false;
+    return number_is_power_of_2(operand_get_immediate(divisor));
+}
+
+bool number_is_lsl_trigger(Instruction* this,struct _LSL_FEATURE* feat)
+{
+    struct _operand op1,op2,srcOp1,srcOp2;
+    op1 = srcOp1 = toOperand(this,FIRST_OPERAND);
+    op2 = srcOp2 = toOperand(this,SECOND_OPERAND);
+    TAC_OP opCode = ins_get_opCode(this);
+    if(opCode == MulOP)
+    {
+        if(operand_is_immediate(op1) || operand_is_immediate(op2))
+        {
+            if(operand_is_immediate(op1))
+            {
+                *feat = number_is_lsl(operand_get_immediate(op1));
+                feat->op_idx = 1;
+            }
+            else if (operand_is_immediate(op2))
+            {
+                *feat = number_is_lsl(operand_get_immediate(op2));
+                feat->op_idx = 2;                
+            }
+        }
+        else return false;
+
+        if ((feat->feature == LSL_NORMAL) || (feat->feature == _2_N_SUB_1))
+            return false;
+        else return true;
+    }
+}
+
+
+/**
+ * @brief 乘法可优化数
+ * @birth: Created by LGD on 2023-8-20
+*/
+struct _LSL_FEATURE number_is_lsl(int32_t num)
+{
+    //2^n 统计1的个数为1
+    //2^n + 1  第0位为1且其余位共1位1
+    //2^n - 1  第0位为1且+1后统计1的个数为1
+    //2^(m+n)+2^n   统计1的个数为2  2^n(2^m + 1)
+
+    int8_t b1 = -1;
+    int8_t b2 = -1;
+    uint8_t cnt = 0;
+    int32_t temp = num;
+    struct _LSL_FEATURE res = {.feature=LSL_NORMAL,.b1=-1,.b2=-1};
+    if (num < 0)return res;
+    if (num == 0){res.feature = LSL_ZERO;return res;}
+    //循环
+    for(int i=0;i<31;++i)
+    {
+        cnt += (temp & 1);
+        if((b1 == -1) && (temp & 1)) b1 = i; //b1未赋值 当前temp末位为1
+        else if((b1 != -1) && (b2 == -1) && (temp & 1)) b2 = i; //b1赋值 b2未赋值
+        temp = temp >> 1;
+    }
+
+    //2^n
+    if(cnt == 1)
+    {
+        res.feature = _2_N;
+        res.b1 = b1;
+        return res;
+    }
+    //2^n + 1 2^(m+n)+2^n
+    else if (cnt == 2)
+    {
+        if(b1 == 0){
+            res.feature = _2_N_ADD_1;
+            res.b1 = b2;
+        }
+        else if(b1 != 0){
+            res.feature = _2_M_N_2_N_1;
+            res.b1 = b1;
+            res.b2 = b2;
+        }
+        return res;
+    }
+    else {
+        //判断 2^n - 1
+        temp = num + 1;
+        cnt = 0;
+        b1 = -1;
+        b2 = -1;
+        //循环
+        for(int i=0;i<31;++i)
+        {
+            cnt += (temp & 1);
+            if((b1 == 0) && (temp & 1)) b1 = i; //b1未赋值 当前temp末位为1
+            else if((b1 != 0) && (b2 == 0) && (temp & 1)) b2 = i; //b1赋值 b2未赋值
+            temp = temp >> 1;
+        }
+        if(cnt == 1)
+        {
+            res.feature = _2_N_SUB_1;
+            res.b1 = b1;
+        }
+        return res;
+    }
+}
+
+
+
+
 /**
  * @brief 乘法转移码条件触发器
  * @update: Created by LGD on 2023-4-20

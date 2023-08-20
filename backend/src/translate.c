@@ -9,6 +9,7 @@
 
 #include "optimize.h"
 #include "enum_2_str.h"
+#include "math.h"
 
 /* Global Variable */
 AssembleOperand nullop;
@@ -321,6 +322,72 @@ void variable_place_shift(Instruction* this,Value* var,AssembleOperand cur)
 }
 
 /**
+ * @brief 翻译乘法的移位语句
+ * @birth: Created by LGD on 2023-8-20
+*/
+void translate_mul_lsl(Instruction* this,struct _LSL_FEATURE feat){
+    struct _operand unimmed;
+    struct _operand middleOp;
+    struct _operand tarOp = toOperand(this,TARGET_OPERAND);
+    if(feat.op_idx == 1)
+        unimmed = toOperand(this,SECOND_OPERAND);
+    else if(feat.op_idx == 2)
+        unimmed = toOperand(this,FIRST_OPERAND);
+
+    
+    switch(feat.feature){
+        case LSL_ZERO:
+        {
+            struct _operand immed = operand_create_immediate_op(0, INTERGER_TWOSCOMPLEMENT);
+            movii(unimmed,immed);
+        }
+        break;
+        case _2_N:
+        {
+            operand_set_shift(&unimmed,LSL,feat.b1);
+            movii(tarOp,unimmed);
+        }
+        break;
+        case _2_N_ADD_1:
+        {
+            struct _operand temp = unimmed;
+            operand_set_shift(&temp,LSL,feat.b1);
+            addiii(tarOp, unimmed, temp);
+        }
+        break;
+        case _2_M_N_2_N_1:
+        {
+            struct _operand temp = unimmed;
+            uint8_t min = feat.b1>feat.b2 ? feat.b2 : feat.b1;
+            uint8_t max = feat.b1>feat.b2 ? feat.b1 : feat.b2;
+
+            operand_set_shift(&temp,LSL,min);
+            movii(unimmed,temp);
+
+            operand_set_shift(&temp,LSL,max - min);
+            addiii(tarOp,unimmed,temp);
+        }
+        break;
+    }
+}
+
+/**
+ * @brief 翻译除法优化语句
+ * @birth: Created by LGD on 2023-8-20
+*/
+void translate_div_2(Instruction* this)
+{
+    struct _operand divisor = toOperand(this,SECOND_OPERAND);
+    struct _operand divided = toOperand(this,FIRST_OPERAND);
+    struct _operand target = toOperand(this,TARGET_OPERAND);
+    struct _operand temp = divided;
+    int8_t shiftTime = number_get_shift_time(operand_get_immediate(divisor));
+    operand_set_shift(&temp,LSR,shiftTime);
+    movii(target,temp);
+
+}
+
+/**
  * @brief 翻译所有的双目赋值运算,但是采用add + mov 的新方法
  * @birth: Created by LGD on 20230226
  * @update: 20230306 新的变量位置切换
@@ -335,19 +402,32 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
     //     ins_mul_2_lsl(this);
     //     return;
     // }
+    
     if(opCode == SubOP)
     {
         translate_sub(this);
         return;
     }
 
-    if(opCode == DivOP)
-        0;
+    //Mul Optimize
+    struct _LSL_FEATURE feat;
+    if(number_is_lsl_trigger(this,&feat))
+    {
+        translate_mul_lsl(this,feat);
+        return;
+    }
+
+    //Div Optimize
+    if(div_optimize_trigger(this))
+    {
+        translate_div_2(this);
+        return;
+    }
+        
     struct _operand op1,op2,srcOp1,srcOp2;
     op1 = srcOp1 = toOperand(this,FIRST_OPERAND);
     op2 = srcOp2 = toOperand(this,SECOND_OPERAND);
     AssembleOperand tarOp = toOperand(this,TARGET_OPERAND);
-
     AssembleOperand middleOp;
 
     //如果使用了除法，由于在一个Instruction内完成传参，需要限制r0和r1的访问权限
@@ -356,7 +436,6 @@ void translate_binary_expression_binary_and_assign(Instruction* this)
         add_register_limited(R0);
         add_register_limited(R1);
     }
-
 
     //双目中有其一是浮点数
     if(ins_operand_is_float(this,FIRST_OPERAND | SECOND_OPERAND))
