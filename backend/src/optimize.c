@@ -46,6 +46,7 @@ uint8_t number_get_shift_time(int32_t num)
 /**
  * @brief 判断除数是否可以优化
  * @birth: Created by LGD on 2023-8-20
+ * @update: 2023-8-20 判断操作数是否是浮点数
 */
 bool div_optimize_trigger(Instruction* this)
 {
@@ -53,7 +54,10 @@ bool div_optimize_trigger(Instruction* this)
     if(opCode == DivOP)
     {
         struct _operand divisor;
+        Value* divisor_val;
         divisor = toOperand(this,SECOND_OPERAND);
+        divisor_val = ins_get_operand(this, SECOND_OPERAND);
+        if(value_is_float(divisor_val))return false;
         if(!operand_is_immediate(divisor))return false;
         if(operand_get_immediate(divisor) < 0)return false;
         return number_is_power_of_2(operand_get_immediate(divisor));
@@ -64,6 +68,10 @@ bool div_optimize_trigger(Instruction* this)
 
 }
 
+/**
+ * @brief 判断操作数是否可以移位优化
+ * @update: 2023-8-20 判断操作数是否是浮点数
+*/
 bool number_is_lsl_trigger(Instruction* this,struct _LSL_FEATURE* feat)
 {
     struct _operand op1,op2,srcOp1,srcOp2;
@@ -72,6 +80,9 @@ bool number_is_lsl_trigger(Instruction* this,struct _LSL_FEATURE* feat)
     TAC_OP opCode = ins_get_opCode(this);
     if(opCode == MulOP)
     {
+        Value* op1_var = ins_get_operand(this, FIRST_OPERAND);
+        Value* op2_var = ins_get_operand(this, SECOND_OPERAND);
+        if( value_is_float(op1_var) || value_is_float(op2_var))return false;
         if(operand_is_immediate(op1) || operand_is_immediate(op2))
         {
             if(operand_is_immediate(op1))
