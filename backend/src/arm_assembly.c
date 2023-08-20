@@ -264,9 +264,14 @@ ARMorVFP register_type(RegisterOrder reg)
 /**
  * @brief 将数据从寄存器溢出到内存，由于相对寻址范围可能解释成多条指令
  * @birth: Created by LGD on 2023-7-17
+ * @update: 2023-8-20 当存在偏移值的时候，完成偏移后溢出到内存
 **/
 void reg2mem(struct _operand reg,struct _operand mem)
 {
+    struct _operand finiReg = reg;
+    //当前寄存器有偏移，先mov到合理的位置
+    if(reg.shiftWay != NONE_SHIFT)
+        finiReg = operand_load_to_register(reg, nullop,ARM);
     switch(register_type(reg.oprendVal))
     {
         case ARM:
@@ -279,20 +284,22 @@ void reg2mem(struct _operand reg,struct _operand mem)
                 struct _operand offReg = operand_load_immediate(immed, ARM);
                 //构造带偏移的寻址操作数
                 struct _operand offMem = operand_create2_relative_adressing(mem.oprendVal, offReg);
-                memory_access_instructions("STR",reg,offMem,NONESUFFIX,false,NONELABEL);
+                memory_access_instructions("STR",finiReg,offMem,NONESUFFIX,false,NONELABEL);
                 //归还寄存器
                 operand_recycle_temp_register(offReg);
             }
             else
-                memory_access_instructions("STR",reg,mem,NONESUFFIX,false,NONELABEL);
+                memory_access_instructions("STR",finiReg,mem,NONESUFFIX,false,NONELABEL);
         }
         break;
         case VFP:
         {
-            vfp_memory_access_instructions("FST",reg,mem,FloatTyID);
+            vfp_memory_access_instructions("FST",finiReg,mem,FloatTyID);
         }
         break;
     }
+    if(!operand_is_same(reg, finiReg))
+        operand_recycle_temp_register(finiReg);
 }
 
 /**

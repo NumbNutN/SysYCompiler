@@ -186,19 +186,7 @@ uint64 float_754_binary_code(double num,int bitType){
     }
 }
 
-/**
- * @brief 判断一个数是否是2的指数
-*/
-bool number_is_power_of_2(int num)
-{
-    size_t cnt_bit1 = 0;
-    do
-    {
-        cnt_bit1 += num & 0x1;
-        num = num >> 1;
-    } while (num != 0);
-    return cnt_bit1 == 1;
-}
+
 
 /**
  * @brief 翻译前执行的初始化
