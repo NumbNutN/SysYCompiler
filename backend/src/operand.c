@@ -584,7 +584,25 @@ AssembleOperand operand_load_immediate_to_specified_register(AssembleOperand src
         }
         break;
         case VFP:
-            pseudo_fld("FLDS",dst,src,FloatTyID);
+        {
+            if(src.addrMode == IMMEDIATE)
+            {
+                struct _operand reg = operand_pick_temp_register(ARM);
+                if(check_immediate_valid(src.oprendVal))
+                    general_data_processing_instructions_extend(MOV, NONESUFFIX, false, reg,src,nullop);
+                else
+                {
+                    //movw will zero the upper 16 bits. So there's a order to first w then t
+                    struct _operand h32 = operand_create_immediate_op((uint32_t)src.oprendVal >> 16, INTERGER_TWOSCOMPLEMENT);
+                    struct _operand l32 = operand_create_immediate_op(src.oprendVal & 0xFFFF,INTERGER_TWOSCOMPLEMENT);
+                    general_data_processing_instructions_extend(MOVW, NONESUFFIX, false, reg,l32,nullop);
+                    general_data_processing_instructions_extend(MOVT, NONESUFFIX, false, reg,h32,nullop);
+                }
+                fmrs_and_fmsr_instruction("FMSR", reg, dst, FloatTyID);
+                operand_recycle_temp_register(reg);
+            }
+            assert(src.addrMode != LABEL_MARKED_LOCATION && "标号地址送入VPF寄存器是不支持的行为");
+        }
         break;
     }
     return dst;
