@@ -14,6 +14,30 @@ void initDlist();
 extern TempReg TempARMRegList[];
 extern TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 
+enum _regListStat {
+    UN_OPTIMIZABLE_INSTRUCTION,
+    REGLIST_OK,
+    ALREADY_USED
+};
+
+struct _regList {
+    //struct _operand list[5];
+    uint8_t len;
+    enum _regListStat stat;
+    assmNode* node;
+};
+
+extern struct _regList regList;
+
+/**
+ * @brief 判断是否有寄存器并返回下标，无则返回-1
+*/
+int8_t reg_in_reglist(struct _operand reg);
+/**
+ * @brief 初始化寄存器列表
+*/
+void regList_Init();
+
 /**
  * @brief 浮点临时寄存器获取三件套
 */

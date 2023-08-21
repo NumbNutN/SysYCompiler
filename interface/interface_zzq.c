@@ -354,6 +354,8 @@ void translate_function_call(List* this,Instruction* p1)
     while(ListNext(funcCallList, &procedureP)){
         check_before_translate(procedureP);
         translate_IR_test(procedureP);
+        //添加边界
+        instruction_boundary(ins_get_opCode(p));
     }
 }
 /**
@@ -384,6 +386,9 @@ size_t traverse_list_and_translate_all_instruction(List* this,int order)
         }
         if(check_before_translate(p) == false)continue;
         translate_IR_test(p);
+
+        //添加边界
+        instruction_boundary(ins_get_opCode(p));
         currentInstruction = p;
         detect_temp_register_status();
     }while(ListNext(this,&p) && ins_get_opCode(p)!=FuncLabelOP);

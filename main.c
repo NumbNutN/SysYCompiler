@@ -325,10 +325,14 @@ int main(int argc, char **argv) {
     register_replace((Function *)element);
   }
 
+  //定义最后一个节点
+  last = prev;
   //添加文字池
   add_interal_pool();
   //去除不必要的分支语句
   remove_unnessary_branch();
+  //删除多余的寄存器
+  delete_none_used_reg();
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);
