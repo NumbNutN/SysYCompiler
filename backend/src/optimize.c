@@ -270,3 +270,103 @@ void remove_unnessary_branch(){
         codeRemoveNode(p);
     }
 }
+
+// /**
+//  * @brief 根据指令特点添加寄存器
+//  * @birth: Created by LGD on 2023-8-21
+// */
+// void add_used_reg(assmNode* node)
+// {
+//     for(int i=1;i<node->op_len;++i)
+//     {
+//         if(node->op[i].addrMode == REGISTER_DIRECT)
+//             regList_Add_Reg(node->op[i]);
+//     }
+// }
+
+/**
+ * @brief 设置寄存器的性质
+*/
+void set_reg_kill(assmNode* node)
+{
+    for(int i = 1;i < regList.node->op_len; ++i)
+    {
+        if((node->op[0].addrMode == regList.node->op[i].addrMode) && \
+         (node->op[0].oprendVal == regList.node->op[i].oprendVal) )
+        regList.node->op[i].regStat = REG_KILLED;
+    }
+}
+
+/**
+ * @brief 消除单个mov指令
+*/
+void delete_posible_mov(assmNode* node)
+{
+    struct _operand dele_reg = node->op[0];
+    int idx = reg_in_reglist(dele_reg);
+    if(idx != -1)
+    {
+        //如果mov rd,rn rn不是寄存器 不允消除
+        if(!operand_is_in_register(node->op[2]))return;
+        //这个寄存器存在于list中  准备消除
+        regList.node->op[idx].oprendVal = node->op[2].oprendVal;
+        codeRemoveNode(node);
+    }
+}
+
+/**
+ * @brief 删除和消去多余的寄存器
+ * @birth: Created by LGD on 2023-8-21
+*/
+void delete_none_used_reg(){
+    assmNode* p;
+    for(p = last;p != NULL;p = p->past)
+    {
+
+        //DEBUG
+        //print_single_assembleNode(p);
+
+        //到达一个新的边界寄存器列表状态清空
+        if(p->assemType == INSTRUCTION_BOUNDARY)
+        {
+            regList_Init();
+            switch(p->addtion)
+            {
+                case AddOP:
+                case SubOP:
+                case MulOP:
+                case GetelementptrOP:
+                case GreatEqualOP:
+                case GreatThanOP:
+                case LessEqualOP:
+                case LessThanOP:
+                    regList.stat = REGLIST_OK;
+                break;
+                default:
+                    regList.stat = UN_OPTIMIZABLE_INSTRUCTION;
+            }
+            continue;
+        }
+
+        //遇到符合的可优化内容
+        if((regList.stat == REGLIST_OK) && \
+        (!strcmp(p->opCode,"ADD") || !strcmp(p->opCode,"SUB") || !strcmp(p->opCode,"MUL") || !strcmp(p->opCode,"CMP") || !strcmp(p->opCode,"MLA")))
+        {
+            regList.node = p;
+            regList.stat = ALREADY_USED;
+            continue;
+        }
+
+        if(regList.stat == ALREADY_USED)
+        {
+            //如果是mov语句  准备消除
+            if(!strcmp(p->opCode,"MOV")){
+                delete_posible_mov(p);
+            }
+            else{
+                set_reg_kill(p);
+            }
+        }
+
+    }
+}

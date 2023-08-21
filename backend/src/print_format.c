@@ -192,8 +192,11 @@ void print_single_assembleNode(assmNode *p) {
   case FMSTAT:
     printf("\tFMSTAT\n");
   break;
+  case INSTRUCTION_BOUNDARY:
+  break;
+  default:
+    assert(false && "know assemnode type");
   }
-  
 }
 
 /**

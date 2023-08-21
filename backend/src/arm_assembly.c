@@ -5,6 +5,7 @@
 #include "enum_2_str.h"
 
 #include "interface_zzq.h"
+#include "arm_assembly.h"
 
 /*
 *将Instruction翻译为汇编后，
@@ -30,6 +31,8 @@
 assmNode* head;
 //该指针始终指向当前上一个节点
 assmNode* prev;
+//最后一个节点
+assmNode* last;
 
 //目标操作数暂存器
 // extern Value* tempReg; //算数运算暂存寄存器
@@ -52,9 +55,39 @@ TempReg TempARMRegList[] = \
 TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 TempReg AddtionalARMRegList[ADDITION_REG_NUM];
 
-
-
 Stack* Free_Vps_Register_list;
+
+
+/*****************************/
+/*        register list      */
+/****************************/
+struct _regList regList = {.len = 0};
+
+/**
+ * @brief 初始化寄存器列表
+*/
+void regList_Init()
+{
+    regList.len = 0;
+}
+
+/**
+ * @brief 判断是否有寄存器并返回下标，无则返回-1
+*/
+int8_t reg_in_reglist(struct _operand reg)
+{
+    for(int i=1;i<regList.node->op_len;++i)
+    {
+        if((reg.addrMode == regList.node->op[i].addrMode) &&\
+            (reg.oprendVal == regList.node->op[i].oprendVal) &&\
+            regList.node->op[i].regStat == REG_USED)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 /**
  * @brief 浮点空闲寄存器获取三件套  这是选取临时浮点寄存器保存操作数
@@ -223,6 +256,7 @@ void initDlist()
     */
     head = (assmNode*)malloc(sizeof(assmNode));
     head->next = NULL;
+    head->past = NULL;
     prev = head;
     //清空nullop
     nullop.addrMode = 0;

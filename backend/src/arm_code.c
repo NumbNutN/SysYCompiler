@@ -638,6 +638,7 @@ void linkNode(assmNode* now)
     链接下一个汇编指令
     */
     now->next = prev->next;
+    now->past = prev;
     prev->next = now;
     prev = now;
 
@@ -649,18 +650,31 @@ void linkNode(assmNode* now)
 /**
  * @brief 从代码链中移除节点
  * @birth: Created by LGD on 2023-8-9
+ * @update: 2023-8-21 支持双向链表
+ *          2023-8-21 取消傻缺的遍历
 */
 void codeRemoveNode(assmNode* node){
-    assmNode* p=head,*prev = NULL;
-    while(p!= node){
-        prev = p;
-        p = p-> next;
-    }
+    assmNode* p=node,*prev = node->past;
+
     if(prev){
         prev->next = p->next;
+        p->next->past = prev;
     }
     else{
         head = p->next;
+        head->past = NULL;
     }
+    free(p);
 }
 
+/**
+ * @brief 插入一个边界节点
+ * @birth: Created by LGD on 2023-8-21
+*/
+void instruction_boundary(TAC_OP opCode)
+{
+    assmNode* node = arm_instruction_node_init();
+    node->assemType = INSTRUCTION_BOUNDARY;
+    node->addtion = opCode;
+    linkNode(node);
+}

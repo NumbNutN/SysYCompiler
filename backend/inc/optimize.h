@@ -53,3 +53,9 @@ void ins_mul_2_lsl(Instruction* ins);
  * @birth: Created by LGD on 2023-8-9
 */
 void remove_unnessary_branch(void);
+
+/**
+ * @brief 删除和消去多余的寄存器
+ * @birth: Created by LGD on 2023-8-21
+*/
+void delete_none_used_reg();

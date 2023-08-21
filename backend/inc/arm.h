@@ -7,6 +7,7 @@
 
 #include "cds.h"
 #include "value.h"
+#include "instruction.h"
 
 extern int CntAssemble;
 
@@ -59,7 +60,8 @@ typedef enum
     BI,      //Branch Instructions
     UNDEF,  /*Undefined Instruction 2023-7-9*/
     LDR_PSEUDO_INSTRUCTION,
-    POOL /*2023-7-21 文字池*/
+    POOL, /*2023-7-21 文字池*/
+    INSTRUCTION_BOUNDARY    //2023-8-21 定义新的节点
     
 } ASSEMBLE_TYPE;
 
@@ -139,6 +141,11 @@ enum _OffsetType{
     OFFSET_IN_REGISTER
 };
 
+enum _RegStat{
+    REG_USED,
+    REG_KILLED
+};
+
 typedef struct _operand
 {
     //定义了操作数的寻址方式
@@ -158,12 +165,8 @@ typedef struct _operand
     //定义了移位的数量  2023-4-20
     size_t shiftNum;
 
-    // union {
-    //     struct {
-    //         //定义了访存指令的偏移选项
-    //         enum _OffsetType flexOffsetWay;
-    //     }
-    // }
+    //2023-8-21 标注寄存器状态
+    enum _RegStat regStat;
 
 } AssembleOperand;
 
@@ -297,6 +300,12 @@ typedef struct _assemNode
     //指向下一个节点
     struct _assemNode* next;
 
+    //指向上一个节点  2023-8-21
+    struct _assemNode* past;
+
+    //2023-8-21  boundary 扩展
+    int8_t addtion;
+
 } assmNode;
 
 
@@ -304,6 +313,8 @@ typedef struct _assemNode
 extern assmNode* head;
 //该指针始终指向当前上一个节点
 extern assmNode* prev;
+//最后一个节点
+extern assmNode* last;
 
 typedef enum _RegorMem
 {
@@ -528,5 +539,11 @@ struct _operand AssemblyNode_get_opernad(struct _assemNode* assemNode,size_t idx
  * @birth: Created by LGD on 2023-7-15
  */
 assmNode* arm_instruction_node_init();
+
+/**
+ * @brief 插入一个边界节点
+ * @birth: Created by LGD on 2023-8-21
+*/
+void instruction_boundary(TAC_OP opCode);
 
 #endif
