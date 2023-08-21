@@ -306,6 +306,12 @@ typedef struct _assemNode
     //2023-8-21  boundary 扩展
     int8_t addtion;
 
+    //2023-8-21 label引用链 扩展
+    struct _assemNode* refereence_next;
+
+    //2023-8-21 扩展 当前label的等效label  无则NULL
+    char equalLabel[128];
+
 } assmNode;
 
 

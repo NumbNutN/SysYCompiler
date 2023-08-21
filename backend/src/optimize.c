@@ -260,9 +260,15 @@ void remove_unnessary_branch(){
     assmNode* p;
     for(p = head;p != NULL;p = p->next){
         //当前语句是branch
+
+        //debug
+        print_single_assembleNode(p);
+
         if(strcmp("B",p->opCode))continue;
         assmNode* pNext = p->next;
         //下一个语句是label
+        //跳过边界
+        while(pNext->assemType == INSTRUCTION_BOUNDARY)pNext = pNext->next;
         if(pNext->assemType != LABEL)continue;
         //branch语句指向标号和下一个标号一致
         if(strcmp((char*)p->op[0].oprendVal,pNext->label))continue;
@@ -368,5 +374,72 @@ void delete_none_used_reg(){
             }
         }
 
+    }
+}
+
+/**
+ * @brief 判断标签是否可以等效到别的标签
+*/
+void label_equivalent(assmNode* node)
+{
+    /* pNext: Branch instruction */
+    assert(node->assemType == LABEL);
+    //从这里遍历判断下方是否有除b以外的内容
+    assmNode* pNext = node->next;
+    //跳过边界
+    while(pNext->assemType == INSTRUCTION_BOUNDARY)pNext = pNext->next;
+    if(!strcmp(node->opCode,"B") && !strcmp(node->suffix,NONESUFFIX))
+    {
+        //可以等效
+        strcpy(node->equalLabel,(char*)pNext->op[0].oprendVal);
+    }
+    else {
+        strcpy(node->equalLabel,"");
+    }
+}
+
+/**
+ * @brief 等效标签更改与消除
+*/
+void change_and_delete_unused_label(assmNode* node)
+{
+    if(strcmp(node->equalLabel,""))
+    {
+        //当前标签具有等效标签
+        assmNode* b_node = HashMapGet(label_used_list, node->label);
+        while(b_node != NULL)
+        {
+            //遍历依赖关系链表
+            strcpy((char*)b_node->op[0].oprendVal, node->equalLabel);
+            b_node = b_node->refereence_next;
+        }
+        //将当前标签的B消除
+        assmNode* b_node_in_unused_label = node->next;
+        //跳过边界
+        while(b_node_in_unused_label->assemType == INSTRUCTION_BOUNDARY)b_node_in_unused_label = b_node_in_unused_label->next;
+        codeRemoveNode(b_node_in_unused_label);
+        //将当前标签消除
+        codeRemoveNode(node);
+    }
+}
+
+/**
+ * @brief 消除冗余的跳转
+ * @birth: Created by LGD on 2023-8-21
+*/
+void delete_unused_label()
+{
+    //第一步 判断所有标号的等效关系
+    char* label;
+    assmNode* label_node;
+    HashMap_foreach(label_node_list,label, label_node)
+    {
+        label_equivalent(label_node);
+    }
+
+    //第二步 将具有等效关系的标签的所有reference branch全部调整
+    HashMap_foreach(label_node_list, label, label_node)
+    {
+        change_and_delete_unused_label(label_node);
     }
 }

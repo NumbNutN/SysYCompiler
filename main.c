@@ -333,6 +333,7 @@ int main(int argc, char **argv) {
   remove_unnessary_branch();
   //删除多余的寄存器
   delete_none_used_reg();
+  //delete_unused_label();
 
   /* 生成文件 */
   freopen(argv[3], "w", stdout);

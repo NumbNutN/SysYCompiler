@@ -200,6 +200,8 @@ void TranslateInit()
     data_list_init();
     //初始化符号表
     back_endsymbol_table_init();
+    //初始化标号引用表
+    label_used_list_init();
 }
 
 /**

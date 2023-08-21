@@ -55,6 +55,45 @@ TempReg TempARMRegList[] = \
 TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 TempReg AddtionalARMRegList[ADDITION_REG_NUM];
 
+/* 2023-8-21 存储所有标签的引用关系 */
+HashMap* label_used_list;
+
+/* 2023-8-21 存储标号所在的assemNode */
+HashMap* label_node_list;
+
+int LabelReferenceList_CompareKey_Value(void* lhs,void* rhs){return strcmp(lhs,rhs);}
+
+/* 初始化label引用表 */
+void label_used_list_init()
+{
+    label_used_list = HashMapInit();
+    HashMapSetHash(label_used_list,HashDjb2);
+    HashMapSetCompare(label_used_list, LabelReferenceList_CompareKey_Value);
+    label_node_list = HashMapInit();
+    HashMapSetHash(label_node_list,HashDjb2);
+    HashMapSetCompare(label_node_list, LabelReferenceList_CompareKey_Value);
+}
+
+/**
+ * @brief 为哈希表添加新的assemNode
+*/
+void label_used_list_add_new_assemNode(char* label,assmNode* node)
+{
+    if(!HashMapContain(label_used_list, label))
+    {
+        //第一次添加
+        node->refereence_next = NULL;
+        HashMapPut(label_used_list, label, node);
+    }
+    else
+    {
+        assmNode* head = HashMapGet(label_used_list, label);
+        node->refereence_next = head;
+        HashMapPut(label_used_list, label, node);
+    }
+}
+
+
 Stack* Free_Vps_Register_list;
 
 
