@@ -59,3 +59,9 @@ void remove_unnessary_branch(void);
  * @birth: Created by LGD on 2023-8-21
 */
 void delete_none_used_reg();
+
+/**
+ * @brief 消除冗余的跳转
+ * @birth: Created by LGD on 2023-8-21
+*/
+void delete_unused_label();

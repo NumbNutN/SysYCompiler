@@ -368,6 +368,9 @@ void branch_instructions_test(char* tarLabel,char* suffix,bool symbol,char* labe
     //指令类型   20221203
     node->assemType = ASSEM_INSTRUCTION;
 
+    //2023-8-21 将node加入标号引用表
+    label_used_list_add_new_assemNode((char*)node->op[0].oprendVal,node);
+
     linkNode(node);
 }
 
@@ -547,6 +550,9 @@ void Label(char* label)
     assmNode* node = arm_instruction_node_init();
     node->assemType = LABEL;
     strcpy(node->label,label);
+
+    //添加到label Node哈希表
+    HashMapPut(label_node_list,node->label, node);
     linkNode(node);
 }
 

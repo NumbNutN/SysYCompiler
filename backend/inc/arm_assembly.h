@@ -14,6 +14,11 @@ void initDlist();
 extern TempReg TempARMRegList[];
 extern TempReg TempVFPRegList[TEMP_VFP_REG_NUM];
 
+/* 2023-8-21 存储所有标签的引用关系 */
+extern HashMap* label_used_list;
+/* 2023-8-21 存储标号所在的assemNode */
+extern HashMap* label_node_list;
+
 enum _regListStat {
     UN_OPTIMIZABLE_INSTRUCTION,
     REGLIST_OK,
@@ -233,5 +238,10 @@ void addiii(struct _operand tarOp,struct _operand op1,struct _operand op2);
  * @birth: Created by LGD on 2023-7-27
 */
 void add_interal_pool();
+
+/**
+ * @brief 为哈希表添加新的assemNode
+*/
+void label_used_list_add_new_assemNode(char* label,assmNode* node);
 
 #endif
