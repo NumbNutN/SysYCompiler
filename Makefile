@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wextra -g --std=c11 -O2 -lm
+CFLAGS = -Wall -Wextra -g --std=c11 -O2 -lm -Wl,-Map,./build/compiler.map
 
 SRCDIR = .
 BUILDDIR = ./build

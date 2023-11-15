@@ -262,7 +262,7 @@ void remove_unnessary_branch(){
         //当前语句是branch
 
         //debug
-        print_single_assembleNode(p);
+        //print_single_assembleNode(p);
 
         if(strcmp("B",p->opCode))continue;
         assmNode* pNext = p->next;
